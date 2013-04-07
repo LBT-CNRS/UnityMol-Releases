@@ -1,0 +1,24 @@
+Introduction
+============
+
+This software is a computer program based on the Unity3D game engine.
+It is part of UnityMol, a general framework whose purpose is to
+provide a prototype for developing molecular graphics and scientific
+visualisation applications. More details about UnityMol are provided
+at the following URL: "http://unitymol.sourceforge.net".
+
+Installation
+============
+
+Tools required
+--------------
+- Unity3D version 4.1 (or later) [ http://www.unity3d.com](http://www.unity3d.com)
+
+Running UnityMol
+----------------
+
+Open the UnityMol projet in Unity3D and push play..
+
+Copyright and License
+================================================
+This program is under the CeCill licence [href="http://www.cecill.info/index.en.html](href="http://www.cecill.info/index.en.html), which is compatible with GPL licence.
