@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 728718a01e0434b1d9e10e0f8e076cfc
+TrueTypeFontImporter:
+  serializedVersion: 2
+  fontSize: 12
+  fontColor: {r: 1, g: 1, b: 1, a: 1}
+  forceTextureCase: -2
+  characterSpacing: 1
+  characterPadding: 0
+  includeFontData: 1
+  use2xBehaviour: 0
+  fontNames:
+  - ArialDyn
+  customCharacters: 
+  fontRenderingMode: 0
+  userData: 

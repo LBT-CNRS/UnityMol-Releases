@@ -1,0 +1,12 @@
+Theses PDBs files are sugars pdb examples.
+Normally all sugar fonction works on them.
+
+Case_9 is the most complex example of a sugar, with several chain, several units, and several sugar types.
+Case_8 is a example with furanose and pyranose
+Case_51 is a simple example with 3 glucose
+Case_52 is a simple glucose helix
+Case_53 is a double glucose helix
+case_5 is a Arabose example (1 sugar)
+case_32 is a beautiful simple example with 5 different sugar (with 5 differents colors) and 2 chains (one ramification)
+
+TODO : add a complexe protein-sugar complexe

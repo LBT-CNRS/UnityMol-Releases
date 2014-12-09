@@ -1,0 +1,45 @@
+UnityMol ChangeLog.
+===================
+
+# $Id: CHANGELOG 259 2013-04-16 22:12:46Z macadmin $
+Marc Baaden <baaden@smplinux.de>)
+
+Please refer to the UnityMol SVN repositories for
+change details prior to the 0.9.1 release.
+
+
+Changes in version 0.9.2 (this release) (2013-04-16).
+-----------------------------------------------------
+
+Modifications:
+- The asset folder "Standard Assets/Image Effects (Pro Only)" was moved
+  to the "Resources" subfolder.
+- The Dream Image effect dependencies were renamed so that they do not
+  conflict with the standard Image Effects of the Pro version. This old
+  image effect does not yet work, though.
+
+
+Changes in version 0.9.1 (2013-04-9). 
+-------------------------------------
+
+License change: UnityMol is now distributed under the CeCILL-C license,
+which is an adaptation of the LGPL to French law.
+
+New features:
+- Shortcut button to activate HyperBalls smooth link representation.
+
+Improvements:
+- The majority of warnings could be corrected by cleaning unused
+  portions of the code and removing obsolete variables.
+
+Bug fixes:
+- There are no bugs in UnityMol :) .. ok, I'm kidding. WiP.
+
+Additions:
+- This ChangeLog was initiated.
+- New color schemes were added.
+
+Changes:
+- The whole filetree was cleaned up and reorganized. Old and duplicate
+  files were removed.
+
