@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BondTubeStyle.cs 224 2013-04-06 23:00:34Z baaden $
+/// $Id: BondTubeStyle.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -69,6 +69,7 @@ namespace Molecule.View.DisplayBond
 
 	using UnityEngine;
 	using System.Collections;
+	using System.Collections.Generic;
 	using Molecule.Model;
 	using Molecule.Control;
 	using Config;
@@ -79,7 +80,7 @@ namespace Molecule.View.DisplayBond
 	{
 		
 		public int number=1;
-		public ArrayList bondEPList=new ArrayList();
+		public List<int[]> bondEPList=new List<int[]>();
 
 		public BondTubeStyle()	
 		{
@@ -126,8 +127,8 @@ namespace Molecule.View.DisplayBond
 
 			TubeUpdate comp = Line.GetComponent<TubeUpdate>();
 			comp.SetAtoms((GameObject)MoleculeModel.atoms[atomsIds[0]], (GameObject)MoleculeModel.atoms[atomsIds[1]]);
-			// comp.atompointer1=(GameObject)MoleculeModel.atoms[atom1number];
-			// comp.atompointer2=(GameObject)MoleculeModel.atoms[atom2number];
+//			comp.atompointer1=(GameObject)MoleculeModel.atoms[atom1number];
+//			comp.atompointer2=(GameObject)MoleculeModel.atoms[atom2number];
 			comp.enabled = true;										
 			Line.tag="Club";
 					

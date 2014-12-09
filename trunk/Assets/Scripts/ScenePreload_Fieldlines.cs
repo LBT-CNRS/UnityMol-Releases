@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ScenePreload_Fieldlines.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: ScenePreload_Fieldlines.cs 268 2013-05-08 11:15:28Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -89,7 +89,7 @@ public class ScenePreload_Fieldlines : MonoBehaviour {
 	IEnumerator InitScene(RequestPDB requestPDB)
 	{
 		StartCoroutine(requestPDB.LoadPDBWWW(UIData.server_url+"Scenes/fieldlines/fieldline.pdb"));
-		while(!requestPDB.isDone)
+		while(!RequestPDB.isDone)
 		{
 			pdb_progress = requestPDB.progress;
 			Debug.Log(pdb_progress);
@@ -99,29 +99,29 @@ public class ScenePreload_Fieldlines : MonoBehaviour {
 		
 		UIData.atomtype = UIData.AtomType.particleball;
 		UIData.bondtype = UIData.BondType.nobond;
-		GUIMoleculeController.menuOpen_show=false;
-		GUIMoleculeController.menuAtom_show=true;
+		GUIMoleculeController.showOpenMenu=false;
+		GUIMoleculeController.showAtomMenu=true;
 		SendMessage("Display",SendMessageOptions.DontRequireReceiver);
 		
 		StartCoroutine(requestPDB.LoadJsonWWW(UIData.server_url+"Scenes/fieldlines/fieldline.json",MoleculeModel.Offset));
-		while(!requestPDB.isDone)
+		while(!RequestPDB.isDone)
 		{
 			json_progress = requestPDB.progress;
 			yield return new WaitForEndOfFrame();
 		}
 		json_progress = 1.0f;
-		MoleculeModel.FieldLineFileExist=true;
-		GUIMoleculeController.FieldLine_show = true;
+		MoleculeModel.fieldLineFileExists = true;
+		GUIMoleculeController.showFieldLines = true;
 		FieldLineStyle.DisplayFieldLine();
 
 		StartCoroutine(requestPDB.LoadOBJWWW(UIData.server_url+"Scenes/fieldlines/fieldline.obj"));
-		while(!requestPDB.isDone)
+		while(!RequestPDB.isDone)
 		{
 			obj_progress = requestPDB.progress;
 			yield return new WaitForEndOfFrame();
 		}
 		obj_progress = 1.0f;
-		MoleculeModel.SurfaceFileExist=true;
+		MoleculeModel.surfaceFileExists = true;
 		GUIMoleculeController.modif=true;
 	
 	}

@@ -45,21 +45,7 @@ Shader "Hidden/Tonemapper" {
 		fLogLumSum += log( Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(1,-1)).rgb) + DELTA);		
 
 		float avg = fLogLumSum / 4.0;
-		return float4(avg,avg,avg, avg);
-	}
-
-	float4 fragExpNoBlend(v2f i) : COLOR 
-	{
-		float2 lum = float2(0.0f, 0.0f);
-		
-		lum += tex2D(_MainTex, i.uv  + _MainTex_TexelSize.xy * float2(-1,-1)).xy;	
-		lum += tex2D(_MainTex, i.uv  + _MainTex_TexelSize.xy * float2(1,1)).xy;	
-		lum += tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(1,-1)).xy;	
-		lum += tex2D(_MainTex, i.uv  + _MainTex_TexelSize.xy * float2(-1,1)).xy;	
-
-		lum = exp(lum / 4.0f);
-		
-		return float4(lum.x, lum.y, lum.x, 1.0);
+		return float4(avg, avg, avg, avg);
 	}
 
 	float4 fragExp(v2f i) : COLOR 
@@ -140,7 +126,7 @@ Shader "Hidden/Tonemapper" {
 		
 		float cieLum = max(0.000001, Luminance(color.rgb)); //ToCIE(color.rgb);
 		
-		float lumScaled = cieLum * _HdrParams.z / (0.001 + avgLum);
+		float lumScaled = cieLum * _HdrParams.z / (0.001 + avgLum.x);
 		
 		lumScaled = (lumScaled * (1.0f + lumScaled / (_HdrParams.w)))/(1.0f + lumScaled);
 		
@@ -263,6 +249,7 @@ Subshader {
       ENDCG
   }
 
+  // 1
  Pass {
 	  ZTest Always Cull Off ZWrite Off
 	  Fog { Mode off }      
@@ -273,11 +260,11 @@ Subshader {
       #pragma fragment fragLog
       ENDCG
   }  
+  // 2
  Pass {
 	  ZTest Always Cull Off ZWrite Off
 	  Fog { Mode off }      
-
-	 Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 
       CGPROGRAM
       #pragma fragmentoption ARB_precision_hint_fastest 
@@ -285,15 +272,17 @@ Subshader {
       #pragma fragment fragExp
       ENDCG
   }  
-  
+  // 3 
  Pass {
 	  ZTest Always Cull Off ZWrite Off
-	  Fog { Mode off }      
+	  Fog { Mode off }
+
+	  Blend Off   
 
       CGPROGRAM
       #pragma fragmentoption ARB_precision_hint_fastest 
       #pragma vertex vert
-      #pragma fragment fragExpNoBlend
+      #pragma fragment fragExp
       ENDCG
   }  
   

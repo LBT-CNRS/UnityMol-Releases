@@ -10,42 +10,43 @@
 	#include "UnityCG.cginc"
 	
 	struct v2f {
-		half4 pos : POSITION;
-		half2 uv : TEXCOORD0;
-		half2 uv1 : TEXCOORD1;
+		float4 pos : POSITION;
+		float2 uv : TEXCOORD0;
+		float2 uv1 : TEXCOORD1;
 	};
 
 	struct v2fRadius {
-		half4 pos : POSITION;
-		half2 uv : TEXCOORD0;
-		half4 uv1[4] : TEXCOORD1;
+		float4 pos : POSITION;
+		float2 uv : TEXCOORD0;
+		float4 uv1[4] : TEXCOORD1;
 	};
 	
 	struct v2fBlur {
-		half4 pos : POSITION;
-		half2 uv : TEXCOORD0;
-		half4 uv01 : TEXCOORD1;
-		half4 uv23 : TEXCOORD2;
-		half4 uv45 : TEXCOORD3;
-		half4 uv67 : TEXCOORD4; 
-		half4 uv89 : TEXCOORD5;
+		float4 pos : POSITION;
+		float2 uv : TEXCOORD0;
+		float4 uv01 : TEXCOORD1;
+		float4 uv23 : TEXCOORD2;
+		float4 uv45 : TEXCOORD3;
+		float4 uv67 : TEXCOORD4; 
+		float4 uv89 : TEXCOORD5;
 	};	
 	
 	uniform sampler2D _MainTex;
 	uniform sampler2D _CameraDepthTexture;
 	uniform sampler2D _FgOverlap;
 	uniform sampler2D _LowRez;
-	uniform half4 _CurveParams;
-	uniform float4 _MainTex_TexelSize;	
-	uniform half4 _Offsets;
+	uniform float4 _CurveParams;
+	uniform float4 _MainTex_TexelSize;
+	uniform float4 _Offsets;
 
-	v2f vert( appdata_img v ) {
+	v2f vert( appdata_img v ) 
+	{
 		v2f o;
 		o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
 		o.uv1.xy = v.texcoord.xy;
 		o.uv.xy = v.texcoord.xy;
 		
-		#if SHADER_API_D3D9 || SHADER_API_XBOX360 || SHADER_API_D3D11
+		#if UNITY_UV_STARTS_AT_TOP
 		if (_MainTex_TexelSize.y < 0)
 			o.uv.y = 1-o.uv.y;
 		#endif			
@@ -53,58 +54,50 @@
 		return o;
 	} 
 
-	v2fBlur vertBlurPlusMinus (appdata_img v) {
+	v2f vertFlip( appdata_img v ) 
+	{
+		v2f o;
+		o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
+		o.uv1.xy = v.texcoord.xy;
+		o.uv.xy = v.texcoord.xy;
+		
+		#if UNITY_UV_STARTS_AT_TOP
+		if (_MainTex_TexelSize.y < 0)
+			o.uv.y = 1-o.uv.y;
+		if (_MainTex_TexelSize.y < 0)
+			o.uv1.y = 1-o.uv1.y;			
+		#endif			
+		
+		return o;
+	} 
+
+	v2fBlur vertBlurPlusMinus (appdata_img v) 
+	{
 		v2fBlur o;
 		o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
 		o.uv.xy = v.texcoord.xy;
-		o.uv01 =  v.texcoord.xyxy + _Offsets.xyxy * half4(1,1, -1,-1) * _MainTex_TexelSize.xyxy;
-		o.uv23 =  v.texcoord.xyxy + _Offsets.xyxy * half4(2,2, -2,-2) * _MainTex_TexelSize.xyxy;// * 3.0;
-		o.uv45 =  v.texcoord.xyxy + _Offsets.xyxy * half4(3,3, -3,-3) * _MainTex_TexelSize.xyxy;// * 3.0;
-		o.uv67 =  v.texcoord.xyxy + _Offsets.xyxy * half4(4,4, -4,-4) * _MainTex_TexelSize.xyxy;// * 4.0;
-		o.uv89 =  v.texcoord.xyxy + _Offsets.xyxy * half4(5,5, -5,-5) * _MainTex_TexelSize.xyxy;// * 5.0;
+		o.uv01 =  v.texcoord.xyxy + _Offsets.xyxy * float4(1,1, -1,-1) * _MainTex_TexelSize.xyxy / 6.0;
+		o.uv23 =  v.texcoord.xyxy + _Offsets.xyxy * float4(2,2, -2,-2) * _MainTex_TexelSize.xyxy / 6.0;
+		o.uv45 =  v.texcoord.xyxy + _Offsets.xyxy * float4(3,3, -3,-3) * _MainTex_TexelSize.xyxy / 6.0;
+		o.uv67 =  v.texcoord.xyxy + _Offsets.xyxy * float4(4,4, -4,-4) * _MainTex_TexelSize.xyxy / 6.0;
+		o.uv89 =  v.texcoord.xyxy + _Offsets.xyxy * float4(5,5, -5,-5) * _MainTex_TexelSize.xyxy / 6.0;
 		return o;  
 	}
-		
-	inline half3 Axis(half2 coords, half minRange)
-	{
-		half coc = tex2D(_MainTex, coords).a;
-		coc *= coc;
-		return half3( max(coc, minRange) * (_Offsets.xy), coc);
-	}	
 
-	inline half3 AxisFromSample(half4 sample, half minRange)
+	#define SCATTER_OVERLAP_SMOOTH (-0.265)
+
+	inline float BokehWeightDisc(float4 sample, float sampleDistance, float4 centerSample)
 	{
-		return half3( max(sample.a, minRange) * (_Offsets.xy), sample.a);
-	}	
-	
-	inline half2 AxisFromSamplePoisson(half4 sample, half minRange)
+		return smoothstep(SCATTER_OVERLAP_SMOOTH, 0.0, sample.a - centerSample.a*sampleDistance); 
+	}
+
+	inline float2 BokehWeightDisc2(float4 sampleA, float4 sampleB, float2 sampleDistance2, float4 centerSample)
 	{
-		return half2( max(sample.a, minRange), sample.a);
-	}
-	
-	inline float4 AdjustForLowRezBuffers(half2 coords, half4 returnValue) 
-	{		
-		half4 highRezColor = tex2D(_MainTex, coords);
-		return lerp(highRezColor, returnValue, smoothstep(0.135, 0.5, highRezColor.a)); // lerp value is important as blending HR <-> LR is pretty PRETTY REALLY ugly :/
-	}
-	
-	inline float ForegroundOverlap(float2 coords)
-	{
-		return saturate(tex2D(_FgOverlap,coords).a);
-	}
-	
-	inline float BokehWeightForDisc(float4 sample, float4 center, float blurWidth, float2 tapOffset)
-	{ 
-		return smoothstep(-1,0, sample.a * blurWidth - length(tapOffset * blurWidth * center.a));
-	}
-	inline float BokehWeightForDiscFg(float4 sample, float4 center, float blurWidth, float2 tapOffset)
-	{ 
-		return smoothstep(-1,0, length(tapOffset * blurWidth * center.a)- sample.a * blurWidth);
-	}
+		return smoothstep(float2(SCATTER_OVERLAP_SMOOTH, SCATTER_OVERLAP_SMOOTH), float2(0.0,0.0), float2(sampleA.a, sampleB.a) - centerSample.aa*sampleDistance2);	}		
 			
-	static const float2 poisson[13] =
+	static const int SmallDiscKernelSamples = 12;		
+	static const float2 SmallDiscKernel[SmallDiscKernelSamples] =
 	{
-		float2(0,0), 
 		float2(-0.326212,-0.40581),
 		float2(-0.840144,-0.07358),
 		float2(-0.695914,0.457137),
@@ -119,519 +112,473 @@
 		float2(-0.791559,-0.59771)
 	};
 
-	half4 fragBlurPoisson (v2f i) : COLOR 
+	static const int NumDiscSamples = 28;
+	static const float3 DiscKernel[NumDiscSamples] = 
 	{
-		const int TAPS = 13; // X1	
-		
-		half4 centerTap = tex2D(_MainTex, i.uv1.xy);
-		half4 sum = centerTap;
-		half4 poissonScale = _MainTex_TexelSize.xyxy * centerTap.a * _Offsets.w;
-					
-		half sampleCount = centerTap.a; 
-		sum *= sampleCount;
-		
-		for(int l=1; l < TAPS; l++)
-		{
-			half2 sampleUV = i.uv1.xy + poisson[l].xy * poissonScale;
-			half4 sample0 = tex2D(_MainTex, sampleUV.xy);	
-								
-			half weight0 = BokehWeightForDisc(sample0, centerTap, _Offsets.w, poisson[l].xy);
+		float3(0.62463,0.54337,0.82790),
+		float3(-0.13414,-0.94488,0.95435),
+		float3(0.38772,-0.43475,0.58253),
+		float3(0.12126,-0.19282,0.22778),
+		float3(-0.20388,0.11133,0.23230),
+		float3(0.83114,-0.29218,0.88100),
+		float3(0.10759,-0.57839,0.58831),
+		float3(0.28285,0.79036,0.83945),
+		float3(-0.36622,0.39516,0.53876),
+		float3(0.75591,0.21916,0.78704),
+		float3(-0.52610,0.02386,0.52664),
+		float3(-0.88216,-0.24471,0.91547),
+		float3(-0.48888,-0.29330,0.57011),
+		float3(0.44014,-0.08558,0.44838),
+		float3(0.21179,0.51373,0.55567),
+		float3(0.05483,0.95701,0.95858),
+		float3(-0.59001,-0.70509,0.91938),
+		float3(-0.80065,0.24631,0.83768),
+		float3(-0.19424,-0.18402,0.26757),
+		float3(-0.43667,0.76751,0.88304),
+		float3(0.21666,0.11602,0.24577),
+		float3(0.15696,-0.85600,0.87027),
+		float3(-0.75821,0.58363,0.95682),
+		float3(0.99284,-0.02904,0.99327),
+		float3(-0.22234,-0.57907,0.62029),
+		float3(0.55052,-0.66984,0.86704),
+		float3(0.46431,0.28115,0.54280),
+		float3(-0.07214,0.60554,0.60982),
+	};	
 
-			sum += sample0 * weight0; 
-			sampleCount += weight0 ; 
+	float4 fragBlurInsaneMQ (v2f i) : COLOR 
+	{
+		float4 centerTap = tex2D(_MainTex, i.uv1.xy);
+		float4 sum = centerTap;
+		float4 poissonScale = _MainTex_TexelSize.xyxy * centerTap.a * _Offsets.w;
+
+		float sampleCount = max(centerTap.a * 0.25, _Offsets.z); // <- weighing with 0.25 looks nicer for small high freq spec
+		sum *= sampleCount;
+
+		float weights = 0;
+		
+		for(int l=0; l < NumDiscSamples; l++)
+		{
+			float2 sampleUV = i.uv1.xy + DiscKernel[l].xy * poissonScale.xy;
+			float4 sample0 = tex2D(_MainTex, sampleUV.xy);
+
+			if( sample0.a > 0.0 )  
+			{
+				weights = BokehWeightDisc(sample0, DiscKernel[l].z, centerTap);
+				sum += sample0 * weights; 
+				sampleCount += weights; 
+			}
 		}
 		
-		half4 returnValue = sum / (0.00001 + sampleCount);	
-		returnValue.a = centerTap.a;
-		
-		return returnValue;			
-	}
-
-	half4 fragBlurPoissonLowRez (v2f i) : COLOR 
-	{
-		const int TAPS = 13; // X1
-		
-		half4 centerTap = tex2D(_LowRez, i.uv1.xy);
-		half4 sum = centerTap;
-		half4 poissonScale = _MainTex_TexelSize.xyxy * centerTap.a * _Offsets.w;
-					
-		half sampleCount = centerTap.a; 
-		sum *= sampleCount;
-		
-		for(int l=1; l < TAPS; l++)
-		{
-			half2 sampleUV = i.uv1.xy + poisson[l].xy * poissonScale;
-			half4 sample0 = tex2D(_LowRez, sampleUV.xy);	
-								
-			half weight0 = BokehWeightForDisc(sample0, centerTap, _Offsets.w, poisson[l].xy);
-
-			sum += sample0 * weight0; 
-			sampleCount += weight0 ; 
-		}
-		
-		half4 returnValue = sum / (0.00001 + sampleCount);	
-		returnValue.a = centerTap.a;
-		
-		return AdjustForLowRezBuffers(i.uv1.xy, returnValue);		
-	}	 
-	 	 	 
-	half4 fragBlurProduction (v2f i) : COLOR 
-	{
-		const int TAPS = 13; // X2	
-				
-		half4 centerTap = tex2D(_MainTex, i.uv1.xy);
-		half4 sum = centerTap;
-		half4 poissonScale = _MainTex_TexelSize.xyxy * centerTap.a * _Offsets.w;
-					
-		half sampleCount = centerTap.a; 
-		sum *= sampleCount;
-		
-		for(int l=1; l < TAPS; l++)
-		{
-			half4 sampleUV = i.uv1.xyxy + half4(poisson[l].xy,-poisson[l].xy) * poissonScale;
-			
-			half4 sample0 = tex2D(_MainTex, sampleUV.xy);	
-			half4 sample1 = tex2D(_MainTex, sampleUV.zw);	 
-								
-			half weight0 = BokehWeightForDisc(sample0, centerTap, _Offsets.w, poisson[l].xy);
-			half weight1 = BokehWeightForDisc(sample1, centerTap, _Offsets.w, -poisson[l].xy);
-
-			sum += sample0 * weight0; 
-			sum += sample1 * weight1; 
-			sampleCount += weight0 + weight1; 
-		}
-		
-		half4 returnValue = sum / (0.00001 + sampleCount);	
-		returnValue.a = centerTap.a;
-		
-		return returnValue;	
-	}	
-
-	half4 fragBlurProductionLowRez (v2f i) : COLOR 
-	{
-		const int TAPS = 13; // X2	
-		
-		half4 centerTap = tex2D(_LowRez, i.uv1.xy);
-		half4 sum = centerTap;
-		half4 poissonScale = _MainTex_TexelSize.xyxy * centerTap.a * _Offsets.w; 
-					
-		half sampleCount = centerTap.a; 
-		sum *= sampleCount;
-		
-		for(int l=1; l < TAPS; l++)
-		{
-			half4 sampleUV = i.uv1.xyxy + half4(poisson[l].xy,-poisson[l].xy) * poissonScale;
-			
-			half4 sample0 = tex2D(_LowRez, sampleUV.xy);	
-			half4 sample1 = tex2D(_LowRez, sampleUV.zw);	 
-								
-			half weight0 = BokehWeightForDisc(sample0, centerTap, _Offsets.w, poisson[l].xy);
-			half weight1 = BokehWeightForDisc(sample1, centerTap, _Offsets.w, -poisson[l].xy);
-
-			sum += sample0 * weight0;
-			sum += sample1 * weight1;
-			
-			sampleCount += weight0 + weight1; 
-		}
-		
-		half4 returnValue = sum / (0.00001 + sampleCount);	
-		returnValue.a = centerTap.a;
-		
-		return AdjustForLowRezBuffers(i.uv1.xy, returnValue);	
-	}		
-	
-	static const float3 movieTaps[60] =
-	{
-		float3(  0.2165,  0.1250, 1.0000 ),
-		float3(  0.0000,  0.2500, 1.0000 ),
-		float3( -0.2165,  0.1250, 1.0000 ),
-		float3( -0.2165, -0.1250, 1.0000 ),
-		float3( -0.0000, -0.2500, 1.0000 ),
-		float3(  0.2165, -0.1250, 1.0000 ),
-		float3(  0.4330,  0.2500, 1.0000 ),
-		float3(  0.0000,  0.5000, 1.0000 ),
-		float3( -0.4330,  0.2500, 1.0000 ),
-		float3( -0.4330, -0.2500, 1.0000 ),
-		float3( -0.0000, -0.5000, 1.0000 ),
-		float3(  0.4330, -0.2500, 1.0000 ),
-		float3(  0.6495,  0.3750, 1.0000 ),
-		float3(  0.0000,  0.7500, 1.0000 ),
-		float3( -0.6495,  0.3750, 1.0000 ),
-		float3( -0.6495, -0.3750, 1.0000 ),
-		float3( -0.0000, -0.7500, 1.0000 ),
-		float3(  0.6495, -0.3750, 1.0000 ),
-		float3(  0.8660,  0.5000, 1.0000 ),
-		float3(  0.0000,  1.0000, 1.0000 ),
-		float3( -0.8660,  0.5000, 1.0000 ),
-		float3( -0.8660, -0.5000, 1.0000 ),
-		float3( -0.0000, -1.0000, 1.0000 ),
-		float3(  0.8660, -0.5000, 1.0000 ),
-		float3(  0.2163,  0.3754, 0.8670 ),
-		float3( -0.2170,  0.3750, 0.8670 ),
-		float3( -0.4333, -0.0004, 0.8670 ),
-		float3( -0.2163, -0.3754, 0.8670 ),
-		float3(  0.2170, -0.3750, 0.8670 ),
-		float3(  0.4333,  0.0004, 0.8670 ),
-		float3(  0.4328,  0.5004, 0.8847 ),
-		float3( -0.2170,  0.6250, 0.8847 ),
-		float3( -0.6498,  0.1246, 0.8847 ),
-		float3( -0.4328, -0.5004, 0.8847 ),
-		float3(  0.2170, -0.6250, 0.8847 ),
-		float3(  0.6498, -0.1246, 0.8847 ),
-		float3(  0.6493,  0.6254, 0.9065 ),
-		float3( -0.2170,  0.8750, 0.9065 ),
-		float3( -0.8663,  0.2496, 0.9065 ),
-		float3( -0.6493, -0.6254, 0.9065 ),
-		float3(  0.2170, -0.8750, 0.9065 ),
-		float3(  0.8663, -0.2496, 0.9065 ),
-		float3(  0.2160,  0.6259, 0.8851 ),
-		float3( -0.4340,  0.5000, 0.8851 ),
-		float3( -0.6500, -0.1259, 0.8851 ),
-		float3( -0.2160, -0.6259, 0.8851 ),
-		float3(  0.4340, -0.5000, 0.8851 ),
-		float3(  0.6500,  0.1259, 0.8851 ),
-		float3(  0.4325,  0.7509, 0.8670 ),
-		float3( -0.4340,  0.7500, 0.8670 ),
-		float3( -0.8665, -0.0009, 0.8670 ),
-		float3( -0.4325, -0.7509, 0.8670 ),
-		float3(  0.4340, -0.7500, 0.8670 ),
-		float3(  0.8665,  0.0009, 0.8670 ),
-		float3(  0.2158,  0.8763, 0.9070 ),
-		float3( -0.6510,  0.6250, 0.9070 ),
-		float3( -0.8668, -0.2513, 0.9070 ),
-		float3( -0.2158, -0.8763, 0.9070 ),
-		float3(  0.6510, -0.6250, 0.9070 ),
-		float3(  0.8668,  0.2513, 0.9070 )
-	};
-
-	// insane movie quality
-	half4 fragBlurMovie (v2f i) : COLOR 
-	{
-		const int TAPS = 60;
-					
-		half4 centerTap = tex2D(_MainTex, i.uv1.xy);
-		half4 sum = centerTap;
-		half4 poissonScale = _MainTex_TexelSize.xyxy * (centerTap.a) * _Offsets.w;
-					
-		half sampleCount = centerTap.a; 
-		sum *= sampleCount;
-		
-		for(int l=0; l < TAPS; l++)
-		{
-			half2 sampleUV = i.uv1.xy + movieTaps[l].xy * poissonScale;
-			half4 sample0 = tex2D(_MainTex, sampleUV.xy);	 
-			half weight0 = saturate( BokehWeightForDisc(sample0, centerTap, _Offsets.w, movieTaps[l].xy) * movieTaps[l].z);
-			sum += sample0 * weight0; 
-			sampleCount += weight0; 
-		}
-		
-		half4 returnValue = sum / (0.00001 + sampleCount);	
+		float4 returnValue = sum / sampleCount;
 		returnValue.a = centerTap.a;
 
 		return returnValue;
-	}	
+	}		
 
-	// insane movie quality in low resolution
-	half4 fragBlurMovieLowRez (v2f i) : COLOR 
+	float4 fragBlurInsaneHQ (v2f i) : COLOR 
 	{
-		const int TAPS = 60;
-					
-		half4 centerTap = tex2D(_LowRez, i.uv1.xy);
-		half4 sum = centerTap;
-		half4 poissonScale = _MainTex_TexelSize.xyxy * (centerTap.a) * _Offsets.w; 
-					
-		half sampleCount = centerTap.a; 
+		float4 centerTap = tex2D(_MainTex, i.uv1.xy);
+		float4 sum = centerTap;
+		float4 poissonScale = _MainTex_TexelSize.xyxy * centerTap.a * _Offsets.w;
+
+		float sampleCount = max(centerTap.a * 0.25, _Offsets.z); // <- weighing with 0.25 looks nicer for small high freq spec
 		sum *= sampleCount;
+
+		float2 weights = 0;
 		
-		for(int l=1; l < TAPS; l++)
+		for(int l=0; l < NumDiscSamples; l++)
 		{
-			half2 sampleUV = i.uv1.xy + movieTaps[l].xy * poissonScale;
-			half4 sample0 = tex2D(_LowRez, sampleUV.xy);	 					
-			half weight0 = BokehWeightForDisc(sample0, centerTap, _Offsets.w, movieTaps[l].xy) * movieTaps[l].z;
-			sum += sample0 * weight0; 
-			sampleCount += weight0; 
+			float4 sampleUV = i.uv1.xyxy + DiscKernel[l].xyxy * poissonScale.xyxy / float4(1.2,1.2,DiscKernel[l].zz);
+
+			float4 sample0 = tex2D(_MainTex, sampleUV.xy);
+			float4 sample1 = tex2D(_MainTex, sampleUV.zw);	
+
+			if( (sample0.a + sample1.a) > 0.0 )  
+			{
+				weights = BokehWeightDisc2(sample0, sample1, float2(DiscKernel[l].z/1.2, 1.0), centerTap);
+				sum += sample0 * weights.x + sample1 * weights.y; 
+				sampleCount += dot(weights, 1); 
+			}
 		}
 		
-		half4 returnValue = sum / (0.00001 + sampleCount);	
+		float4 returnValue = sum / sampleCount;
 		returnValue.a = centerTap.a;
+
+		return returnValue;
+	}
+
+	inline float4 BlendLowWithHighHQ(float coc, float4 low, float4 high)
+	{
+		float blend = smoothstep(0.65,0.85, coc);
+		return lerp(low, high, blend);
+	}
+
+	inline float4 BlendLowWithHighMQ(float coc, float4 low, float4 high)
+	{
+		float blend = smoothstep(0.4,0.6, coc);
+		return lerp(low, high, blend);
+	}
+
+	float4 fragBlurUpsampleCombineHQ (v2f i) : COLOR 
+	{	
+		float4 bigBlur = tex2D(_LowRez, i.uv1.xy);
+		float4 centerTap = tex2D(_MainTex, i.uv1.xy);
+
+		float4 smallBlur = centerTap;
+		float4 poissonScale = _MainTex_TexelSize.xyxy * centerTap.a * _Offsets.w ;
+					
+		float sampleCount = max(centerTap.a * 0.25, 0.1f); // <- weighing with 0.25 looks nicer for small high freq spec
+		smallBlur *= sampleCount; 
 		
-		return AdjustForLowRezBuffers(i.uv1.xy, returnValue);
-	}				
+		for(int l=0; l < NumDiscSamples; l++)
+		{
+			float2 sampleUV = i.uv1.xy + DiscKernel[l].xy * poissonScale.xy;
+
+			float4 sample0 = tex2D(_MainTex, sampleUV);	 
+			float weight0 = BokehWeightDisc(sample0, DiscKernel[l].z, centerTap);
+			smallBlur += sample0 * weight0; sampleCount += weight0;
+		}
+
+		smallBlur /= (sampleCount+1e-5f);		
+		smallBlur = BlendLowWithHighHQ(centerTap.a, smallBlur, bigBlur);
+
+		return centerTap.a < 1e-2f ? centerTap : float4(smallBlur.rgb,centerTap.a);
+	}
+
+	float4 fragBlurUpsampleCombineMQ (v2f i) : COLOR 
+	{			
+		float4 bigBlur = tex2D(_LowRez, i.uv1.xy);
+		float4 centerTap = tex2D(_MainTex, i.uv1.xy);
+
+		float4 smallBlur = centerTap;
+		float4 poissonScale = _MainTex_TexelSize.xyxy * centerTap.a * _Offsets.w ;
+					
+		float sampleCount = max(centerTap.a * 0.25, 0.1f); // <- weighing with 0.25 looks nicer for small high freq spec
+		smallBlur *= sampleCount; 
+		
+		for(int l=0; l < SmallDiscKernelSamples; l++)
+		{
+			float2 sampleUV = i.uv1.xy + SmallDiscKernel[l].xy * poissonScale.xy*1.1;
+
+			float4 sample0 = tex2D(_MainTex, sampleUV);	 
+			float weight0 = BokehWeightDisc(sample0, length(SmallDiscKernel[l].xy*1.1), centerTap);
+			smallBlur += sample0 * weight0; sampleCount += weight0;
+		}
+
+		smallBlur /= (sampleCount+1e-5f);
+		
+		smallBlur = BlendLowWithHighMQ(centerTap.a, smallBlur, bigBlur);
+
+		return centerTap.a < 1e-2f ? centerTap : float4(smallBlur.rgb,centerTap.a);
+	}	
+
+	float4 fragBlurUpsampleCheap (v2f i) : COLOR 
+	{			
+		float4 centerTap = tex2D(_MainTex, i.uv1.xy);
+		float4 bigBlur = tex2D(_LowRez, i.uv1.xy);
+
+		float fgCoc = tex2D(_FgOverlap, i.uv1.xy).a;
+		float4 smallBlur = lerp(centerTap, bigBlur, saturate( max(centerTap.a,fgCoc)*8.0 ));
+
+		return float4(smallBlur.rgb, centerTap.a);
+	}	
 									
-	half4 fragBlurHighSampleCount (v2f i) : COLOR 
+	float4 fragBlurBox (v2f i) : COLOR 
 	{
 		const int TAPS = 12;
-		const half FILTER_KERNEL_WEIGHTS[12] = {1.0, 0.8, 0.65, 0.5, 0.4, 0.2, 0.1, 0.05, 0.025, 0.0125, 0.005, 0.00175}; 
-		//const half FILTER_KERNEL_WEIGHTS[10] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+
+		float4 centerTap = tex2D(_MainTex, i.uv1.xy);
+
+		// TODO: important ? breaks when HR blur is being used
+		//centerTap.a = max(centerTap.a, 0.1f);
+
+		float sampleCount =  centerTap.a;
+		float4 sum = centerTap * sampleCount;
 		
-		half fgOverlap = saturate(tex2D(_FgOverlap, i.uv1.xy).a*3); // CheckForegroundOverlap(i.uv.xy);
+		float2 lenStep = centerTap.aa * (1.0 / (TAPS-1.0));
+		float4 steps = (_Offsets.xyxy * _MainTex_TexelSize.xyxy) * lenStep.xyxy * float4(1,1, -1,-1);
 		
-		
-		half4 centerTap = tex2D(_MainTex, i.uv1.xy);
-		half4 sum = centerTap;// * FILTER_KERNEL_WEIGHTS[0];
-		
-		half2 offset = AxisFromSample(sum, fgOverlap); //GetFirstAxis(TexCoord);
-		half amount = length(offset.xy);				
-								
-	//	half centerDepth = Linear01Depth(tex2D(_CameraDepthTexture, i.uv.xy).x);
-				
-		half sampleCount = FILTER_KERNEL_WEIGHTS[0];
-		half4 steps = (offset.xy * _MainTex_TexelSize.xy).xyxy;
-		steps.zw *= -1; 
-		for(int l=1; l < TAPS; l++)
+		for(int l=1; l<TAPS; l++)
 		{
-			//djhkjsdhkjashdkjashdkj kashd  as iiiiii
-			half4 sampleUV = i.uv1.xyxy + steps * l;
+			float4 sampleUV = i.uv1.xyxy + steps * (float)l;
 			
-			// Color samples
-			half4 sample0 = tex2D(_MainTex, sampleUV.xy);
-			half4 sample1 = tex2D(_MainTex, sampleUV.zw);
+			float4 sample0 = tex2D(_MainTex, sampleUV.xy);
+			float4 sample1 = tex2D(_MainTex, sampleUV.zw);
+	
+			float2 maxLen01 = float2(sample0.a, sample1.a);
+			float2 r = lenStep.xx * (float)l;
 			
-			// Maximum extent of the blur at these samples
-			half maxLengthAt0;
-			half maxLengthAt1;
-			
-			maxLengthAt0 = length(AxisFromSample(sample0, fgOverlap).xy) * (TAPS+1);//length(GetFirstAxis(sampleUV.xy)) * (NUM_STEPS+1);
-			maxLengthAt1 = length(AxisFromSample(sample1, fgOverlap).xy) * (TAPS+1);//length(GetFirstAxis(sampleUV.zw)) * (NUM_STEPS+1);
+			float2 weight01 = smoothstep(float2(-0.4,-0.4),float2(0.0,0.0), maxLen01-r);
+			sum += sample0 * weight01.x + sample1 * weight01.y; 
 
-	//	half depth0 = Linear01Depth(tex2D(_CameraDepthTexture, sampleUV.xy).x);
-		//half depth1 = Linear01Depth(tex2D(_CameraDepthTexture, sampleUV.zw).x);
-		
-		//depth0 = saturate(1-(centerDepth-depth0)*(centerDepth-depth0)*10.5);
-		//depth1 = saturate(1-(centerDepth-depth1)*(centerDepth-depth1)*10.5);
-
-			// Y U NO WORKY ?
-			half currentLength = amount * ((half)l);
-			
-			half weight0 = max(0, saturate((maxLengthAt0 - currentLength))) * FILTER_KERNEL_WEIGHTS[l];//* depth0;
-			sum += sample0 * weight0; 
-			sampleCount += weight0;
-			
-			half weight1 = max(0, saturate((maxLengthAt1 - currentLength))) * FILTER_KERNEL_WEIGHTS[l];//* depth1;
-			sum += sample1 * weight1;
-			sampleCount += weight1;
+			sampleCount += dot(weight01,1);
 		}
 		
-		half4 returnValue = sum / sampleCount;	
-		returnValue.a = centerTap.a;
+		float4 returnValue = sum / (1e-5f + sampleCount);
+
+		//returnValue.a = centerTap.a;
+		//return centerTap.a;
 
 		return returnValue;
 	}		
-	
-	half4 fragBlurLowSampleCount (v2f i) : COLOR 
+
+
+	float4 fragVisualize (v2f i) : COLOR 
 	{
-		const int TAPS = 6;
-		const half FILTER_KERNEL_WEIGHTS[6] = {1.0, 0.8, 0.6, 0.375, 0.135, 0.075}; 
-		
-		half fgOverlap = saturate(tex2D(_FgOverlap, i.uv1.xy).a*3); // CheckForegroundOverlap(i.uv.xy);
-		
-		
-		half4 centerTap = tex2D(_MainTex, i.uv1.xy);
-		half4 sum = centerTap;// * FILTER_KERNEL_WEIGHTS[0];
-		
-		half2 offset = AxisFromSample(sum, fgOverlap); //GetFirstAxis(TexCoord);
-		half amount = length(offset.xy);				
-								
-	//	half centerDepth = Linear01Depth(tex2D(_CameraDepthTexture, i.uv.xy).x);
-				
-		half sampleCount = FILTER_KERNEL_WEIGHTS[0];
-		half4 steps = (offset.xy * _MainTex_TexelSize.xy).xyxy;
-		steps.zw *= -1; 
-		for(int l=1; l < TAPS; l++)
-		{
-			//djhkjsdhkjashdkjashdkj kashd  as iiiiii
-			half4 sampleUV = i.uv1.xyxy + steps * l;
-			
-			// Color samples
-			half4 sample0 = tex2D(_MainTex, sampleUV.xy);
-			half4 sample1 = tex2D(_MainTex, sampleUV.zw);
-			
-			// Maximum extent of the blur at these samples
-			half maxLengthAt0;
-			half maxLengthAt1;
-			
-			maxLengthAt0 = length(AxisFromSample(sample0, fgOverlap).xy) * (TAPS+1);//length(GetFirstAxis(sampleUV.xy)) * (NUM_STEPS+1);
-			maxLengthAt1 = length(AxisFromSample(sample1, fgOverlap).xy) * (TAPS+1);//length(GetFirstAxis(sampleUV.zw)) * (NUM_STEPS+1);
-
-	//	half depth0 = Linear01Depth(tex2D(_CameraDepthTexture, sampleUV.xy).x);
-		//half depth1 = Linear01Depth(tex2D(_CameraDepthTexture, sampleUV.zw).x);
-		
-		//depth0 = saturate(1-(centerDepth-depth0)*(centerDepth-depth0)*10.5);
-		//depth1 = saturate(1-(centerDepth-depth1)*(centerDepth-depth1)*10.5);
-
-			// Y U NO WORKY ?
-			half currentLength = amount * ((half)l);
-			
-			half weight0 = max(0, saturate((maxLengthAt0 - currentLength))) * FILTER_KERNEL_WEIGHTS[l];//* depth0;
-			sum += sample0 * weight0; 
-			sampleCount += weight0;
-			
-			half weight1 = max(0, saturate((maxLengthAt1 - currentLength))) * FILTER_KERNEL_WEIGHTS[l];//* depth1;
-			sum += sample1 * weight1;
-			sampleCount += weight1;
-		}
-		
-		half4 returnValue = sum / sampleCount;	
-		returnValue.a = centerTap.a;
-
+		float4 returnValue = tex2D(_MainTex, i.uv1.xy);	
+		returnValue.rgb = lerp(float3(0.0,0.0,0.0), float3(1.0,1.0,1.0), saturate(returnValue.a/_CurveParams.x));
 		return returnValue;
-	}	
-	
-	half4 fragBlurForFgCoc (v2fBlur i) : COLOR 
-	{
-		half4 blurredColor = half4 (0,0,0,0);
+	}
 
-		half4 sampleA = tex2D(_MainTex, i.uv.xy)*4;
-		half4 sampleB = tex2D(_MainTex, i.uv01.xy)*2;
-		half4 sampleC = tex2D(_MainTex, i.uv01.zw)*2;
-		half4 sampleD = tex2D(_MainTex, i.uv23.xy);
-		half4 sampleE = tex2D(_MainTex, i.uv23.zw);
-		half4 sampleF = tex2D(_MainTex, i.uv45.xy)*0.55;
-		half4 sampleG = tex2D(_MainTex, i.uv45.zw)*0.55;
-		half4 sampleH = tex2D(_MainTex, i.uv67.xy)*0.2;
-		half4 sampleI = tex2D(_MainTex, i.uv67.zw)*0.2;
-								
-		blurredColor += sampleA;
-		blurredColor += sampleB;
-		blurredColor += sampleC; 
-		blurredColor += sampleD; 
-		blurredColor += sampleE; 
-		blurredColor += sampleF; 
-		blurredColor += sampleG; 
-		blurredColor += sampleH; 
-		blurredColor += sampleI; 
-		
-		blurredColor /= 11.5;
-		
-		//half4 alphas = half4(sampleD.a, sampleE.a, sampleH.a*5, sampleI.a*5);
-		//half4 alphas2 = half4(sampleE.a, sampleF.a, sampleG.a, 1.0);
-		
-		//half overlapFactor = saturate(length(alphas-sampleA.aaaa/4)-0.5);
 
-		//half4 maxedColor = max(sampleA, sampleB);
-		//maxedColor = max(maxedColor, sampleC);
-		
-		//blurredColor.a = saturate(blurredColor.a * 4.0f);
-		// to do ot not to do
-		
-		//blurredColor.a += overlapFactor ; // max(maxedColor.a, blurredColor.a);
-		
-		float4 originalCoc = tex2D(_FgOverlap,i.uv.xy).aaaa;
-		originalCoc.a = saturate(originalCoc.a + 1.8*saturate(blurredColor.a-originalCoc.a));
-		
-		return max(blurredColor.aaaa, originalCoc.aaaa);
-	}	
-
-	half4 frag4TapBlurForLRSpawn (v2f i) : COLOR 
-	{  
-		half4 tapA =  tex2D(_MainTex, i.uv.xy + _MainTex_TexelSize.xy); 
-		half4 tapB =  tex2D(_MainTex, i.uv.xy - _MainTex_TexelSize.xy);
-		half4 tapC =  tex2D(_MainTex, i.uv.xy + _MainTex_TexelSize.xy * half2(1,-1));
-		half4 tapD =  tex2D(_MainTex, i.uv.xy - _MainTex_TexelSize.xy * half2(1,-1));
-
-		half4 color = (tapA + tapB * tapB.a + tapC * tapC.a + tapD * tapD.a) / (1.0 + tapB.a + tapC.a + tapD.a);
-		color.a = tapA.a;
-		return color;
-	}	
-	
-	half4 fragApplyDebug (v2f i) : COLOR 
+	float4 fragBoxDownsample (v2f i) : COLOR 
 	{		
-		float4 tapHigh = tex2D (_MainTex, i.uv1.xy);		
-		float4 outColor = lerp(tapHigh, half4(0,1,0,1), tapHigh.a);
-		return outColor;
+		//float4 returnValue = tex2D(_MainTex, i.uv1.xy);			
+		float4 returnValue = tex2D(_MainTex, i.uv1.xy + 0.75*_MainTex_TexelSize.xy);
+		returnValue += tex2D(_MainTex, i.uv1.xy - 0.75*_MainTex_TexelSize.xy);
+		returnValue += tex2D(_MainTex, i.uv1.xy + 0.75*_MainTex_TexelSize.xy * float2(1,-1));
+		returnValue += tex2D(_MainTex, i.uv1.xy - 0.75*_MainTex_TexelSize.xy * float2(1,-1));
+
+		return returnValue/4;
 	}		
+
+	float4 fragBlurAlphaWeighted (v2fBlur i) : COLOR 
+	{
+		const float ALPHA_WEIGHT = 2.0f;
+		float4 sum = float4 (0,0,0,0);
+		float w = 0;
+		float weights = 0;
+		const float G_WEIGHTS[6] = {1.0, 0.8, 0.675, 0.5, 0.2, 0.075}; 
+
+		float4 sampleA = tex2D(_MainTex, i.uv.xy);
+
+		float4 sampleB = tex2D(_MainTex, i.uv01.xy);
+		float4 sampleC = tex2D(_MainTex, i.uv01.zw);
+		float4 sampleD = tex2D(_MainTex, i.uv23.xy);
+		float4 sampleE = tex2D(_MainTex, i.uv23.zw);
+		float4 sampleF = tex2D(_MainTex, i.uv45.xy);
+		float4 sampleG = tex2D(_MainTex, i.uv45.zw);
+		float4 sampleH = tex2D(_MainTex, i.uv67.xy);
+		float4 sampleI = tex2D(_MainTex, i.uv67.zw);
+		float4 sampleJ = tex2D(_MainTex, i.uv89.xy);
+		float4 sampleK = tex2D(_MainTex, i.uv89.zw);		
+								
+		w = sampleA.a * G_WEIGHTS[0]; sum += sampleA * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleB.a) * G_WEIGHTS[1]; sum += sampleB * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleC.a) * G_WEIGHTS[1]; sum += sampleC * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleD.a) * G_WEIGHTS[2]; sum += sampleD * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleE.a) * G_WEIGHTS[2]; sum += sampleE * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleF.a) * G_WEIGHTS[3]; sum += sampleF * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleG.a) * G_WEIGHTS[3]; sum += sampleG * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleH.a) * G_WEIGHTS[4]; sum += sampleH * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleI.a) * G_WEIGHTS[4]; sum += sampleI * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleJ.a) * G_WEIGHTS[5]; sum += sampleJ * w; weights += w;
+		w = saturate(ALPHA_WEIGHT*sampleK.a) * G_WEIGHTS[5]; sum += sampleK * w; weights += w;
+
+		sum /= weights + 1e-4f;
+
+		sum.a = sampleA.a;
+		if(sampleA.a<1e-2f) sum.rgb = sampleA.rgb;
+
+		return sum;
+	}	
+	
+	float4 fragBlurForFgCoc (v2fBlur i) : COLOR 
+	{
+		float4 sum = float4 (0,0,0,0);
+		float w = 0;
+		float weights = 0;
+		const float G_WEIGHTS[6] = {1.0, 0.8, 0.675, 0.5, 0.2, 0.075}; 
+
+		float4 sampleA = tex2D(_MainTex, i.uv.xy);
+
+		float4 sampleB = tex2D(_MainTex, i.uv01.xy);
+		float4 sampleC = tex2D(_MainTex, i.uv01.zw);
+		float4 sampleD = tex2D(_MainTex, i.uv23.xy);
+		float4 sampleE = tex2D(_MainTex, i.uv23.zw);
+		float4 sampleF = tex2D(_MainTex, i.uv45.xy);
+		float4 sampleG = tex2D(_MainTex, i.uv45.zw);
+		float4 sampleH = tex2D(_MainTex, i.uv67.xy);
+		float4 sampleI = tex2D(_MainTex, i.uv67.zw);
+		float4 sampleJ = tex2D(_MainTex, i.uv89.xy);
+		float4 sampleK = tex2D(_MainTex, i.uv89.zw);		
+								
+		w = sampleA.a * G_WEIGHTS[0]; sum += sampleA * w; weights += w;								
+		w = smoothstep(-0.5,0.0,sampleB.a-sampleA.a) * G_WEIGHTS[1]; sum += sampleB * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleC.a-sampleA.a) * G_WEIGHTS[1]; sum += sampleC * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleD.a-sampleA.a) * G_WEIGHTS[2]; sum += sampleD * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleE.a-sampleA.a) * G_WEIGHTS[2]; sum += sampleE * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleF.a-sampleA.a) * G_WEIGHTS[3]; sum += sampleF * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleG.a-sampleA.a) * G_WEIGHTS[3]; sum += sampleG * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleH.a-sampleA.a) * G_WEIGHTS[4]; sum += sampleH * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleI.a-sampleA.a) * G_WEIGHTS[4]; sum += sampleI * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleJ.a-sampleA.a) * G_WEIGHTS[5]; sum += sampleJ * w; weights += w;
+		w = smoothstep(-0.5,0.0,sampleK.a-sampleA.a) * G_WEIGHTS[5]; sum += sampleK * w; weights += w;
+
+		sum /= weights + 1e-4f;
+
+		return sum;
+	}	
+
+	float4 fragGaussBlur (v2fBlur i) : COLOR 
+	{
+		float4 sum = float4 (0,0,0,0);
+		float w = 0;
+		float weights = 0;
+		const float G_WEIGHTS[9] = {1.0, 0.8, 0.65, 0.5, 0.4, 0.2, 0.1, 0.05, 0.025}; 
+
+		float4 sampleA = tex2D(_MainTex, i.uv.xy);
+
+		float4 sampleB = tex2D(_MainTex, i.uv01.xy);
+		float4 sampleC = tex2D(_MainTex, i.uv01.zw);
+		float4 sampleD = tex2D(_MainTex, i.uv23.xy);
+		float4 sampleE = tex2D(_MainTex, i.uv23.zw);
+		float4 sampleF = tex2D(_MainTex, i.uv45.xy);
+		float4 sampleG = tex2D(_MainTex, i.uv45.zw);
+		float4 sampleH = tex2D(_MainTex, i.uv67.xy);
+		float4 sampleI = tex2D(_MainTex, i.uv67.zw);
+		float4 sampleJ = tex2D(_MainTex, i.uv89.xy);
+		float4 sampleK = tex2D(_MainTex, i.uv89.zw);
+
+		w = sampleA.a * G_WEIGHTS[0]; sum += sampleA * w; weights += w;
+		w = sampleB.a * G_WEIGHTS[1]; sum += sampleB * w; weights += w;
+		w = sampleC.a * G_WEIGHTS[1]; sum += sampleC * w; weights += w;
+		w = sampleD.a * G_WEIGHTS[2]; sum += sampleD * w; weights += w;
+		w = sampleE.a * G_WEIGHTS[2]; sum += sampleE * w; weights += w;
+		w = sampleF.a * G_WEIGHTS[3]; sum += sampleF * w; weights += w;
+		w = sampleG.a * G_WEIGHTS[3]; sum += sampleG * w; weights += w;
+		w = sampleH.a * G_WEIGHTS[4]; sum += sampleH * w; weights += w;
+		w = sampleI.a * G_WEIGHTS[4]; sum += sampleI * w; weights += w;
+		w = sampleJ.a * G_WEIGHTS[5]; sum += sampleJ * w; weights += w;
+		w = sampleK.a * G_WEIGHTS[5]; sum += sampleK * w; weights += w;
+
+		sum /= weights + 1e-4f;
+
+		return sum;
+	}
+
+	float4 frag4TapBlurForLRSpawn (v2f i) : COLOR 
+	{
+		float4 tap  =  tex2D(_MainTex, i.uv.xy);
 		
-	float4 fragCaptureCoc (v2f i) : COLOR 
+		float4 tapA =  tex2D(_MainTex, i.uv.xy + 0.75 * _MainTex_TexelSize.xy); 
+		float4 tapB =  tex2D(_MainTex, i.uv.xy - 0.75 * _MainTex_TexelSize.xy);
+		float4 tapC =  tex2D(_MainTex, i.uv.xy + 0.75 * _MainTex_TexelSize.xy * float2(1,-1));
+		float4 tapD =  tex2D(_MainTex, i.uv.xy - 0.75 * _MainTex_TexelSize.xy * float2(1,-1));
+		
+		float4 weights = saturate(10.0 * float4(tapA.a, tapB.a, tapC.a, tapD.a));
+		float sumWeights = dot(weights, 1);
+
+		float4 color = (tapA*weights.x + tapB*weights.y + tapC*weights.z + tapD*weights.w);
+
+		float4 outColor = tap;
+		if(tap.a * sumWeights * 8.0 > 1e-5f) outColor.rgb = color.rgb/sumWeights;
+
+		return outColor;
+	}
+
+	float4 fragCaptureColorAndSignedCoc (v2f i) : COLOR 
 	{	
-		float4 color = half4(0,0,0,0); //tex2D (_MainTex, i.uv1.xy);
+		float4 color = tex2D (_MainTex, i.uv1.xy);
 		float d = UNITY_SAMPLE_DEPTH(tex2D(_CameraDepthTexture, i.uv1.xy));
 		d = Linear01Depth (d);
-		color.a = _CurveParams.z * abs(d - _CurveParams.w) / (d + 0.0001); 
-		color.a = clamp( max(0.0, color.a - _CurveParams.y), 0.0, 1.0);
+		color.a = _CurveParams.z * abs(d - _CurveParams.w) / (d + 1e-5f); 
+		color.a = clamp( max(0.0, color.a - _CurveParams.y), 0.0, _CurveParams.x) * sign(d - _CurveParams.w);
 		
 		return color;
-		
-		/*
-		float4 color = half4(0,0,0,0); //tex2D (_MainTex, i.uv1.xy);
-		//float4 lowTap = tex2D(_TapLowA, i.uv1.xy);
-		
-		float d = UNITY_SAMPLE_DEPTH(tex2D(_CameraDepthTexture, i.uv1.xy));
-		d = Linear01Depth (d);
-		
-		float focalDistance01 = _CurveParams.w + _CurveParams.z;
-		
-		//if (d > focalDistance01) 
-		color.a = (d - focalDistance01);
-	 
-		half coc = saturate(color.a * _CurveParams.y);
-		coc += saturate(-color.a * _CurveParams.x);
-		
-		// we are mixing the newly calculated BG COC with the foreground COC
-		// also, for foreground COC, let's scale the COC a bit to get nicer overlaps	
-		//color.a = max(lowTap.a, color.a);
-		
-		//color.a = saturate(color.a);// + COC_SMALL_VALUE);
-		//color.rgb *= color.a;
-		
-		color.a = coc;
-		
-		return saturate(color);
-		*/
 	} 
 	
-	half4 fragCaptureForegroundCoc (v2f i) : COLOR 
+	float4 fragCaptureCoc (v2f i) : COLOR 
 	{	
-		float4 color = half4(0,0,0,0); //tex2D (_MainTex, i.uv1.xy);
+		float4 color = float4(0,0,0,0); //tex2D (_MainTex, i.uv1.xy);
 		float d = UNITY_SAMPLE_DEPTH(tex2D(_CameraDepthTexture, i.uv1.xy));
 		d = Linear01Depth (d);
-		color.a = _CurveParams.z * (_CurveParams.w-d) / (d + 0.0001);
-		color.a = clamp(max(0.0, color.a - _CurveParams.y), 0.0, 1.0);
+		color.a = _CurveParams.z * abs(d - _CurveParams.w) / (d + 1e-5f); 
+		color.a = clamp( max(0.0, color.a - _CurveParams.y), 0.0, _CurveParams.x);
 		
-		return color;	
-			
-		/*
-		half4 color = tex2D (_MainTex, i.uv.xy);
-		color.a = 0.0;
+		return color;
+	} 
 
-		//#if SHADER_API_D3D9
-		//if (_MainTex_TexelSize.y < 0)
-		//	i.uv1.xy = i.uv1.xy * half2(1,-1)+half2(0,1);
-		//#endif
+	float4 AddFgCoc (v2f i) : COLOR 
+	{	
+		return tex2D (_MainTex, i.uv1.xy);
+	} 
+
+	float4 fragMergeCoc (v2f i) : COLOR 
+	{	
+		float4 color = tex2D (_FgOverlap, i.uv1.xy); // this is the foreground overlap value
+		float fgCoc = color.a;
 
 		float d = UNITY_SAMPLE_DEPTH(tex2D(_CameraDepthTexture, i.uv1.xy));
-		d = Linear01Depth (d);	
+		d = Linear01Depth (d);
+		color.a = _CurveParams.z * abs(d - _CurveParams.w) / (d + 1e-5f); 
+		color.a = clamp( max(0.0, color.a - _CurveParams.y), 0.0, _CurveParams.x);
 		
-		float focalDistance01 = (_CurveParams.w - _CurveParams.z);	
+		return max(color.aaaa, float4(fgCoc,fgCoc,fgCoc,fgCoc));
+	} 
+
+	float4 fragCombineCocWithMaskBlur (v2f i) : COLOR 
+	{	
+		float bgAndFgCoc = tex2D (_MainTex, i.uv1.xy).a;
+		float fgOverlapCoc = tex2D (_FgOverlap, i.uv1.xy).a;
+
+		return (bgAndFgCoc < 0.01) * saturate(fgOverlapCoc-bgAndFgCoc);
+	} 
+	
+	float4 fragCaptureForegroundCoc (v2f i) : COLOR 
+	{	
+		float4 color = float4(0,0,0,0); //tex2D (_MainTex, i.uv1.xy);
+		float d = UNITY_SAMPLE_DEPTH(tex2D(_CameraDepthTexture, i.uv1.xy));
+		d = Linear01Depth (d);
+		color.a = _CurveParams.z * (_CurveParams.w-d) / (d + 1e-5f);
+		color.a = clamp(max(0.0, color.a - _CurveParams.y), 0.0, _CurveParams.x);
 		
-		if (d < focalDistance01) 
-			color.a = (focalDistance01 - d);
-		
-		color.a = saturate(color.a * _CurveParams.x);	
-				
 		return color;	
-		*/
+	}	
+
+	float4 fragCaptureForegroundCocMask (v2f i) : COLOR 
+	{	
+		float4 color = float4(0,0,0,0);
+		float d = UNITY_SAMPLE_DEPTH(tex2D(_CameraDepthTexture, i.uv1.xy));
+		d = Linear01Depth (d);
+		color.a = _CurveParams.z * (_CurveParams.w-d) / (d + 1e-5f);
+		color.a = clamp(max(0.0, color.a - _CurveParams.y), 0.0, _CurveParams.x);
+		
+		return color.a > 0;	
 	}	
 	
-	half4 fragCopyAlpha4Tap (v2f i) : COLOR {	
-		half4 tapA =  tex2D(_MainTex, i.uv.xy + 0.5*_MainTex_TexelSize.xy);
-		half4 tapB =  tex2D(_MainTex, i.uv.xy - 0.5*_MainTex_TexelSize.xy);
-		half4 tapC =  tex2D(_MainTex, i.uv.xy + 0.5*_MainTex_TexelSize.xy * half2(1,-1));
-		half4 tapD =  tex2D(_MainTex, i.uv.xy - 0.5*_MainTex_TexelSize.xy * half2(1,-1));	
-		return (tapA+tapB+tapC+tapD)/4;
+	float4 fragBlendInHighRez (v2f i) : COLOR 
+	{
+		float4 tapHighRez =  tex2D(_MainTex, i.uv.xy);
+		return float4(tapHighRez.rgb, 1.0-saturate(tapHighRez.a*5.0));
 	}
 	
-	half4 fragPrepare (v2f i) : COLOR {	
-		half4 from = tex2D(_MainTex, i.uv1.xy);
-		half square = from.a * from.a;
-		square*=square;
-		from.a = saturate(square*square);
-		//from.rgb = 0;//half3(0,0,1); // debug
+	float4 fragBlendInLowRezParts (v2f i) : COLOR 
+	{
+		float4 from = tex2D(_MainTex, i.uv1.xy);
+		from.a = saturate(from.a * _Offsets.w) / (_CurveParams.x + 1e-5f);
+		float square = from.a * from.a;
+		from.a = square * square * _CurveParams.x;
 		return from;
 	}
+	
+	float4 fragUpsampleWithAlphaMask(v2f i) : COLOR 
+	{
+		float4 c = tex2D(_MainTex, i.uv1.xy);
+		return c;
+	}		
+	
+	float4 fragAlphaMask(v2f i) : COLOR 
+	{
+		float4 c = tex2D(_MainTex, i.uv1.xy);
+		c.a = saturate(c.a*100.0);
+		return c;
+	}	
 		
 	ENDCG
 	
-Subshader {
+Subshader 
+{
  
  // pass 0
  
@@ -641,11 +588,13 @@ Subshader {
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
       #pragma fragment fragCaptureCoc
+      #pragma exclude_renderers d3d11_9x flash
       
       ENDCG
   	}
@@ -655,15 +604,16 @@ Subshader {
  Pass 
  {
 	  ZTest Always Cull Off ZWrite Off
-	  ColorMask RGB
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
-      #pragma vertex vert
-      #pragma fragment fragApplyDebug
+      #pragma vertex vertBlurPlusMinus
+      #pragma fragment fragGaussBlur
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	}
@@ -675,11 +625,13 @@ Subshader {
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vertBlurPlusMinus
       #pragma fragment fragBlurForFgCoc
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	}
@@ -696,11 +648,13 @@ Subshader {
 	  Blend One One, One One
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragCaptureCoc
+      #pragma fragment AddFgCoc
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	}  
@@ -715,11 +669,13 @@ Subshader {
 	  ColorMask A
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
       #pragma fragment fragCaptureForegroundCoc
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	} 
@@ -731,11 +687,13 @@ Subshader {
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragBlurHighSampleCount
+      #pragma fragment fragBlurBox
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	} 
@@ -748,9 +706,12 @@ Subshader {
 
       CGPROGRAM
 
+      #pragma glsl
+      #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
       #pragma fragment frag4TapBlurForLRSpawn
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	} 
@@ -759,15 +720,18 @@ Subshader {
  
  Pass {
 	  ZTest Always Cull Off ZWrite Off
-	  ColorMask A
+	  ColorMask RGB
+	  Blend SrcAlpha OneMinusSrcAlpha
   	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragCopyAlpha4Tap
+      #pragma fragment fragBlendInHighRez
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	} 
@@ -777,15 +741,18 @@ Subshader {
  Pass 
  {
 	  ZTest Always Cull Off ZWrite Off
-	  ColorMask RGB
-	  Blend SrcAlpha OneMinusSrcAlpha
+	  ColorMask A
 	  Fog { Mode off }       
 
       CGPROGRAM
+
       #pragma glsl
+      #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragPrepare
+      #pragma fragment fragCaptureForegroundCocMask
+      #pragma exclude_renderers d3d11_9x flash
+
       ENDCG
   	}   
   	
@@ -797,11 +764,13 @@ Subshader {
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragBlurLowSampleCount
+      #pragma fragment fragBlurUpsampleCheap
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	}   	 	 	  	 	 	  	
@@ -813,11 +782,13 @@ Subshader {
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragBlurPoisson
+      #pragma fragment fragCaptureColorAndSignedCoc
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	}   
@@ -829,11 +800,13 @@ Subshader {
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragBlurProduction
+      #pragma fragment fragBlurInsaneMQ
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	} 
@@ -845,11 +818,13 @@ Subshader {
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragBlurProductionLowRez
+      #pragma fragment fragBlurUpsampleCombineMQ
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	} 
@@ -857,14 +832,18 @@ Subshader {
   	// pass 13
  Pass {
 	  ZTest Always Cull Off ZWrite Off
-	  Fog { Mode off }      
+	  Fog { Mode off }
+
+	  ColorMask A 
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragBlurPoissonLowRez
+      #pragma fragment fragMergeCoc
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	}  
@@ -873,14 +852,20 @@ Subshader {
  
  Pass {
 	  ZTest Always Cull Off ZWrite Off
-	  Fog { Mode off }      
+	  Fog { Mode off }    
+
+	  ColorMask A
+	  BlendOp Max, Max
+	  Blend One One, One One
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest 
       #pragma vertex vert
-      #pragma fragment fragBlurMovie
+      #pragma fragment fragCombineCocWithMaskBlur
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
   	} 
@@ -892,14 +877,148 @@ Subshader {
 	  Fog { Mode off }      
 
       CGPROGRAM
+
       #pragma glsl
       #pragma target 3.0
       #pragma fragmentoption ARB_precision_hint_fastest
       #pragma vertex vert
-      #pragma fragment fragBlurMovieLowRez
+      #pragma fragment fragBoxDownsample
+      #pragma exclude_renderers d3d11_9x flash
 
       ENDCG
-  	}   			
+  	}   
+
+ // pass 16
+ Pass {
+	  ZTest Always Cull Off ZWrite Off
+	  Fog { Mode off }      
+
+     	CGPROGRAM
+
+      	#pragma glsl
+      	#pragma target 3.0
+      	#pragma fragmentoption ARB_precision_hint_fastest
+      	#pragma vertex vert
+		#pragma fragment fragVisualize
+		#pragma exclude_renderers d3d11_9x flash
+
+      	ENDCG
+  	}	
+
+ // pass 17
+ 
+ Pass {
+	  ZTest Always Cull Off ZWrite Off
+	  Fog { Mode off }      
+
+      CGPROGRAM
+
+      #pragma glsl
+      #pragma target 3.0
+      #pragma fragmentoption ARB_precision_hint_fastest 
+      #pragma vertex vert
+      #pragma fragment fragBlurInsaneHQ
+      #pragma exclude_renderers d3d11_9x flash
+
+      ENDCG
+  	} 
+
+ // pass 18
+ 
+ Pass {
+	  ZTest Always Cull Off ZWrite Off
+	  Fog { Mode off }      
+
+      CGPROGRAM
+
+      #pragma glsl
+      #pragma target 3.0
+      #pragma fragmentoption ARB_precision_hint_fastest
+      #pragma vertex vert
+      #pragma fragment fragBlurUpsampleCombineHQ
+      #pragma exclude_renderers d3d11_9x flash
+
+      ENDCG
+  	}    	
+
+  // pass 19
+
+ Pass {
+	  ZTest Always Cull Off ZWrite Off
+	  Fog { Mode off }      
+
+      CGPROGRAM
+
+      #pragma glsl	
+      #pragma target 3.0
+      #pragma fragmentoption ARB_precision_hint_fastest
+      #pragma vertex vertBlurPlusMinus
+      #pragma fragment fragBlurAlphaWeighted
+      #pragma exclude_renderers d3d11_9x flash
+
+      ENDCG
+  	}    
+	
+  // pass 20
+ 
+ Pass {
+	  ZTest Always Cull Off ZWrite Off
+	  Fog { Mode off }      
+
+      CGPROGRAM
+
+      #pragma glsl
+      #pragma target 3.0
+      #pragma fragmentoption ARB_precision_hint_fastest
+      #pragma vertex vert
+      #pragma fragment fragAlphaMask
+      #pragma exclude_renderers d3d11_9x flash
+
+      ENDCG
+  	}
+	
+  // pass 21
+ 
+ Pass {
+	  ZTest Always Cull Off ZWrite Off
+	  Fog { Mode off }  
+
+	  BlendOp Add, Add
+	  Blend DstAlpha OneMinusDstAlpha, Zero One
+
+      CGPROGRAM
+
+      #pragma glsl
+      #pragma target 3.0
+      #pragma fragmentoption ARB_precision_hint_fastest
+      #pragma vertex vertFlip
+      #pragma fragment fragBlurBox
+      #pragma exclude_renderers d3d11_9x flash
+
+      ENDCG
+  	}	
+	
+  // pass 22
+ 
+ Pass {
+	  ZTest Always Cull Off ZWrite Off
+	  Fog { Mode off }  
+
+	  // destination alpha needs to stay intact as we have layed alpha before
+	  BlendOp Add, Add
+	  Blend DstAlpha One, Zero One
+
+      CGPROGRAM
+      
+      #pragma glsl
+      #pragma target 3.0
+      #pragma fragmentoption ARB_precision_hint_fastest
+      #pragma vertex vert
+      #pragma fragment fragUpsampleWithAlphaMask
+      #pragma exclude_renderers d3d11_9x flash
+
+      ENDCG
+  	} 	
 }
   
 Fallback off

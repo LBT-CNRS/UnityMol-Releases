@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BondParticleStyle.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: BondParticleStyle.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -69,6 +69,7 @@ namespace Molecule.View.DisplayBond
 	
 	using UnityEngine;
 	using System.Collections;
+	using System.Collections.Generic;
 	using Molecule.Model;
 	using Molecule.Control;
 	using Config;
@@ -77,8 +78,8 @@ namespace Molecule.View.DisplayBond
 	public class BondParticleStyle:IBondStyle
 	{
 		public int number=1;
-		public ArrayList bondList=new ArrayList();
-		public ArrayList bondEPList=new ArrayList();
+		public List<int[]> bondList=new List<int[]>();
+		public List<int[]> bondEPList=new List<int[]>();
 		
 		Particle[] p = new Particle[MoleculeModel.bondEPList.Count/FunctionConfig.number];
 		int bondindex=0;
@@ -117,7 +118,8 @@ namespace Molecule.View.DisplayBond
 			
 			
 		}
-		private void CreateCylinderByParticle(int start, int end)
+		
+		private void CreateCylinderByParticle(int start, int end) // Apparently unused function. Would make ParticleSticks.
 		{
 			
 			
@@ -126,7 +128,16 @@ namespace Molecule.View.DisplayBond
 			ParticleManager.transform.GetComponent<ParticleEffect>();
 			for(int i=start;i<end;i++)
 			{	
-				Vector3[]  location=bondEPList[i] as Vector3[];		
+//				Vector3[]  location=bondEPList[i] as Vector3[];
+				Vector3[] location = new Vector3[bondEPList.Count];
+				for(int j=0; i<(bondEPList.Count); j++)
+				{
+					Vector3 v = new Vector3(	(bondEPList[i][0]),
+												(bondEPList[i][1]),
+												(bondEPList[i][2])	);
+					location[i] = v;
+				}
+				
 				Vector3 atom0position=new Vector3();
 				Vector3 atom1position=new Vector3();
 				Vector3 atomtype=new Vector3();		

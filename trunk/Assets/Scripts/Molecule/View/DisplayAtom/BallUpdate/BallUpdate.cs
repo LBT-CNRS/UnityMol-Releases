@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BallUpdate.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: BallUpdate.cs 369 2013-08-30 13:07:41Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -70,27 +70,43 @@ using Molecule.Model;
 
 
 public class BallUpdate : MonoBehaviour {
+	public static bool resetColors = true;
+	public static bool resetBondColors = true;
+	public static bool bondsReadyToBeReset = true;
+	public static bool resetRadii = true;
+	
 	public float rayon = 1.0f;
 	public float rayonFactor = 1.0f;
+	public float oldrayonFactor = 2.0f;
 	public static float radiusFactor = 1.0f;
-
-	public float oldradiusFactor = 2.0f;
-	public  float oldrayonFactor = 2.0f;
+	public static float oldRadiusFactor = 1.0f;
 	
 	public long number=0;
 
 	public  Color atomcolor;
-	protected  Color oldatomcolor = Color.black;
+	public  Color oldatomcolor = Color.black;
 
 	public bool independant = false;
+	public bool isSplineNode = false; // If true, this is not an atom but a node in a spline.
 	
-	public virtual void SetRayonFactor(float rf)
-	{
+	public virtual Color AtomColor {
+		get { return atomcolor;	}
+		set { atomcolor = value; }
+	}
+	
+	public virtual void SetRayonFactor(float rf) {
 		rayonFactor = rf;
 	}
 
-	public virtual float GetRealRadius()
-	{
+	public virtual float GetRealRadius() {
 		return(rayon*rayonFactor*radiusFactor);
+	}
+	
+	public static void UpdateColorsFromModel() {
+		BallUpdate[] balls = GameObject.FindObjectsOfType(typeof(BallUpdate)) as BallUpdate[];
+		foreach(BallUpdate ball in balls)
+			ball.atomcolor = AtomModel.GetAtomColor(ball.tag);
+		
+		resetColors = true;
 	}
 }

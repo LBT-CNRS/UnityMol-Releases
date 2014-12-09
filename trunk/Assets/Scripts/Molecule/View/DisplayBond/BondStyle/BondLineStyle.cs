@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BondLineStyle.cs 223 2013-04-06 22:32:11Z baaden $
+/// $Id: BondLineStyle.cs 361 2013-08-28 12:55:30Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -69,6 +69,7 @@ namespace Molecule.View.DisplayBond
 
 	using UnityEngine;
 	using System.Collections;
+	using System.Collections.Generic;
 	using Molecule.Model;
 	using Molecule.Control;
 	using Config;
@@ -79,7 +80,7 @@ namespace Molecule.View.DisplayBond
 	{
 		
 		public int number=1;
-		public ArrayList bondEPList=new ArrayList();
+		public List<int[]> bondEPList=new List<int[]>();
 
 		public BondLineStyle()	
 		{
@@ -109,11 +110,13 @@ namespace Molecule.View.DisplayBond
 			{
 				CreateLine(i*number);
 			}
-						
+			GameObject lineManagerObj = GameObject.FindGameObjectWithTag("LineManager");
+			LineManager lineManager = lineManagerObj.GetComponent<LineManager>();
+			lineManager.Init();
 		}
 		private void CreateLine(int i)
 		{
-			GameObject Line=new GameObject();
+			GameObject Line=new GameObject("Line");
 
 			int[] atomsIds = bondEPList[i] as int[];
 		
@@ -124,8 +127,19 @@ namespace Molecule.View.DisplayBond
 			if(Line.GetComponent<LineUpdate>()==null)
 				Line.AddComponent("LineUpdate");
 			LineUpdate comp = Line.GetComponent<LineUpdate>();
-			comp.atompointer1=(GameObject)MoleculeModel.atoms[atomsIds[0]];
-			comp.atompointer2=(GameObject)MoleculeModel.atoms[atomsIds[1]];
+//			comp.atompointer1=(GameObject)MoleculeModel.atoms[atomsIds[0]];
+//			comp.atompointer2=(GameObject)MoleculeModel.atoms[atomsIds[1]];
+			
+			if(UI.UIData.atomtype == UI.UIData.AtomType.particleball){
+				comp.atompointer1=(GameObject)MoleculeModel.atoms[atomsIds[0]];
+				comp.atompointer2=(GameObject)MoleculeModel.atoms[atomsIds[1]];
+			}
+			else{
+				GenericManager manager = Molecule.View.DisplayMolecule.GetManagers()[0];
+				comp.atompointer1 = manager.GetBall(Molecule.Model.MoleculeModel.atoms.Count - 1 - atomsIds[0]);
+				comp.atompointer2 = manager.GetBall(Molecule.Model.MoleculeModel.atoms.Count - 1 - atomsIds[1]);
+			}
+			
 			comp.enabled = true;										
 			Line.tag="Club";
 		}

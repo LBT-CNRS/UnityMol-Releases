@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: MouseOverMolecule.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: MouseOverMolecule.cs 307 2013-06-20 08:11:24Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -69,6 +69,8 @@ using System.Collections;
 
 public class MouseOverMolecule : MonoBehaviour {
 	
+	public static bool stopCamera = false;
+	
 	// Use this for initialization
 	
 
@@ -77,6 +79,7 @@ public class MouseOverMolecule : MonoBehaviour {
 	void OnMouseDrag () {
 		if(Input.GetMouseButton(0)){
 			maxCamera.cameraStop = true;
+			stopCamera = true;
 			Vector3 p = Input.mousePosition;
 			p.z = Camera.main.WorldToScreenPoint(transform.position).z;
 			transform.position = Camera.main.ScreenToWorldPoint(p);
@@ -84,7 +87,9 @@ public class MouseOverMolecule : MonoBehaviour {
 	}
 	
 	void OnMouseUp() {
-		maxCamera.cameraStop = false;	
+		Debug.Log("MouseUp is called now.");
+		maxCamera.cameraStop = false;
+		stopCamera = false;
 	}
 	
 }

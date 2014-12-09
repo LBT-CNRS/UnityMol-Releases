@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: PDBtoDEN.cs 227 2013-04-07 15:21:09Z baaden $
+/// $Id: PDBtoDEN.cs 613 2014-07-22 13:31:09Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -65,50 +65,99 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System;
 using Molecule.Model;
 using UI;
 
-public class PDBtoDEN : MonoBehaviour
-{
-	static float[,,] GridS;
+public class PDBtoDEN : MonoBehaviour {
+	private static float[,,] gridS;
+	
+	public static float[,,] GridS {
+		get {return gridS;}
+	}
+	
 	static Color[,,] VertColor;
 	public static Color[] colors;
 
 	public static int X;
 	public static int Y;
 	public static int Z;
-	public static Vector3 delta = new Vector3(2f,2f,2f);
+	
+	// I have no idea where this 18f vector comes from, but it's used everywhere in this class and by others,
+	// so I might as well make it a public static member. --- Alexandre
+	public static Vector3 fudgeFactor = new Vector3(18f,18f,18f);
+
+	public static Vector3 delta;
 	public static Vector3 origin = new Vector3(MoleculeModel.MinValue.x,
 											   MoleculeModel.MinValue.y,
 		 									   MoleculeModel.MinValue.z);
-	// Use this for initialization
-	void Start ()
-	{
-	
+	private const float DEFAULT_RESOLUTION = 2.75f;
+
+
+
+
+	/// <summary>
+	/// First we lower the resolution for bigger molecules.
+	/// Perhaps this could be exposed to the interface, but it might cause
+	/// users to choose unreasonable values.
+	/// Bear in mind that the "threshold" value in VertexTree effectively caps
+	/// the resolution of the final mesh, but not of the original voxels, or of
+	/// the MarchingCubes algorithm itself.
+	/// So they serve slightly different purposes.
+	/// </summary>
+	/// <returns>
+	/// The resolution.
+	/// </returns>
+	private float CapResolution(float resolution) {
+		int nbAtoms = MoleculeModel.atomsLocationlist.Count;
+		//float resolution = DEFAULT_RESOLUTION;
+		
+		if(nbAtoms > 500)
+			resolution = 2.5f;
+		if(nbAtoms > 1000)
+			resolution = 2.2f;
+		if(nbAtoms > 2000)
+			resolution = 2.0f;
+		if(nbAtoms > 4000)
+			resolution = 1.8f;
+		if(nbAtoms > 5000)
+			resolution = 1.7f;
+		if(nbAtoms > 6000)
+			resolution = 1.6f;
+		if(nbAtoms > 8000)
+			resolution = 1.5f;
+		if(nbAtoms > 10000)
+			resolution = 1.4f;
+		if(nbAtoms > 14000)
+			resolution = 1.2f;
+		if(nbAtoms > 20000)
+			resolution = 1.0f;
+		
+		return resolution;
 	}
 
-	public void TranPDBtoDEN(){
+	public void TranPDBtoDEN(float resolution = DEFAULT_RESOLUTION, bool cap = true){
+		if(cap)
+			resolution = CapResolution(resolution);
 		
-		
-//		if (MoleculeModel.MinValue.x >0)
-//			MoleculeModel.MinValue.x = 0;
-//		if (MoleculeModel.MinValue.y >0)
-//			MoleculeModel.MinValue.y = 0;
-//		if (MoleculeModel.MinValue.z >0)
-//			MoleculeModel.MinValue.z = 0;
-		Debug.Log("Entering :: Generation of density from PDB");
-		X = (int)(((MoleculeModel.MaxValue.x-MoleculeModel.MinValue.x)*2)+40);
-		Y = (int)(((MoleculeModel.MaxValue.y-MoleculeModel.MinValue.y)*2)+40);
-		Z = (int)(((MoleculeModel.MaxValue.z-MoleculeModel.MinValue.z)*2)+40);
+		delta = new Vector3(resolution, resolution, resolution);
 
+		// We need to refresh the molecule's origin when it's not
+		// the first molecule for which we generate a surface.
+		origin = MoleculeModel.MinValue;
+		Debug.Log("Entering :: Generation of density from PDB");
+		X = (int) (((MoleculeModel.MaxValue.x-MoleculeModel.MinValue.x) * resolution) + 40);
+		Y = (int) (((MoleculeModel.MaxValue.y-MoleculeModel.MinValue.y) * resolution) + 40);
+		Z = (int) (((MoleculeModel.MaxValue.z-MoleculeModel.MinValue.z) * resolution) + 40);
 		
 		Debug.Log("Density point X,Y,Z :: "+ X+","+Y+","+Z);
 		Debug.Log("Density minValue :: " + MoleculeModel.MinValue);
-		GridS = new float[X,Y,Z];
+		gridS = new float[X,Y,Z];
 		VertColor = new Color[X,Y,Z];
-		
+
+
 		int i;
 		int j;
 		int k;
@@ -128,111 +177,143 @@ public class PDBtoDEN : MonoBehaviour
 			for(j=0;j<Y;j++)
 				for(k=0;k<Z;k++)
 					VertColor[i,j,k].b=1f;
-		
-		foreach (float[] coord in MoleculeModel.atomsLocationlist){
-//		foreach (float[] coord in MoleculeModel.CatomsLocationlist){
-			// i = Mathf.RoundToInt((coord[0]-MoleculeModel.MinValue.x-MoleculeModel.Offset.x)*2)+18;
-			// j = Mathf.RoundToInt((coord[1]-MoleculeModel.MinValue.y-MoleculeModel.Offset.y)*2)+18;
-			// k = Mathf.RoundToInt((coord[2]-MoleculeModel.MinValue.z-MoleculeModel.Offset.z)*2)+18;
-			i = Mathf.RoundToInt((coord[0]-MoleculeModel.MinValue.x)*2)+18;
-			j = Mathf.RoundToInt((coord[1]-MoleculeModel.MinValue.y)*2)+18;
-			k = Mathf.RoundToInt((coord[2]-MoleculeModel.MinValue.z)*2)+18;
+
+
+		int index = -1;
+		foreach (float[] coord in MoleculeModel.atomsLocationlist) {
+			index++;
+
+			bool useAtomForCalc = true;
+
+			if (!MoleculeModel.useHetatmForSurface){
+				Debug.Log((MoleculeModel.atomHetTypeList[index]=="HETATM"));
+				if ((MoleculeModel.atomHetTypeList[index]=="HETATM") && (!MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[index]))){
+					useAtomForCalc = false;
+				}
+			}
+
+			if (!MoleculeModel.useSugarForSurface){
+				if (MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[index]))
+					useAtomForCalc = false;
+			}
+
+			if (useAtomForCalc){
+			i = Mathf.RoundToInt( (coord[0]-MoleculeModel.MinValue.x) * delta.x + fudgeFactor.x);
+			j = Mathf.RoundToInt( (coord[1]-MoleculeModel.MinValue.y) * delta.y + fudgeFactor.y);
+			k = Mathf.RoundToInt( (coord[2]-MoleculeModel.MinValue.z) * delta.z + fudgeFactor.z);
+			
+			/*
+			float scaleFactor = 10f;
+			i = Mathf.RoundToInt(coord[0] * scaleFactor);
+			j = Mathf.RoundToInt(coord[1] * scaleFactor);
+			k = Mathf.RoundToInt(coord[2] * scaleFactor);
+			*/
+			
 //			Debug.Log("i,j,k : " + i +","+j+","+k);
-//			GridS[i,j,k]=2;
+//			gridS[i,j,k]=2;
 //		}
-			type = (MoleculeModel.atomsTypelist[atomnumber] as AtomModel).type;
+			type = (MoleculeModel.atomsTypelist[atomnumber]).type;
 //			type = "C";
 //			Debug.Log("i j k : "+i+","+j+","+k);
 			// Vector3 v1 = new Vector3((coord[0]-MoleculeModel.MinValue.x-MoleculeModel.Offset.x)*2+18,
 			// 						 (coord[1]-MoleculeModel.MinValue.y-MoleculeModel.Offset.y)*2+18,
 			// 						 (coord[2]-MoleculeModel.MinValue.z-MoleculeModel.Offset.z)*2+18);
-			Vector3 v1 = new Vector3((coord[0]-MoleculeModel.MinValue.x)*2+18,
-									 (coord[1]-MoleculeModel.MinValue.y)*2+18,
-									 (coord[2]-MoleculeModel.MinValue.z)*2+18);
+			
+			
+			Vector3 v1 = new Vector3(	(coord[0]-MoleculeModel.MinValue.x) * delta.x + fudgeFactor.x,
+										(coord[1]-MoleculeModel.MinValue.y) * delta.y + fudgeFactor.y,
+										(coord[2]-MoleculeModel.MinValue.z) * delta.z + fudgeFactor.z	);
+			
+			
+			/*
+			Vector3 v1 = new Vector3( 	coord[0] * scaleFactor,
+										coord[1] * scaleFactor,
+										coord[2] * scaleFactor);
+			*/
+										
 			float AtomRadius = 1f;
 			
-			 // possibilité de créer une liste a la lecture du pdb et de la reprendre ici. Comme cela on peut lire d'autre propriété biologique
-			switch(type)
-				{
+			// Possibilité de créer une liste a la lecture du pdb et de la reprendre ici.
+			// Comme cela on peut lire d'autre propriétés biologiques
+			switch(type) {
 				case "C": 
 					AtomRadius =3.4f;
-					atomColor = MoleculeModel.carbonColor;
+					atomColor = MoleculeModel.carbonColor.color;
 					break;
 				case "N": 
 					AtomRadius =3.1f;
-					atomColor =MoleculeModel.nitrogenColor;
+					atomColor =MoleculeModel.nitrogenColor.color;
 					break;	
 				case "O": 
 					AtomRadius =3.04f;
-					atomColor = MoleculeModel.oxygenColor;
+					atomColor = MoleculeModel.oxygenColor.color;
 					break;
 				case "S": 
 					AtomRadius =4.54f;
-					atomColor = MoleculeModel.sulphurColor;
+					atomColor = MoleculeModel.sulphurColor.color;
 					break;
 				case "P": 
 					AtomRadius =3.6f;
-					atomColor =		MoleculeModel.phosphorusColor;
-
+					atomColor =	MoleculeModel.phosphorusColor.color;
 					break;
 				case "H": 
 					AtomRadius =2.4f;
-					atomColor = MoleculeModel.hydrogenColor;
-
+					atomColor = MoleculeModel.hydrogenColor.color;
 					break;
 				default: 
 					AtomRadius =2f;
-					atomColor = MoleculeModel.unknownColor;
+					atomColor = MoleculeModel.unknownColor.color;
 					break;
-				
-					}
+			}
 			
-			if (UIData.toggleSurf){
+			if (UIData.toggleSurf && !UIData.toggleBfac) {
 			for (int l = i-8 ;l < i+9 ; l++)
 					for ( int m = j-8 ; m < j+9 ; m++)
 						for ( int n = k-8 ; n < k+9 ; n++){
 							Vector3 v2 = new Vector3(l,m,n);
 							Dist = Vector3.Distance(v1,v2);
 							density = (float)Math.Exp(-((Dist/AtomRadius)*(Dist/AtomRadius)));
-							if (density > GridS[l,m,n])
+							if (density > gridS[l,m,n])
 //							if (VertColor[l,m,n].b!=0){
 //								if (density > 0.5)
 									VertColor[l,m,n] = atomColor;
-							GridS[l,m,n] += density;
-							}
+							gridS[l,m,n] += density;
+						}
 			
-			}else if (UIData.toggleBfac){			
-			for (int l = i-8 ;l < i+9 ; l++)
-				for ( int m = j-8 ; m < j+9 ; m++)
-					for ( int n = k-8 ; n < k+9 ; n++){
-						Vector3 v2 = new Vector3(l,m,n);
-						Dist = Vector3.Distance(v1,v2);
-
-						bfactor = ((float)MoleculeModel.BFactorList[atomnumber]/maxValue*5);
-						if (bfactor>0)	
-						GridS[l,m,n] += (float)Math.Exp(-((Dist/bfactor)*(Dist/bfactor)));
-						else
-						GridS[l,m,n] -= (float)Math.Exp(-((Dist/bfactor)*(Dist/bfactor)));
+			} else if (UIData.toggleBfac) {			// these index bounds might need to be express as functions of fudgeFactor
+				for (int l = i-8 ;l < i+9 ; l++) {
+					for ( int m = j-8 ; m < j+9 ; m++) {
+						for ( int n = k-8 ; n < k+9 ; n++) {
+							Vector3 v2 = new Vector3(l,m,n);
+							Dist = Vector3.Distance(v1,v2);
+							
+							bfactor = ((float)MoleculeModel.BFactorList[atomnumber]/maxValue*5);
+							if (bfactor>0)	
+								gridS[l,m,n] += (float)Math.Exp(-((Dist/bfactor)*(Dist/bfactor)));
+							else
+								gridS[l,m,n] -= (float)Math.Exp(-((Dist/bfactor)*(Dist/bfactor)));
+							
+							if (VertColor[l,m,n].b == 1f && VertColor[l,m,n].r==0f) {
+								VertColor[l,m,n].r +=((float)MoleculeModel.BFactorList[atomnumber]/(maxValue));
+								VertColor[l,m,n].b -=((float)MoleculeModel.BFactorList[atomnumber]/(2*maxValue));
+							}
+	//						if ( (VertColor[l,m,n].r + ((float)MoleculeModel.BFactorList[atomnumber]/(maxValue))) > 1){
+	//							VertColor[l,m,n].r=1f;
+	//							VertColor[l,m,n].b=0f;
+	//						}
+							else {
+								VertColor[l,m,n].r +=((float)MoleculeModel.BFactorList[atomnumber]/(20*maxValue));
+								VertColor[l,m,n].b -=((float)MoleculeModel.BFactorList[atomnumber]/(20*maxValue));
+							}
 						
-						if (VertColor[l,m,n].b == 1f && VertColor[l,m,n].r==0f){
-							VertColor[l,m,n].r +=((float)MoleculeModel.BFactorList[atomnumber]/(maxValue));
-							VertColor[l,m,n].b -=((float)MoleculeModel.BFactorList[atomnumber]/(2*maxValue));
-//						}
-//						if ( (VertColor[l,m,n].r + ((float)MoleculeModel.BFactorList[atomnumber]/(maxValue))) > 1){
-//							VertColor[l,m,n].r=1f;
-//							VertColor[l,m,n].b=0f;
 						}
-						else 
-						{
-							VertColor[l,m,n].r +=((float)MoleculeModel.BFactorList[atomnumber]/(20*maxValue));
-							VertColor[l,m,n].b -=((float)MoleculeModel.BFactorList[atomnumber]/(20*maxValue));
-						}
-					
-						}
+					}
+				}
 			}
 			atomnumber++;
 			}
-						
+		}
+
 //				}
 //			}
 //		}
@@ -240,42 +321,49 @@ public class PDBtoDEN : MonoBehaviour
 		// export the density in a .dx file readable by pymol or vmd
 //		StreamWriter test;
 //		test = new StreamWriter("grille.dx");
-//		test.Write("# Data from APBS 1.3\n#\n# POTENTIAL (kT/e)\n#\nobject 1 class gridpositions counts "+X+" "+Y+" "+Z+"\norigin -2.330000e+01 -2.34000e+01 -2.550000e+01\ndelta 5.000000e-01 0.000000e+00 0.000000e+00\ndelta 0.000000e+00 5.000000e-01 0.000000e+00\ndelta 0.000000e+00 0.000000e+00 5.000000e-01\nobject 2 class gridconnections counts "+X+" "+Y+" "+Z+"\nobject 3 class array type double rank 0 items "+X*Y*Z+" data follows\n");
+//		test.Write("# Data from APBS 1.3\n#\n# POTENTIAL (kT/e)\n#\nobject 1 class gridpositions counts "+X+" "+Y+" "+Z+"\n
+//					origin -2.330000e+01 -2.34000e+01 -2.550000e+01\ndelta 5.000000e-01 0.000000e+00 0.000000e+00\n
+//					delta 0.000000e+00 5.000000e-01 0.000000e+00\ndelta 0.000000e+00 0.000000e+00 5.000000e-01\n
+//					object 2 class gridconnections counts "+X+" "+Y+" "+Z+"\nobject 3 class array type double rank 0 items "+X*Y*Z+" data follows\n");
 //		for (i=0 ; i< X ; i++){
 //			for (j=0 ; j<Y ; j++){
 //				for (k=0 ; k<Z ; k++){
-//					test.WriteLine(GridS[i,j,k]);
+//					test.WriteLine(gridS[i,j,k]);
 //					}
 //				}
 //			}
-//			test.Write("attribute \"dep\" string \"positions\"\nobject \"regular positions regular connections\" class field\ncomponent \"positions\" value 1\ncomponent \"connections\" value 2\ncomponent \"data\" value 3");
+//			test.Write("attribute \"dep\" string \"positions\"\nobject \"regular positions regular connections\" class field\n
+//						component \"positions\" value 1\ncomponent \"connections\" value 2\ncomponent \"data\" value 3");
 //			test.Close();
 	}
 	
 	public static void ProSurface(float seuil){
-		
-		// to creat the structure since the pdb
-
+		// to create the structure from the pdb
 		
 		Vector4[] points;
 		points = new Vector4[ (X) * (Y) * (Z)];
 		colors = new Color[(X) * (Y) * (Z)];
 		// convert grid
 		for (int j = 0; j < Y; j++) {
+
 			for (int i = 0; i < Z; i++) {
 				for (int k = 0; k < X; k++) {
-						points[j*(Z)*(X) + i*(X) + k] = new Vector4 (k, j, i , GridS[k,j,i]);
+						points[j*(Z)*(X) + i*(X) + k] = new Vector4 (k, j, i , gridS[k,j,i]);
 						colors[j*(Z)*(X) + i*(X) + k] = VertColor[k,j,i];
 				}
 			}
 		}
 		
-		
+		/*
 		Debug.Log("Entering :: Marching Cubes");
 		MarchingCubesRec MCInstance;
 		MCInstance = new MarchingCubesRec();
 		DestroySurface();
 		MCInstance.MCRecMain(X, Y, Z, seuil, points, 0f,false, delta, origin, colors);
+		*/
+		
+		GenerateMesh.CreateSurfaceObjects(gridS, seuil, delta, origin, colors);
+		
 		points = null;
 		colors = null;
 //		long bytebefore = GC.GetTotalMemory(false);
@@ -284,10 +372,9 @@ public class PDBtoDEN : MonoBehaviour
 		GC.Collect();
 //		long byteafter2 = GC.GetTotalMemory(false);
 //		Debug.Log ("before: "+(bytebefore/1000000)+"+ " afterCollet: " +(byteafter2/1000000));
-		
 	}
 	
-	public static void initColors(int X,int Y,int Z, Color col){
+	public static void initColors(int X,int Y,int Z, Color col) {
 		colors = new Color[(X) * (Y) * (Z)];
 
 		for (int j = 0; j < Y; j++) {
@@ -298,13 +385,16 @@ public class PDBtoDEN : MonoBehaviour
 			}
 		}
 	}
-	public static void DestroySurface() { // to destroy previously displayed isosurface at GUI change
+	
+	/// <summary>
+	/// Destroys previously displayed isosurface at GUI change
+	/// </summary>
+	public static void DestroySurface() {
 		GameObject[] surfaceOBJ = GameObject.FindGameObjectsWithTag("SurfaceManager");
 		for (int l = 0; l < surfaceOBJ.Length; l++) {
-			
 			Destroy(surfaceOBJ[l]);
 		}
-
 	}
+	
 }
 

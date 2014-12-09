@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: SurfaceMATCAP.shader 210 2013-04-06 20:52:41Z baaden $
+/// $Id: SurfaceMATCAP.shader 378 2013-09-10 17:18:27Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -65,130 +65,139 @@
 
 Shader "Mat Cap Cut" {
 Properties {
-	_Color ("Main Color", Color) = (0.5,0.5,0.5,1) 				//couleur général de la surface  
+	_Color ("Main Color", Color) = (1,1,1,1) 				//couleur générale de la surface  
 	_ColorIN ("Color Cut" , Color) = (0.5,0.5,0.5,1) 			// Couleur du plan de coupe
-	_SpecColor ("Specular Color", Color) = (0, 0, 0, 1)		// Couleur des reflet de la surface
-	_Shininess ("Shininess", Range (0.03, 1)) = 0.078125	// Brillance de la surface inactif ici
+	_SpecColor ("Specular Color", Color) = (0, 0, 0, 1)		// Couleur des reflets de la surface
+	_Shininess ("Shininess", Range (0.03, 1)) = 0.078125	// Brillance de la surface, inactive ici
 	_MainTex ("Base (RGB) Gloss (A)", 2D) = "white" {}		// Texture de la surface 
     _BumpMap ("Bumpmap (RGB)", 2D) = "bump" {}	
-	_texture ("activation texture",float)= 0				// activation des texture
+	_texture ("activation texture",float)= 0				// activation des textures
     _MatCap ("MatCap (RGB)", 2D) = "white" {}				// texture MAtCap
    	_depthcut("depth", float) = 0							// distance de cut de la surface
 	_cut("Active cut", float) = 0							// active ou non le cut
 	_cutX("axe X", float)=1
 	_cutY("axe Y", float)=1									// axe pour le cut fixe
 	_cutZ("axe Z", float)=1
-	_colormode("color", float) = 0							// activation du dégradé de couleur	
+	_colormode("color", float) = 1							// activation du dégradé de couleur
+	_Brightness("Brightness", float) = 1.0
+	_ColorWeight("Lerp weight", float) = 0.5
 }
 
+
+// RenderType opaque + basic lightmode allows for SSAO, with the drawback that it's applied even on part of the surface that is cut out.
 SubShader {
-	Tags { "RenderType"="Transparent" }
-            /* Upgrade NOTE: commented out, possibly part of old style per-pixel lighting: Blend AppSrcAdd AppDstAdd */
+	Tags { "RenderType"="Opaque" }
+            // Upgrade NOTE: commented out, possibly part of old style per-pixel lighting: Blend AppSrcAdd AppDstAdd
     Fog { Color [_AddFog] } 
 
-    Pass { 
-                Name "BASE"
-                Tags { "LightMode" = "Always" } 
-                cull back
-                CGPROGRAM    
+    Pass { 	
+		Name "BASE"
+		//Tags { "LightMode" = "Always" } 
+		cull back
+		CGPROGRAM    
 // Upgrade NOTE: excluded shader from DX11 and Xbox360; has structs without semantics (struct v2f members uv,TtoV0,TtoV1)
-#pragma exclude_renderers d3d11 xbox360
+		#pragma exclude_renderers d3d11 xbox360
 // Upgrade NOTE: excluded shader from Xbox360; has structs without semantics (struct v2f members uv,TtoV0,TtoV1)
-				#pragma exclude_renderers xbox360
-                #pragma vertex vert
-                #pragma fragment frag
-                #pragma fragmentoption ARB_fog_exp2
-                #pragma fragmentoption ARB_precision_hint_fastest
-                #include "UnityCG.cginc"
+		#pragma exclude_renderers xbox360
+		#pragma vertex vert
+		#pragma fragment frag
+		#pragma fragmentoption ARB_fog_exp2
+		#pragma fragmentoption ARB_precision_hint_fastest
+		#include "UnityCG.cginc"
 		  
 	  		
-		  		float4 pos;
-				float4 worldPos;
-				fixed4 _ColorIn;
-				float _cut;
-				float _depthcut;
-				float _cutX;
-				float _cutY;
-				float _cutZ;	
-				float3 _SurfacePos;
-				float _texture;
-				float _colormode;
+		float4 pos;
+		float4 worldPos;
+		fixed4 _ColorIn;
+		float _cut;
+		float _depthcut;
+		float _cutX;
+		float _cutY;
+		float _cutZ;	
+		float3 _SurfacePos;
+		float _texture;
+		float _colormode;
+		float _Brightness;
+		float _ColorWeight;
 				  
-				struct appdata {
-   				 	float4 vertex : POSITION;
-   				 	float4 texcoord : TEXCOORD0;
-    				float4 color : COLOR;
-       				float3 normal : NORMAL;
-    				float4 tangent : TANGENT;
-				};
+		struct appdata {
+			float4 vertex : POSITION;
+			float4 texcoord : TEXCOORD0;
+			float4 color : COLOR;
+			float3 normal : NORMAL;
+			float4 tangent : TANGENT;
+		};
 				  
 				  
-                struct v2f {
-                    float4 pos : SV_POSITION;
-                    float2  uv;
-                    float3  TtoV0;
-                    float3  TtoV1; 
-           	    	float4  worldPos : TEXCOORD1 ;
-  					fixed4 color : COLOR;
-
-                };
+		struct v2f {
+			float4 pos : SV_POSITION;
+			float2  uv;
+			float3  TtoV0;
+			float3  TtoV1; 
+			float4  worldPos : TEXCOORD1 ;
+			fixed4 color : COLOR;
+			//float3 normal : TEXCOORD0;
+		};
  
+		 
+		uniform float4 _BumpMap_ST;
  
-
-				
-                uniform float4 _BumpMap_ST;
- 
-                v2f vert (appdata v)
-                {
-                    v2f o;
-                    o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
-                    o.uv = TRANSFORM_TEX(v.texcoord,_BumpMap);
-		  			o.worldPos = v.vertex;
-   					o.color = v.color;
-  
-                    TANGENT_SPACE_ROTATION;
-                    o.TtoV0 = mul(rotation, UNITY_MATRIX_MV[0].xyz);
-                    o.TtoV1 = mul(rotation, UNITY_MATRIX_MV[1].xyz);
-                    return o;
-                }
+		v2f vert (appdata v) {
+			v2f o;
+			o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
+			o.uv = TRANSFORM_TEX(v.texcoord,_BumpMap);
+			o.worldPos = v.vertex;
+			o.color = v.color;
+			
+			TANGENT_SPACE_ROTATION;
+			o.TtoV0 = mul(rotation, UNITY_MATRIX_MV[0].xyz);
+			o.TtoV1 = mul(rotation, UNITY_MATRIX_MV[1].xyz);
+			//o.normal = mul((float3x3) UNITY_MATRIX_MVP, v.normal);
+			//o.normal = v.normal;
+			return o;
+		}
                
-                uniform float4 _Color;
-                uniform sampler2D _BumpMap;
-                uniform sampler2D _MatCap;
+		uniform float4 _Color;
+		uniform sampler2D _BumpMap;
+		uniform sampler2D _MatCap;
                
-                float4 frag (v2f i) : COLOR
-                { 
-                
-		            	pos = mul (UNITY_MATRIX_MVP, float4(i.worldPos.x+_SurfacePos.x,i.worldPos.y+_SurfacePos.y,i.worldPos.z+_SurfacePos.z,0));
-						
-						// Cut of the molecule
-						if ( _cut== 1f ){ // active le cut fixe
-								if ((_depthcut + _cutX*(i.worldPos.x+_SurfacePos.x) + _cutY*(i.worldPos.y+_SurfacePos.y) + _cutZ*(i.worldPos.z+_SurfacePos.z))<0){
-									clip(-1);
-								}//else {
-									//clip((_depthcut + _cutX*(i.worldPos.x+_SurfacePos.x) + _cutY*(i.worldPos.y+_SurfacePos.y) + _cutZ*(i.worldPos.z+_SurfacePos.z)));
-									//}
-						}else if ( _cut== 2f ){
-								clip (frac(-(_depthcut + pos.z)/500) -0.5);
-						}
-		                    // get normal from the normal map
-		                    float3 normal = tex2D(_BumpMap, i.uv).xyz * 2 - 1;
-		                    half2 vn;
-		                    vn.x = dot(i.TtoV0, normal);
-		                    vn.y = dot(i.TtoV1, normal);
-		                   
-		                    float4 matcapLookup = tex2D(_MatCap, vn*0.5 + 0.5);
-		                    
-		                    // coment for benoist video
-		                   	//if (_colormode == 0f){
-		                   	//	_Color=i.color;
-		                   	// } 
-		                   
-		                    return _Color*matcapLookup*1.5;
+		float4 frag (v2f i) : COLOR { 
+			pos = mul (UNITY_MATRIX_MVP, float4(i.worldPos.x+_SurfacePos.x,i.worldPos.y+_SurfacePos.y,i.worldPos.z+_SurfacePos.z,0));
 
-	                }
-	                ENDCG
-	            } // End PASS
+			// Cut of the molecule
+			if ( _cut== 1f ){ // active le cut fixe
+				if ((_depthcut + _cutX*(i.worldPos.x+_SurfacePos.x) + _cutY*(i.worldPos.y+_SurfacePos.y) + _cutZ*(i.worldPos.z+_SurfacePos.z))<0){
+					clip(-1);
+				}//else {
+					//clip((_depthcut + _cutX*(i.worldPos.x+_SurfacePos.x) + _cutY*(i.worldPos.y+_SurfacePos.y) + _cutZ*(i.worldPos.z+_SurfacePos.z)));
+				//}
+			}else if ( _cut== 2f ){
+				clip (frac(-(_depthcut + pos.z)/500) -0.5);
+			}
+			// get normal from the normal map
+			float3 normal;
+			normal = tex2D(_BumpMap, i.uv).xyz * 2 - 1;
+			//normal = i.normal;
+			half2 vn;
+			vn.x = dot(i.TtoV0, normal);
+			vn.y = dot(i.TtoV1, normal);
+			
+			//vn = normal.xy;
+
+			float4 matcapLookup = tex2D(_MatCap, vn*0.5 + 0.5);
+
+			// coment for benoist video
+			if (_colormode == 0f){
+				_Color=i.color;
+			}
+			
+			float4 finalColor = lerp(_Color, i.color, _ColorWeight); 
+
+			//return _Color*matcapLookup*1.5;
+			return finalColor*matcapLookup*1.5 * _Brightness;
+		}
+		ENDCG
+	} // End PASS
 
 		Pass{
 			Tags { } // tag tres important, la modification peut entrainer la dispartition du plan de coupe
@@ -225,19 +234,15 @@ SubShader {
 	    	float2 texcoord : TEXCOORD0;
 			};
 			
-		struct fragment_out 
-			{
-			  float4 Color    : COLOR0;
- 			};
+		struct fragment_out {
+			float4 Color : COLOR0;
+ 		};
 		
 		
 		 uniform float4 _MainTex_ST;
 		// VERTEX SHADER IMPLEMENTATION =============================
-			v2p Surface_v(appdata_base v)
-			{
-			
+			v2p Surface_v(appdata_base v) {
 			v2p o; // Shader output
-			
 			o.worldPos = v.vertex;
 			o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
 			o.texcoord = TRANSFORM_TEX(v.texcoord,_MainTex);
@@ -245,8 +250,7 @@ SubShader {
 			}
 			
 		// FRAGMENT SHADER IMPLEMENTATION =========================== 
-			fragment_out Surface_p(v2p i)
-			{
+			fragment_out Surface_p(v2p i) {
 				fragment_out OUT;
 				pos = mul (UNITY_MATRIX_MVP, float4(i.worldPos.x+_SurfacePos.x,i.worldPos.y+_SurfacePos.y,i.worldPos.z+_SurfacePos.z,0));
 				
@@ -258,7 +262,7 @@ SubShader {
 							//clip((_depthcut + _cutX*(i.worldPos.x+_SurfacePos.x) + _cutY*(i.worldPos.y+_SurfacePos.y) + _cutZ*(i.worldPos.z+_SurfacePos.z)));
 							//}
 				}else if ( _cut== 2f ){
-						clip (frac(-(_depthcut + pos.z)/500) -0.5);
+					clip (frac(-(_depthcut + pos.z)/500) -0.5);
 				}
 				
 				if ( _cut !=  0f ){
@@ -277,12 +281,16 @@ SubShader {
 					float3 eyepos = float3(0,0,1.0);
 					float3 halfvec = normalize(lightvec + eyepos);
 					
+					float ambient = 0.35; // should be obtained from the application
 					float diffuse = dot(normal,lightvec);
-					float shininess = 500.0;				
-					float specular = pow(max(dot(normal, halfvec),0.0),shininess);
+					//float shininess = 300.0;				
+					//float specular = pow(max(dot(normal, halfvec),0.0),shininess);
 				   
-					float3 diffusecolor;	
-					float3 specularcolor = float3(1.0,1.0,1.0);
+					float3 diffusecolor;
+					float3 ambientcolor;
+					//float3 specularcolor = float3(1.0,1.0,1.0);
+					//specularcolor = specular * specularcolor;
+					
 				
 					
 	//				if ( frac(_cutX*(i.worldPos.x+_SurfacePos.x) + _cutY*(i.worldPos.y+_SurfacePos.y) + _cutZ*(i.worldPos.z+_SurfacePos.z)) < 0.5 ){
@@ -290,7 +298,9 @@ SubShader {
 
 			
 //					diffusecolor = float3(102f/255,102f/255,102f/255);
-					diffusecolor = _ColorIN.rgb;
+					diffusecolor = _ColorIN.rgb * max(0,diffuse);
+					ambientcolor = _ColorIN.rgb * ambient;
+					//diffusecolor = _ColorIN.rgb;
 				
 					
 					// ajout de rayure sur le plan #############################
@@ -317,10 +327,11 @@ SubShader {
 				    
 				    // Coloration uni basique ####################################
 
-					OUT.Color.a = 0.2;
+					//OUT.Color.a = 0.2;
 					
 //						OUT.Color.rgb = float3(102f/255,102f/255,102f/255);
-					OUT.Color.rgb = _ColorIN.rgb;
+					//OUT.Color.rgb = _ColorIN.rgb;
+					OUT.Color.rgb = diffusecolor + ambientcolor;// + specularcolor ;
 	
 //			OUT.Color.a = 1f;
 				}else if ( _cut== 0f )

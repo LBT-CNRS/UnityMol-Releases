@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: IAtomStyle.cs 248 2013-04-07 20:52:21Z baaden $
+/// $Id: IAtomStyle.cs 305 2013-06-18 19:04:52Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -63,16 +63,13 @@
 /// J. Comput. Chem., 2011, 32, 2924
 ///
 
-namespace Molecule.View.DisplayAtom
-{
+namespace Molecule.View.DisplayAtom {
 
 	using UnityEngine;
 	using System.Collections;
 	using UI;
 	
-	interface IAtomStyle 
-	{
-	
+	interface IAtomStyle {
 		void DisplayAtoms(UIData.AtomType type_atom, bool force_display = false);
 	}
 

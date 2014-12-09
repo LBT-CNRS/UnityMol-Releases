@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: CubeBonds_TwoColors.shader 210 2013-04-06 20:52:41Z baaden $
+/// $Id: CubeBonds_TwoColors.shader 347 2013-08-20 09:36:34Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -65,10 +65,10 @@
 
 Shader "Custom/CubeBonds_TwoColors" {
 	Properties {
-		_Color1 ("Color Atom 1", Color) = (1,0.1,0.1,1.0)
-		_Color2 ("Color Atom 2", Color) = (0.1,0.1,1.0,1.0)
-	    _Pos1 ("Position Atom 1", Vector) = (0.0,0.0,0.0,1.0)
-	    _Pos2 ("Position Atom 2", Vector) = (3.0,0.0,0.0,1.0)
+		_Color1 ("Color Atom 1", Color)		=	(1,		0.1,	0.1,	1.0)
+		_Color2 ("Color Atom 2", Color)		=	(0.1,	0.1,	1.0,	1.0)
+	    _Pos1 ("Position Atom 1", Vector)	=	(0.0,	0.0,	0.0,	1.0)
+	    _Pos2 ("Position Atom 2", Vector)	=	(3.0,	0.0,	0.0,	1.0)
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -91,9 +91,42 @@ Shader "Custom/CubeBonds_TwoColors" {
 			float3 pos = mul(v.vertex,_World2Object);
 			
 			o.col = _Color1.rgb;
-		    if(pos.x < 0)
-		    	o.col = _Color2.rgb;
+			
+			if(_Pos1.x > _Pos2.x){
+		    	if(pos.x < 0)
+		    		o.col = _Color2.rgb;
+		    }
+		    else{ // if(_Pos1.x < _Pos2.x)
+		    	if(pos.x > 0)
+		    		o.col = _Color2.rgb;
+		    }
 		}
+
+			//float minDist = 99999999999.0;
+//			float3 pos;
+//			float3 pos1;
+//			float3 pos2;
+			
+			
+//			pos = v.vertex;
+			//pos = mul(v.vertex,_World2Object);
+//			pos1 = mul (_Pos1, (float3x3)_World2Object);
+//			pos2 = mul (_Pos2, (float3x3)_World2Object);
+//			float minDist = distance(pos, _Pos2);
+//	    	o.col = _Color2.rgb;
+	    	
+//		    float dist = distance(pos, _Pos1);
+//		    if(dist < minDist)
+//		    	o.col = _Color1.rgb;
+			
+			
+			//float3 pos = mul(v.vertex,_World2Object);
+			
+			
+			//o.col = _Color1.rgb;
+		    //if(pos.x < 0)
+		    	//o.col = _Color2.rgb;		    	
+//		}
 
 		void surf (Input IN, inout SurfaceOutput o) {
 			o.Albedo = IN.col.rgb;

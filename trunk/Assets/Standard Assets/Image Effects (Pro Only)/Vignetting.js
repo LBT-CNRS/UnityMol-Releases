@@ -5,15 +5,24 @@
 @script RequireComponent (Camera)
 @script AddComponentMenu ("Image Effects/Vignette and Chromatic Aberration")
 
-class Vignetting extends PostEffectsBase {
+class Vignetting /* And Chromatic Aberration */ extends PostEffectsBase {
+
+	public enum AberrationMode {
+		Simple = 0,
+		Advanced = 1,
+	}
+
+	public var mode : AberrationMode = AberrationMode.Simple;
 	
-	public var intensity : float = 0.375f;
+	public var intensity : float = 0.375f; // intensity == 0 disables pre pass (optimization)
 	public var chromaticAberration : float = 0.2f;
-	public var blur : float = 0.1f;
-	public var blurSpread : float = 1.5f;
-	
-    // needed shaders & materials
-	
+	public var axialAberration : float = 0.5f;
+
+	public var blur : float = 0.0f; // blur == 0 disables blur pass (optimization)
+	public var blurSpread : float = 0.75f;
+
+	public var luminanceDependency : float = 0.25f;
+		
 	public var vignetteShader : Shader;
 	private var vignetteMaterial : Material;
 	
@@ -30,48 +39,61 @@ class Vignetting extends PostEffectsBase {
 		separableBlurMaterial = CheckShaderAndCreateMaterial (separableBlurShader, separableBlurMaterial);
 		chromAberrationMaterial = CheckShaderAndCreateMaterial (chromAberrationShader, chromAberrationMaterial);
 		
-		if(!isSupported)
+		if (!isSupported)
 			ReportAutoDisable ();
 		return isSupported;		
 	}
 	
 	function OnRenderImage (source : RenderTexture, destination : RenderTexture) {	
-		if(CheckResources()==false) {
+		if( CheckResources () == false) {
 			Graphics.Blit (source, destination);
 			return;
 		}	
 				
+		var doPrepass : boolean = (Mathf.Abs(blur)>0.0f || Mathf.Abs(intensity)>0.0f);
+
 		var widthOverHeight : float = (1.0f * source.width) / (1.0f * source.height);
 		var oneOverBaseSize : float = 1.0f / 512.0f;				
 		
-		var color : RenderTexture = RenderTexture.GetTemporary (source.width, source.height, 0);	
-		var halfRezColor : RenderTexture = RenderTexture.GetTemporary (source.width / 2.0, source.height / 2.0, 0);		
-		var quarterRezColor : RenderTexture = RenderTexture.GetTemporary (source.width / 4.0, source.height / 4.0, 0);	
-		var secondQuarterRezColor : RenderTexture = RenderTexture.GetTemporary (source.width / 4.0, source.height / 4.0, 0);	
-				
-		Graphics.Blit (source, halfRezColor, chromAberrationMaterial, 0);
-		Graphics.Blit (halfRezColor, quarterRezColor);	
-				
-		for (var it : int = 0; it < 2; it++ ) {
-			separableBlurMaterial.SetVector ("offsets", Vector4 (0.0, blurSpread * oneOverBaseSize, 0.0, 0.0));	
-			Graphics.Blit (quarterRezColor, secondQuarterRezColor, separableBlurMaterial); 
-			separableBlurMaterial.SetVector ("offsets", Vector4 (blurSpread * oneOverBaseSize / widthOverHeight, 0.0, 0.0, 0.0));	
-			Graphics.Blit (secondQuarterRezColor, quarterRezColor, separableBlurMaterial);		
+		var color : RenderTexture = null;
+		var halfRezColor : RenderTexture = null;
+		var secondHalfRezColor : RenderTexture = null;
+
+		if (doPrepass) {
+			color = RenderTexture.GetTemporary (source.width, source.height, 0, source.format);	
+		
+			if (Mathf.Abs (blur)>0.0f) {
+				halfRezColor = RenderTexture.GetTemporary (source.width / 2.0f, source.height / 2.0f, 0, source.format);		
+				secondHalfRezColor = RenderTexture.GetTemporary (source.width / 2.0f, source.height / 2.0f, 0, source.format);	
+
+				Graphics.Blit (source, halfRezColor, chromAberrationMaterial, 0);
+
+				for(var i : int = 0; i < 2; i++) {	// maybe make iteration count tweakable
+					separableBlurMaterial.SetVector ("offsets", Vector4 (0.0f, blurSpread * oneOverBaseSize, 0.0f, 0.0f));	
+					Graphics.Blit (halfRezColor, secondHalfRezColor, separableBlurMaterial); 
+					separableBlurMaterial.SetVector ("offsets", Vector4 (blurSpread * oneOverBaseSize / widthOverHeight, 0.0f, 0.0f, 0.0f));	
+					Graphics.Blit (secondHalfRezColor, halfRezColor, separableBlurMaterial);	
+				}	
+			}
+
+			vignetteMaterial.SetFloat ("_Intensity", intensity); 		// intensity for vignette
+			vignetteMaterial.SetFloat ("_Blur", blur); 					// blur intensity
+			vignetteMaterial.SetTexture ("_VignetteTex", halfRezColor);	// blurred texture
+
+			Graphics.Blit (source, color, vignetteMaterial, 0); 		// prepass blit: darken & blur corners
 		}		
-		
-		vignetteMaterial.SetFloat ("_Intensity", intensity);
-		vignetteMaterial.SetFloat ("_Blur", blur);
-		vignetteMaterial.SetTexture ("_VignetteTex", quarterRezColor);
-		Graphics.Blit (source, color, vignetteMaterial); 				
-		
+
 		chromAberrationMaterial.SetFloat ("_ChromaticAberration", chromaticAberration);
-		Graphics.Blit (color, destination, chromAberrationMaterial, 1);	
+		chromAberrationMaterial.SetFloat ("_AxialAberration", axialAberration);
+		chromAberrationMaterial.SetFloat ("_Luminance", 1.0f/(Mathf.Epsilon + luminanceDependency));
+
+		if(doPrepass) color.wrapMode = TextureWrapMode.Clamp;
+		else source.wrapMode = TextureWrapMode.Clamp;		
+		Graphics.Blit (doPrepass ? color : source, destination, chromAberrationMaterial, mode == AberrationMode.Advanced ? 2 : 1);	
 		
-		RenderTexture.ReleaseTemporary (color);
-		RenderTexture.ReleaseTemporary (halfRezColor);			
-		RenderTexture.ReleaseTemporary (quarterRezColor);	
-		RenderTexture.ReleaseTemporary (secondQuarterRezColor);	
-	
+		if (color) RenderTexture.ReleaseTemporary (color);
+		if (halfRezColor) RenderTexture.ReleaseTemporary (halfRezColor);			
+		if (secondHalfRezColor) RenderTexture.ReleaseTemporary (secondHalfRezColor);		
 	}
 
 }

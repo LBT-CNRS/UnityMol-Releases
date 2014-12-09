@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ColorPicker.cs 223 2013-04-06 22:32:11Z baaden $
+/// $Id: ColorPicker.cs 648 2014-08-08 13:35:12Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -65,6 +65,7 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Molecule.Model;
 
 
@@ -72,13 +73,23 @@ using Molecule.Model;
 public class ColorPicker{
 	
 	private Texture2D m_aTexture;
-	private Rect m_text_area = new Rect(5, 45, 228, 256);
+	private Rect m_text_area = new Rect(5, 45, 228, 228);
 	private Rect m_close_area = new Rect(5, 20, 50, 20);
+	private Rect m_r_area = new Rect(60, 20, 50, 20);
+	private Rect m_g_area = new Rect(115, 20, 50, 20);
+	private Rect m_b_area = new Rect(170, 20, 50, 20);
+	private int m_r_value = 255;
+	private int m_g_value = 255;
+	private int m_b_value = 255;
 	private Rect m_activeArea;
 	private Rect m_rect;
 	private string m_title;
 	private bool m_enabled;
 	private int callId;
+	
+	private List<string> m_atoms = new List<string>();
+	private string m_residue = "All";
+	private string m_chain = "All";
 
 	public bool enabled
 	{
@@ -96,35 +107,51 @@ public class ColorPicker{
 	private ColorObject m_colorObj;
 	public ColorObject color
 	{
-		get 
+		get
 		{
 			return m_colorObj;
 		}
-		set 
+		set
 		{
 			m_colorObj = value;
 		}
-	}	
+	}
 	
-	public ColorPicker(int xstart,int ystart,int width, int height, ColorObject colorObj, string title="Color Picker", int caller=-1)
+	public ColorPicker(int xstart,int ystart,int width, int height, 
+		ColorObject colorObj, List<string> atoms, string residue = "All", string chain = "All", 
+		string title="Color Picker", int caller=-1)
 	{
 		m_colorObj = colorObj;
+		m_atoms = atoms;
+		m_residue = residue;
+		m_chain = chain;
+		m_r_value = (int)(colorObj.color.r * 255f);
+		m_g_value = (int)(colorObj.color.g * 255f);
+		m_b_value = (int)(colorObj.color.b * 255f);
 		m_rect = new Rect(xstart,ystart,width,height);
-	    m_aTexture = (Texture2D)Resources.Load("EnergyGrayColor2");
+	    m_aTexture = (Texture2D)Resources.Load("ImprovedColorPicker");
 		m_title=title;
 		this.enabled = true;
-		m_activeArea = new Rect(m_rect.x + m_text_area.y, m_rect.y + m_text_area.y, m_text_area.width, m_text_area.height);
+		m_activeArea = new Rect(m_rect.x + m_text_area.x, m_rect.y + m_text_area.y, m_text_area.width, m_text_area.height);
 		callId = caller;
 	}	
 
-	public ColorPicker(Rect r, ColorObject colorObj, string title="Color Picker", int caller=-1)
+	public ColorPicker(Rect r, 
+		ColorObject colorObj, List<string> atoms, string residue = "All", string chain = "All", 
+		string title="Color Picker", int caller=-1)
 	{
 		m_colorObj = colorObj;
+		m_atoms = atoms;
+		m_residue = residue;
+		m_chain = chain;
+		m_r_value = (int)(colorObj.color.r * 255f);
+		m_g_value = (int)(colorObj.color.g * 255f);
+		m_b_value = (int)(colorObj.color.b * 255f);
 		m_rect = r;
-	    m_aTexture = (Texture2D)Resources.Load("EnergyGrayColor2");
+	    m_aTexture = (Texture2D)Resources.Load("ImprovedColorPicker");
 		m_title=title;
 		this.enabled = true;
-		m_activeArea = new Rect(m_rect.x + m_text_area.y, m_rect.y + m_text_area.y, m_text_area.width, m_text_area.height);
+		m_activeArea = new Rect(m_rect.x + m_text_area.x, m_rect.y + m_text_area.y, m_text_area.width, m_text_area.height);
 		callId = caller;
 	}
 
@@ -138,26 +165,61 @@ public class ColorPicker{
 	{
 		if(enabled)
 		{
+			
 			GUI.Window(60, m_rect, loadColor, m_title);
+			GUI.DragWindow();
 			Vector3 mousePos = Input.mousePosition;
 			mousePos.y = Screen.height - mousePos.y;
-			if(m_activeArea.Contains(mousePos)&& Input.GetMouseButton(0))
+			if(m_activeArea.Contains(mousePos) && Input.GetMouseButton(0) && GUIUtility.hotControl == 0)
 			{		
-				//Debug.Log("test4");
-				int X = (int)(mousePos.x-m_rect.x)-5;
-				int Y = (int)(m_text_area.height)-((int)(mousePos.y-m_rect.y)-(int)(m_text_area.y));
-				
-				m_colorObj.color = m_aTexture.GetPixel(X,Y);
-				// Debug.Log("Color: "+m_color);
+				int X = (int)((mousePos.x - m_activeArea.x) / m_activeArea.width * m_aTexture.width);
+				int Y = (int)((mousePos.y - m_activeArea.y) / m_activeArea.height * m_aTexture.height);
+//				Debug.Log(X + " " + Y + " " + mousePos.x + " " + mousePos.y);
+				m_r_value = (int)(m_aTexture.GetPixel(X,-Y).r * 255);
+				m_g_value = (int)(m_aTexture.GetPixel(X,-Y).g * 255);
+				m_b_value = (int)(m_aTexture.GetPixel(X,-Y).b * 255);
+//				Debug.Log("Color: "+m_color);
 			}
+			if(m_r_value < 0)
+				m_r_value = 0;
+			if(m_r_value > 255)
+				m_r_value = 255;
+			if(m_g_value < 0)
+				m_g_value = 0;
+			if(m_g_value > 255)
+				m_g_value = 255;
+			if(m_b_value < 0)
+				m_b_value = 0;
+			if(m_b_value > 255)
+				m_b_value = 255;
+			m_colorObj.color = new Color((float)m_r_value/255f, (float)m_g_value/255f, (float)m_b_value/255f, 1f);
+			
+			if(m_atoms != null){
+				GenericManager manager = Molecule.View.DisplayMolecule.GetManagers()[0];
+				if(!UI.GUIMoleculeController.toggle_NA_CLICK){
+					manager.SetColor(m_colorObj.color, m_atoms, m_residue, m_chain);
+				}
+				else{ 
+					foreach(GameObject obj in Camera.main.GetComponent<ClickAtom>().objList){
+							manager.SetColor(m_colorObj.color, (int)obj.GetComponent<BallUpdate>().number);
+					}
+				}
+			}
+			
 		}
 	}
 	
 	public void loadColor(int a){
 		
-//		Debug.Log("test3");
 		if(GUI.Button(m_close_area, "Close"))
-			enabled = false;
+			UI.GUIMoleculeController.m_colorPicker = null;
+		string temp;
+		temp = GUI.TextField(m_r_area, m_r_value.ToString());
+		int.TryParse(temp, out m_r_value);
+		temp = GUI.TextField(m_g_area, m_g_value.ToString());
+		int.TryParse(temp, out m_g_value);
+		temp = GUI.TextField(m_b_area, m_b_value.ToString());
+		int.TryParse(temp, out m_b_value);
 		GUI.DrawTexture(m_text_area, m_aTexture, ScaleMode.ScaleToFit, true, 0F);
 		if (Event.current.type == EventType.Repaint)
         	MoleculeModel.newtooltip = GUI.tooltip;

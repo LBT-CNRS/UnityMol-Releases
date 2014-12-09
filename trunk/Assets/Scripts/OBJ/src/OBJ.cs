@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: OBJ.cs 227 2013-04-07 15:21:09Z baaden $
+/// $Id: OBJ.cs 317 2013-06-24 13:32:30Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -366,6 +366,7 @@ public class OBJ : MonoBehaviour {
 
 	private void Build() {
 		Dictionary<string, Material> materials = new Dictionary<string, Material>();
+		Material m;
 		
 		if(hasMaterials && mtl_reader != null) {
 			Debug.Log("Obj import :: MATERIAL read");
@@ -374,7 +375,9 @@ public class OBJ : MonoBehaviour {
 			}
 		} else {
 			Debug.Log("Obj import :: NO MATERIAL read");
-			materials.Add("default", new Material(Shader.Find("VertexLit")));
+			m = new Material(Shader.Find("Mat Cap Cut"));
+			materials.Add("default", m);
+			m.SetTexture("_MatCap", (Texture)Resources.Load("lit_spheres/divers/daphz1"));
 		}
 		
 		GameObject[] ms = new GameObject[buffer.numObjects];

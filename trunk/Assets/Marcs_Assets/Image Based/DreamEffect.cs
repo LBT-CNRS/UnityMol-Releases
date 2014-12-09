@@ -140,7 +140,7 @@ public class DreamEffect : MonoBehaviour
 		BlackChannelMaterial.SetFloat( "_ContrastPower", ContrastPower );
 		BlackChannelMaterial.SetFloat( "_ContrastBias", ContrastBias );
 		
-		ImageEffects.BlitWithMaterial (BlackChannelMaterial , source, dreamBuffer);
+		ImageEffects2.BlitWithMaterial (BlackChannelMaterial , source, dreamBuffer);
 		
 		// Copy source to the 4x4 smaller texture.
 		DownSample4x (source, buffer);
@@ -153,10 +153,10 @@ public class DreamEffect : MonoBehaviour
 			else FourTapCone (buffer2, buffer, i);
 			oddEven = !oddEven;
 		}
-		if( oddEven ) ImageEffects.Blit(buffer, destination);
-		else ImageEffects.Blit(buffer2, destination);
+		if( oddEven ) ImageEffects2.Blit(buffer, destination);
+		else ImageEffects2.Blit(buffer2, destination);
 		
-		ImageEffects.Blit( dreamBuffer, destination, BlendMode.Multiply );
+		ImageEffects2.Blit( dreamBuffer, destination, BlendMode.Multiply );
 		
 		RenderTexture.ReleaseTemporary(buffer);
 		RenderTexture.ReleaseTemporary(buffer2);

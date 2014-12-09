@@ -1,7 +1,7 @@
 Shader "Hidden/BlendModesOverlay" {
 	Properties {
 		_MainTex ("Screen Blended", 2D) = "" {}
-		_Overlay ("Color", 2D) = "white" {}
+		_Overlay ("Color", 2D) = "grey" {}
 	}
 	
 	CGINCLUDE
@@ -24,7 +24,7 @@ Shader "Hidden/BlendModesOverlay" {
 		o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
 		o.uv[0] =  v.texcoord.xy;
 		
-		#if SHADER_API_D3D9 || SHADER_API_D3D11 || SHADER_API_XBOX360
+		#if UNITY_UV_STARTS_AT_TOP
 		if(_MainTex_TexelSize.y<0.0)
 			o.uv[0].y = 1.0-o.uv[0].y;
 		#endif
@@ -45,17 +45,29 @@ Shader "Hidden/BlendModesOverlay" {
 			
 	half4 fragScreen (v2f i) : COLOR {
 		half4 toBlend =  (tex2D(_Overlay, i.uv[0]) * _Intensity);
-		return 1-saturate(1-toBlend)*(1-(tex2D(_MainTex, i.uv[1])));
+		return 1-(1-toBlend)*(1-(tex2D(_MainTex, i.uv[1])));
 	}
 
 	half4 fragOverlay (v2f i) : COLOR {
-		half4 m = (tex2D(_Overlay, i.uv[0])) * 255.0;
-		half4 color = (tex2D(_MainTex, i.uv[1]))* 255.0;
+		half4 m = (tex2D(_Overlay, i.uv[0]));// * 255.0;
+		half4 color = (tex2D(_MainTex, i.uv[1]));//* 255.0;
 
 		// overlay blend mode
-		color.rgb = (color.rgb/255.0) * (color.rgb + ((2*m.rgb)/( 255.0 )) * (255.0-color.rgb));
-		color.rgb /= 255.0; 
-		return color;
+		//color.rgb = (color.rgb/255.0) * (color.rgb + ((2*m.rgb)/( 255.0 )) * (255.0-color.rgb));
+		//color.rgb /= 255.0; 
+		 
+		/*
+if (Target > ½) R = 1 - (1-2x(Target-½)) x (1-Blend)
+if (Target <= ½) R = (2xTarget) x Blend		
+		*/
+		
+		float3 check = step(0.5, color.rgb);
+		float3 result = 0;
+		
+			result =  check * (half3(1,1,1) - ( (half3(1,1,1) - 2*(color.rgb-0.5)) *  (1-m.rgb))); 
+			result += (1-check) * (2*color.rgb) * m.rgb;
+		
+		return half4(lerp(color.rgb, result.rgb, (_Intensity)), color.a);
 	}
 	
 	half4 fragAlphaBlend (v2f i) : COLOR {

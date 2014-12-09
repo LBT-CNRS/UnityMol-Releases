@@ -12,7 +12,7 @@ Shader "Hidden/SunShaftsComposite" {
 	struct v2f {
 		float4 pos : POSITION;
 		float2 uv : TEXCOORD0;
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		float2 uv1 : TEXCOORD1;
 		#endif		
 	};
@@ -43,7 +43,7 @@ Shader "Hidden/SunShaftsComposite" {
 		o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
 		o.uv = v.texcoord.xy;
 		
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		o.uv1 = v.texcoord.xy;
 		if (_MainTex_TexelSize.y < 0)
 			o.uv1.y = 1-o.uv1.y;
@@ -54,7 +54,7 @@ Shader "Hidden/SunShaftsComposite" {
 		
 	half4 fragScreen(v2f i) : COLOR { 
 		half4 colorA = tex2D (_MainTex, i.uv.xy);
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		half4 colorB = tex2D (_ColorBuffer, i.uv1.xy);
 		#else
 		half4 colorB = tex2D (_ColorBuffer, i.uv.xy);
@@ -65,7 +65,7 @@ Shader "Hidden/SunShaftsComposite" {
 
 	half4 fragAdd(v2f i) : COLOR { 
 		half4 colorA = tex2D (_MainTex, i.uv.xy);
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		half4 colorB = tex2D (_ColorBuffer, i.uv1.xy);
 		#else
 		half4 colorB = tex2D (_ColorBuffer, i.uv.xy);
@@ -101,7 +101,7 @@ Shader "Hidden/SunShaftsComposite" {
 	}
 	
 	half4 frag_depth (v2f i) : COLOR {
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		float depthSample = UNITY_SAMPLE_DEPTH(tex2D (_CameraDepthTexture, i.uv1.xy));
 		#else
 		float depthSample = UNITY_SAMPLE_DEPTH(tex2D (_CameraDepthTexture, i.uv.xy));		
@@ -112,7 +112,7 @@ Shader "Hidden/SunShaftsComposite" {
 		depthSample = Linear01Depth (depthSample);
 		 
 		// consider maximum radius
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		half2 vec = _SunPosition.xy - i.uv1.xy;
 		#else
 		half2 vec = _SunPosition.xy - i.uv.xy;		
@@ -129,7 +129,7 @@ Shader "Hidden/SunShaftsComposite" {
 	}
 	
 	half4 frag_nodepth (v2f i) : COLOR {
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		float4 sky = (tex2D (_Skybox, i.uv1.xy));
 		#else
 		float4 sky = (tex2D (_Skybox, i.uv.xy));		
@@ -138,7 +138,7 @@ Shader "Hidden/SunShaftsComposite" {
 		float4 tex = (tex2D (_MainTex, i.uv.xy));
 		
 		// consider maximum radius
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		half2 vec = _SunPosition.xy - i.uv1.xy;
 		#else
 		half2 vec = _SunPosition.xy - i.uv.xy;		

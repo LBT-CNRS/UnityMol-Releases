@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: DisplayMolecule.cs 227 2013-04-07 15:21:09Z baaden $
+/// $Id: DisplayMolecule.cs 672 2014-10-02 08:13:56Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -63,10 +63,10 @@
 /// J. Comput. Chem., 2011, 32, 2924
 ///
 
-namespace Molecule.View
-{
+namespace Molecule.View {
 	using UnityEngine;
 	using System.Collections;
+	using System.Collections.Generic;
 	using Config;
 	using Molecule.Model;
 	using Molecule.Control;
@@ -75,554 +75,512 @@ namespace Molecule.View
 	using UI;
 
 
-	public class DisplayMolecule 
-	{
-		public static void ResetDisplay()
-		{
+	public class DisplayMolecule {
+		
+		public static void ResetDisplay() {
 			DestroyObject();
 			
 			IAtomStyle displayAtom;
-			//In case we changed the color of the atoms,
-			//we destroy the "permanent" particles and create new ones with the new colors
-			if(UIData.isConfirm || UIData.changeStructure)
-			{
-				DestroyParticles();
+			// In case we changed the color of the atoms,
+			// we destroy the "permanent" particles and create new ones with the new colors
+			if(UIData.isConfirm || UIData.changeStructure) {
+//				DestroyParticles();
 				displayAtom = new AtomCubeStyle();
-				displayAtom.DisplayAtoms(UIData.AtomType.particleball,true);
+				displayAtom.DisplayAtoms(UIData.atomtype, true);
+//				displayAtom.DisplayAtoms(UIData.AtomType.particleball,true);
 			}
-
 			displayAtom=new AtomCubeStyle();
+			
 			displayAtom.DisplayAtoms(UIData.atomtype);
 			Debug.Log(UIData.atomtype);
 			
-			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick)
-			{
+			// This fixes a nasty bug that made carbon alpha chains/entire molecules disappear when switching between the two in sphere mode
+			if(UIData.atomtype == UIData.AtomType.sphere) {
+				UIData.isCubeToSphere = true;
+				UIData.isSphereToCube = false;
+			} else if (UIData.atomtype == UIData.AtomType.cube) {
+				UIData.isCubeToSphere = false ;
+				UIData.isSphereToCube = true ;
+			}
+			
+			if (UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick) {
 				IBondStyle displayBond=new BondCubeStyle();
 				displayBond.DisplayBonds();
-
-			}
-			else if(UIData.bondtype==UIData.BondType.line)
-			{
+			} else if (UIData.bondtype==UIData.BondType.line) {
 				IBondStyle displayBond=new BondLineStyle();
 				displayBond.DisplayBonds();
-
-			}
-			else if(UIData.bondtype==UIData.BondType.tubestick)
-			{
+			} else if (UIData.bondtype==UIData.BondType.tubestick) {
 				IBondStyle displayBond=new BondTubeStyle();
 				displayBond.DisplayBonds();
-
-			}
-			else if(UIData.bondtype==UIData.BondType.particlestick)
-			{
+			} else if (UIData.bondtype==UIData.BondType.particlestick) {
 				IBondStyle displayBond=new BondParticleStyle();
 				displayBond.DisplayBonds();
-
 			}
-
 			CreatGameObjectArray();
 		}
 		
-		public static void AmendDisplay()
-		{
-			
-			Change(MoleculeModel.Ces,0);
-			Change(MoleculeModel.Nes,1);
-			Change(MoleculeModel.Oes,2);
-			Change(MoleculeModel.Ses,3);
-			Change(MoleculeModel.Pes,4);
-			Change(MoleculeModel.Hes,5);
-			
-			Change(MoleculeModel.NOes,6);
-
-		}
-
-		public static void HideAtoms()
-		{
-			ParticleEffect.radiusFactor = 0;
-			if(MoleculeModel.clubs!=null)
-			{
-				foreach(GameObject box in MoleculeModel.clubs)
-				{
-					box.renderer.enabled = false;
-				}
+		/// <summary>
+		/// Gets the list of active managers based on the atom type provided and based on the bond type in UIData.
+		/// </summary>
+		/// <returns>
+		/// The list of managers. A List<GenericManager> object that should contains the "atom" manager in position 0 and the "bond" manager in position 1 (if there is one).
+		/// </returns>
+		public static List<GenericManager> GetManagers() {
+			UIData.AtomType aType = UIData.atomtype;
+			List<GenericManager> managerList = new List<GenericManager>();
+			if(aType == UIData.AtomType.hyperball) {  //||  UIData.bondtype == UIData.BondType.hyperstick) {
+				GameObject hbManagerObj = GameObject.FindGameObjectWithTag("HBallManager");
+				HBallManager hbManager = hbManagerObj.GetComponent<HBallManager>();
+				managerList.Add(hbManager);
+			}else if (aType == UIData.AtomType.sphere) {
+				GameObject spManagerObj = GameObject.FindGameObjectWithTag("SphereManager");
+				SphereManager spManager = spManagerObj.GetComponent<SphereManager>();
+				managerList.Add(spManager);
+			} else if (aType == UIData.AtomType.cube) {
+				GameObject cubeManagerObj = GameObject.FindGameObjectWithTag("CubeManager");
+				CubeManager cubeManager = cubeManagerObj.GetComponent<CubeManager>();
+				managerList.Add(cubeManager);
+			} else if (aType == UIData.AtomType.particleball) {
+				GameObject psObj = GameObject.FindGameObjectWithTag("ShurikenParticleManager");
+				ShurikenParticleManager shManager =  psObj.GetComponent<ShurikenParticleManager>();
+				managerList.Add(shManager);
 			}
-		}
-
-		public static void ShowAtoms()
-		{
-			if(UIData.atomtype==UIData.AtomType.particleball)
-				ParticleEffect.radiusFactor = GUIMoleculeController.rayon;
-
-			if(MoleculeModel.clubs!=null)
-			{
-				foreach(GameObject box in MoleculeModel.clubs)
-				{
-					box.renderer.enabled = true;
-				}
+			if (UIData.bondtype == UIData.BondType.line) {
+				GameObject lineManagerObj = GameObject.FindGameObjectWithTag("LineManager");
+				LineManager lineManager = lineManagerObj.GetComponent<LineManager>();
+				managerList.Add(lineManager);
+			} else if (UIData.bondtype == UIData.BondType.cube) {
+				GameObject cubeBondManagerObj = GameObject.FindGameObjectWithTag("CubeBondManager");
+				CubeBondManager cubeBondManager = cubeBondManagerObj.GetComponent<CubeBondManager>();
+				managerList.Add(cubeBondManager);
+			} else if (UIData.bondtype == UIData.BondType.hyperstick) {
+				GameObject hStickManagerObj = GameObject.FindGameObjectWithTag("HStickManager");
+				HStickManager hStickManager = hStickManagerObj.GetComponent<HStickManager>();
+				managerList.Add(hStickManager);
 			}
+			return managerList;
 		}
 		
-		public static void ToParticle()
-		{
-			if(UIData.atomtype!=UIData.AtomType.particleball)
-			{
-				UIData.atomtype=UIData.AtomType.particleball;
-				//UIData.resetDisplay=true;
+		public static void ToggleDistanceCueing(bool enabling) {
+			List<GenericManager> managers = GetManagers();
+			foreach(GenericManager manager in managers)
+				manager.ToggleDistanceCueing(enabling);
+		}
+		
+		public static void DestroyAtomsAndBonds() {
+			List<GenericManager> managers = GetManagers();
+			foreach(GenericManager manager in managers)
+				manager.DestroyAll();
+		}
+		
+		public static void InitManagers() {
+			List<GenericManager> managers = GetManagers();
+			foreach(GenericManager manager in managers)
+				manager.Init();
+		}
+
+		public static void HideAtoms() {
+			List<GenericManager> managers = GetManagers();
+			foreach(GenericManager manager in managers)
+				manager.DisableRenderers();
+		}
+
+		public static void ShowAtoms() {
+			List<GenericManager> managers = GetManagers();
+			foreach(GenericManager manager in managers)
+				manager.EnableRenderers();
+		}
+		
+		public static void ToParticle() { // Actually buggy with hyperstick since they don't use "enable/disable renderer" but are destroyed and recreated
+			if(UIData.atomtype!=UIData.AtomType.particleball) {
+				UIData.atomtype = UIData.AtomType.particleball;
+				UIData.bondtype = UIData.BondType.nobond ;
+				UIData.resetBondDisplay = true;
+				UIData.resetDisplay=true;
 				UIData.isCubeToSphere=false;
 				UIData.isSphereToCube=true;
 
-				ParticleEffect.radiusFactor = GUIMoleculeController.rayon;
-
-				if(MoleculeModel.clubs!=null)//Will be displayed before the atoms are removed
-				{
-					foreach(GameObject box in MoleculeModel.clubs)
-					{
-						box.renderer.enabled = false;
-					}
-				}
-				if(MoleculeModel.atoms!=null)//Will be displayed before the atoms are removed
-				{
-					foreach(GameObject box in MoleculeModel.atoms)
-					{
-						box.renderer.enabled = false;
-					}
-				}
+//				ParticleEffect.radiusFactor = GUIMoleculeController.rayon;
+				ShurikenParticleManager.radiusFactor = BallUpdate.radiusFactor;
+				GameObject npmObject = GameObject.FindGameObjectWithTag("ShurikenParticleManager");
+				ShurikenParticleManager shManager = npmObject.GetComponent<ShurikenParticleManager>();
+				shManager.enabled = true;
+				shManager.pSystem.renderer.enabled = true;
 
 				Debug.Log("ToParticle()" );
 			}
-
 		}
 		
-		public static void ToNotParticle(UIData.AtomType previous_type)
-		{
-			if(previous_type != UIData.AtomType.noatom && UIData.atomtype != previous_type)
-			{
-
-				UIData.atomtype = previous_type;
-				//UIData.resetDisplay=true;
-				UIData.isCubeToSphere=false;
-				UIData.isSphereToCube=true;
-
-				ParticleEffect.radiusFactor = 0;
-
-				if(MoleculeModel.clubs!=null)//Will be displayed before the atoms are removed
-				{
-					foreach(GameObject box in MoleculeModel.clubs)
-					{
-						box.renderer.enabled = true;
-					}
+		public static void ToNotParticle(UIData.AtomType previousType, UIData.BondType previousBondType) {
+			if(previousType != UIData.AtomType.noatom && UIData.atomtype != previousType) {
+				GameObject shObject = GameObject.FindGameObjectWithTag("ShurikenParticleManager");
+				ShurikenParticleManager shManager = shObject.GetComponent<ShurikenParticleManager>();
+				shManager.pSystem.renderer.enabled = false;
+				shManager.enabled = false;
+				
+				UIData.atomtype = previousType;
+				UIData.bondtype = previousBondType;
+				UIData.resetBondDisplay = true ;
+				UIData.resetDisplay=true;
+				if(UIData.atomtype == UIData.AtomType.sphere){
+					UIData.isCubeToSphere=true;
+					UIData.isSphereToCube=false;
 				}
-				if(MoleculeModel.atoms!=null)//Will be displayed before the atoms are removed
-				{
-					foreach(GameObject box in MoleculeModel.atoms)
-					{
-						box.renderer.enabled = true;
-					}
+				else{
+					UIData.isCubeToSphere=false;
+					UIData.isSphereToCube=true;
 				}
 
+				if(UIData.atomtype == UIData.AtomType.hyperball) {
+					GameObject hbmObject = GameObject.FindGameObjectWithTag("HBallManager");
+					HBallManager hbManager = hbmObject.GetComponent<HBallManager>();
+					BallUpdate.resetRadii = true;
+					hbManager.EnableRenderers();
+					hbManager.enabled = true;
+				}
+				
 				Debug.Log("ToHyperBall()" );
+				Debug.Log(UIData.atomtype.ToString());
+				Debug.Log(UIData.bondtype.ToString());
 			}
 		}
 		
-		public static void CubeToSphere()
-		{
+		public static void CubeToSphere() {
 			
 			UIData.resetDisplay=false;
-			DestroyObject();
-//			Debug.Log("111111111111111111111111111111111111111 " );
-
-			IAtomStyle displayAtom=new AtomSphereStyle();
-			displayAtom.DisplayAtoms(UIData.atomtype);			
-//			Debug.Log("22222222222222222222222222222222222222  " );
+//			DestroyObject();
+			HideObject();
+			if(UIData.atomtype == UIData.AtomType.sphere){
+				GameObject spmObject = GameObject.FindGameObjectWithTag("SphereManager");
+				SphereManager spManager = spmObject.GetComponent<SphereManager>();
+				spManager.EnableRenderers();
+			}
 			
-			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick)
-			{
+			if(!UIData.isSphereLoaded){
+				IAtomStyle displayAtom;
+				
+				Debug.Log("UIData.atomtype :: "+UIData.atomtype);
+				displayAtom = new AtomSphereStyle();
+				displayAtom.DisplayAtoms(UIData.atomtype);	
+			}
+			
+			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick) {
 				IBondStyle displayBond=new BondCubeStyle();
 				displayBond.DisplayBonds();
 
 			}
-			else if(UIData.bondtype==UIData.BondType.line)
-			{
+			else if(UIData.bondtype==UIData.BondType.line) {
 				IBondStyle displayBond=new BondLineStyle();
 				displayBond.DisplayBonds();
 
 			}
-			else if(UIData.bondtype==UIData.BondType.tubestick)
-			{
+			else if(UIData.bondtype==UIData.BondType.tubestick) {
 				IBondStyle displayBond=new BondTubeStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.particlestick)
-			{
+			else if(UIData.bondtype==UIData.BondType.particlestick) {
 				IBondStyle displayBond=new BondParticleStyle();
 				displayBond.DisplayBonds();
-
 			}			
 			CreatGameObjectArray();
+			BallUpdate.resetRadii = true;
+			//BallUpdate.resetColors = true;
+			Debug.Log("Exiting :: CubeToSphere");
 		}
 		
 		
-		public static void SphereToCube()
-		{
+		public static void SphereToCube() {
 			UIData.resetDisplay=false;
-			DestroyObject();
-			IAtomStyle displayAtom;
+//			DestroyObject();
+			HideObject();
+			if(UIData.atomtype == UIData.AtomType.cube){
+				GameObject cbmObject = GameObject.FindGameObjectWithTag("CubeManager");
+				CubeManager cbManager = cbmObject.GetComponent<CubeManager>();
+				cbManager.EnableRenderers();
+				
+				if(!UIData.isCubeLoaded){
+					IAtomStyle displayAtom;
 
-			Debug.Log("UIData.atomtype :: "+UIData.atomtype);
-			displayAtom = new AtomCubeStyle();
-			displayAtom.DisplayAtoms(UIData.atomtype);
+					Debug.Log("UIData.atomtype :: "+UIData.atomtype);
+					displayAtom = new AtomCubeStyle();
+					displayAtom.DisplayAtoms(UIData.atomtype);
+				}
+			}
+			else if(UIData.atomtype == UIData.AtomType.hyperball){
+				GameObject hbmObject = GameObject.FindGameObjectWithTag("HBallManager");
+				HBallManager hbManager = hbmObject.GetComponent<HBallManager>();
+				hbManager.EnableRenderers();
+				
+				if(!UIData.isHBallLoaded){
+					IAtomStyle displayAtom;
+
+					Debug.Log("UIData.atomtype :: "+UIData.atomtype);
+					displayAtom = new AtomCubeStyle();
+					displayAtom.DisplayAtoms(UIData.atomtype);
+				}
+			}
 			
-			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick)
-			{
+			
+			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick) {
 				IBondStyle displayBond=new BondCubeStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.line)
-			{
+			else if(UIData.bondtype==UIData.BondType.line) {
 				IBondStyle displayBond=new BondLineStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.tubestick)
-			{
+			else if(UIData.bondtype==UIData.BondType.tubestick)	{
 				IBondStyle displayBond=new BondTubeStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.particlestick)
-			{
+			else if(UIData.bondtype==UIData.BondType.particlestick)	{
 				IBondStyle displayBond=new BondParticleStyle();
 				displayBond.DisplayBonds();
-
 			}
 			CreatGameObjectArray();
+			BallUpdate.resetRadii = true;
+			//BallUpdate.resetColors = true;
 			Debug.Log("Exiting :: SphereToCube");
-
 		}
 		
-		public static void ResetBondDisplay()
-		{
+		public static void ResetBondDisplay() {
 			UIData.resetBondDisplay=false;
 			
 			DestroyBondObject();
-			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick)
-			{
+			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick) {
 				IBondStyle displayBond=new BondCubeStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.line)
-			{
+			else if(UIData.bondtype==UIData.BondType.line) {
 				IBondStyle displayBond=new BondLineStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.tubestick)
-			{
+			else if(UIData.bondtype==UIData.BondType.tubestick)	{
 				IBondStyle displayBond=new BondTubeStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.particlestick)
-			{
+			else if(UIData.bondtype==UIData.BondType.particlestick)	{
 				IBondStyle displayBond=new BondParticleStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.nobond)
-			{
-				
-			}
-			CreatBondGameObjectArray();			
-	
-		}
-		
-		private static void Change(GameObject[] oes,int type)
-		{
-			foreach(GameObject o in oes)
-			{
-				BallUpdate comp = o.GetComponent<BallUpdate>();
-				switch(type)
-				{
-					case 0:
-						comp.atomcolor = MoleculeModel.carbonColor;
-						comp.SetRayonFactor((MoleculeModel.carbonScale)/100);
-						break;
-					case 1:
-						comp.atomcolor = MoleculeModel.nitrogenColor;
-						comp.SetRayonFactor((MoleculeModel.nitrogenScale)/100);
-						
-						break;
-					case 2:
-						comp.atomcolor = MoleculeModel.oxygenColor;
-						comp.SetRayonFactor((MoleculeModel.oxygenScale)/100);
-						
-						break;
-					case 3:
-						comp.atomcolor = MoleculeModel.sulphurColor;
-						comp.SetRayonFactor((MoleculeModel.sulphurScale)/100);
-						
-						break;
-					case 4:
-						comp.atomcolor = MoleculeModel.phosphorusColor;
-						comp.SetRayonFactor((MoleculeModel.phosphorusScale)/100);
-						
-						break;
-					case 5:
-						comp.atomcolor = MoleculeModel.hydrogenColor;
-						comp.SetRayonFactor((MoleculeModel.hydrogenScale)/100);
-						
-						break;						
-					case 6:
-						comp.atomcolor = MoleculeModel.unknownColor;
-						comp.SetRayonFactor((MoleculeModel.unknownScale)/100);
-						
-						break;
-					default :break;
-				}
-				MoleculeModel.p[comp.number].color = comp.atomcolor;	
-			}
+//			else if(UIData.bondtype==UIData.BondType.nobond) {}
+			CreatBondGameObjectArray();
 			
+			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick)
+			{
+					GameObject hbManagerObj = GameObject.FindGameObjectWithTag("HBallManager");
+					HBallManager hbManager = hbManagerObj.GetComponent<HBallManager>();
+					hbManager.findBonds();
+			}
 		}
+
 		
-		
-		public static void Display()
-		{
-			//UIData.EnableUpdate=false;
+		public static void Display() {
+//			UIData.EnableUpdate=false;
 			IAtomStyle displayAtom;
-			if(UIData.isSphereToCube)
-			{
+			if(UIData.isSphereToCube) {
 				displayAtom=new AtomCubeStyle();
+				Debug.Log("DisplayMolecule.Display(): New atom cube style");
 			}
 			
-			else
-			{
+			else {
 				displayAtom=new AtomSphereStyle();
+				Debug.Log("DisplayMolecule.Display(): New atom sphere style");
 			}
+			Debug.Log("DisplayAtoms here DisplayAtoms here DisplayAtoms here DisplayAtoms here");
 			displayAtom.DisplayAtoms(UIData.atomtype);
-			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick)
-			{
+			if(UIData.bondtype==UIData.BondType.cube||UIData.bondtype==UIData.BondType.hyperstick||UIData.bondtype==UIData.BondType.bbhyperstick) {
 				IBondStyle displayBond=new BondCubeStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.line)
-			{
+			else if(UIData.bondtype==UIData.BondType.line) {
 				IBondStyle displayBond=new BondLineStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.tubestick)
-			{
+			else if(UIData.bondtype==UIData.BondType.tubestick) {
 				IBondStyle displayBond=new BondTubeStyle();
 				displayBond.DisplayBonds();
-
 			}
-			else if(UIData.bondtype==UIData.BondType.particlestick)
-			{
+			else if(UIData.bondtype==UIData.BondType.particlestick) {
 				IBondStyle displayBond=new BondParticleStyle();
 				displayBond.DisplayBonds();
-
 			}
 			CreatGameObjectArray();
+			CheckResidues();
 		
-			
+			if (GUIMoleculeController.HYPERBALLSDEFAULT){
+				GUIMoleculeController.toggle_NA_HBALLSMOOTH = !GUIMoleculeController.toggle_NA_HBALLSMOOTH;
+				UIData.hballsmoothmode = GUIMoleculeController.toggle_NA_HBALLSMOOTH;
+			}
+ 
 			UIData.hasMoleculeDisplay=true;
-			//UIData.EnableUpdate=true;
-			
+//			UIData.EnableUpdate=true;
 
 		}
 		
-		public static void DisplayFieldLine()
-		{
-			//FieldLineStyle fieldlinestyle=new FieldLineStyle();
+		public static void DisplayFieldLine() {
+//			FieldLineStyle fieldlinestyle=new FieldLineStyle();
 			FieldLineStyle.DisplayFieldLine();				
 		}
 		
-		private static void CreatGameObjectArray()
-		{
-			MoleculeModel.Ces=GameObject.FindGameObjectsWithTag("C");
-			MoleculeModel.Nes=GameObject.FindGameObjectsWithTag("N");
-			MoleculeModel.Oes=GameObject.FindGameObjectsWithTag("O");
-			MoleculeModel.Ses=GameObject.FindGameObjectsWithTag("S");
-			MoleculeModel.Pes=GameObject.FindGameObjectsWithTag("P");
-			MoleculeModel.Hes=GameObject.FindGameObjectsWithTag("H");			
-			MoleculeModel.NOes=GameObject.FindGameObjectsWithTag("X");
-			MoleculeModel.clubs=GameObject.FindGameObjectsWithTag("Club");
+		private static void CreatGameObjectArray() {
+			MoleculeModel.atomsByChar.Clear();
+			MoleculeModel.atomsByChar.Add("C", GameObject.FindGameObjectsWithTag("C"));
+			MoleculeModel.atomsByChar.Add("N", GameObject.FindGameObjectsWithTag("N"));
+			MoleculeModel.atomsByChar.Add("O", GameObject.FindGameObjectsWithTag("O"));
+			MoleculeModel.atomsByChar.Add("S", GameObject.FindGameObjectsWithTag("S"));
+			MoleculeModel.atomsByChar.Add("P", GameObject.FindGameObjectsWithTag("P"));
+			MoleculeModel.atomsByChar.Add("H", GameObject.FindGameObjectsWithTag("H"));			
+			MoleculeModel.atomsByChar.Add("X", GameObject.FindGameObjectsWithTag("X"));
+			MoleculeModel.clubs = GameObject.FindGameObjectsWithTag("Club");
 			
-			
-			// MoleculeModel.boxes=ControlMolecule.SetBoxes(MoleculeModel.Ces,MoleculeModel.Nes,MoleculeModel.Oes,
-			// MoleculeModel.Ses, MoleculeModel.Pes,MoleculeModel.Hes,MoleculeModel.NOes);
-			
+//			MoleculeModel.boxes=ControlMolecule.SetBoxes(MoleculeModel.Ces,MoleculeModel.Nes,MoleculeModel.Oes,
+//			MoleculeModel.Ses, MoleculeModel.Pes,MoleculeModel.Hes,MoleculeModel.NOes);
 		}
 		
-		public static void DestroyFieldLine()
-		{
+		private static void CheckResidues() {
+			if(!UIData.hasResidues)
+				return;
+			Debug.Log("Looking for protonated HIS"); // Doesn't handle N-ter and C-ter HIP
+			for(int i = 0; i < MoleculeModel.atomsResnamelist.Count; i++){
+				if(MoleculeModel.atomsResnamelist[i] == "HIS"){
+					if(MoleculeModel.residues[MoleculeModel.residueIds[i]].Count == 18){ // 8 H and 10 others in protonated HIS
+						MoleculeModel.atomsResnamelist[i] = "HIP";
+					}
+				}
+			}
+			foreach(string res in MoleculeModel.atomsResnamelist)
+				if(!MoleculeModel.existingRes.Contains(res))
+					MoleculeModel.existingRes.Add(res);
+			
+			MoleculeModel.existingRes.Sort();
+				
+		}
+		
+		public static void DestroyFieldLine() {
 			GameObject FieldLineManager=GameObject.Find("FieldLineManager");
 			FieldLineModel Line=FieldLineManager.transform.GetComponent<FieldLineModel>();
 			Line.killCurrentEffects();
-			MoleculeModel.FieldLineFileExist=false;
+			MoleculeModel.fieldLineFileExists = false;
 		}
-
-		public static void DestroyObject()
-		{
+		
+		public static void HideObject() {
+			if(UIData.atomtype != UIData.AtomType.hyperball){
+				GameObject hbManagerObj = GameObject.FindGameObjectWithTag("HBallManager");
+				HBallManager hbManager = hbManagerObj.GetComponent<HBallManager>();
+				hbManager.DisableRenderers();
+			}
+			if(UIData.atomtype != UIData.AtomType.sphere){
+				GameObject spManagerObj = GameObject.FindGameObjectWithTag("SphereManager");
+				SphereManager spManager = spManagerObj.GetComponent<SphereManager>();
+				spManager.DisableRenderers();
+			}
+			if(UIData.atomtype != UIData.AtomType.cube){
+				GameObject cbManagerObj = GameObject.FindGameObjectWithTag("CubeManager");
+				CubeManager cbManager = cbManagerObj.GetComponent<CubeManager>();
+				cbManager.DisableRenderers();
+			}
+			
+			DestroyBondObject();
+		}
+		
+		public static void DestroyObject() {
+			
+			if(MoleculeModel.atomsByChar!=null) {
+				foreach(string key in MoleculeModel.atomsByChar.Keys)
+					foreach(GameObject box in MoleculeModel.atomsByChar[key])
+						Object.DestroyImmediate(box,true);
+			}
+			
+			DestroyBondObject();
+			
 			GameObject 	SpriteManager;
-			if(!GameObject.Find("SpriteManager"))
-			{
+			if(!GameObject.Find("SpriteManager")) {
 				SpriteManager=new GameObject();
 				SpriteManager.name="SpriteManager";
 			}
 			else
-			{
 				SpriteManager=GameObject.Find("SpriteManager");
-			}
+
 			SpriteManager.GetComponent <MeshRenderer>().enabled=false;
 			
-			if(!UIData.openBound||UIData.atomtype!=UIData.AtomType.particleball)//Disappear the BoxBound;
-			{
+			//Disappear the BoxBound;
+			if(!UIData.openBound||UIData.atomtype!=UIData.AtomType.particleball) {
 				GameObject[] TransparentCube;
 				TransparentCube = GameObject.FindGameObjectsWithTag("TransparentCube");
 				for(int k=0;k<TransparentCube.Length;k++)
-				{
 					Object.Destroy(TransparentCube[k]);
-				}
+
 				UIData.openBound=false;
 			}
 
-
-			if(UIData.atomtype!=UIData.AtomType.particleball || UIData.isclear || UIData.changeStructure)
-			{
-
+//			if(UIData.atomtype!=UIData.AtomType.particleball || UIData.isclear || UIData.changeStructure) {
+			if(UIData.isclear || UIData.changeStructure) {
+				
+				HideAtoms();
+				Debug.Log("AtomType:");
+				Debug.Log(UIData.atomtype.ToString());
+				Debug.Log(UIData.bondtype.ToString());
+				
 				Debug.Log("Entering :: Destroy ALL");
-				if(MoleculeModel.atoms!=null)//Will be displayed before the atoms are removed
-				{
+				Debug.Log(UIData.atomtype);
+				 
+				//Will be displayed before the atoms are removed
+				if(MoleculeModel.atoms!=null) {
 					foreach(GameObject box in MoleculeModel.atoms)
-					{
 						Object.DestroyImmediate(box,true);
-					}
+
 					MoleculeModel.atoms.Clear();
-					MoleculeModel.atoms=null;
+					//MoleculeModel.atoms=null;
 				}
-				if(MoleculeModel.clubs!=null)//Will be displayed before the atoms are removed
-				{
-					foreach(GameObject box in MoleculeModel.clubs)
-					{
-						Object.DestroyImmediate(box,true);
-					}
-					MoleculeModel.clubs=null;
-				}
-
-				
-				// if(MoleculeModel.Ces!=null)//Will be displayed before the atoms are removed
-				// {
-				// 	foreach(GameObject box in MoleculeModel.Ces)
-				// 	{
-				// 		Object.DestroyImmediate(box,true);//Destroy function has delay，so you must use DestroyImmediate function
-				// 	}
-				// 	MoleculeModel.Ces=null;
-				// }
-				
-				// if(MoleculeModel.Nes!=null)//Will be displayed before the atoms are removed
-				// {
-				// 	foreach(GameObject box in MoleculeModel.Nes)
-				// 	{
-				// 		Object.DestroyImmediate(box,true);
-				// 	}
-				// 	MoleculeModel.Nes=null;
-				// }
-				
-				// if(MoleculeModel.Oes!=null)//Will be displayed before the atoms are removed
-				// {
-				// 	foreach(GameObject box in MoleculeModel.Oes)
-				// 	{
-				// 		Object.DestroyImmediate(box,true);
-				// 	}
-				// 	MoleculeModel.Oes=null;
-				// }
-				
-				// if(MoleculeModel.Ses!=null)//Will be displayed before the atoms are removed
-				// {
-				// 	foreach(GameObject box in MoleculeModel.Ses)
-				// 	{
-				// 		Object.DestroyImmediate(box,true);
-				// 	}
-				// 	MoleculeModel.Ses=null;
-				// }
-				
-				// if(MoleculeModel.Pes!=null)//Will be displayed before the atoms are removed
-				// {
-				// 	foreach(GameObject box in MoleculeModel.Pes)
-				// 	{
-				// 		Object.DestroyImmediate(box,true);
-				// 	}
-				// 	MoleculeModel.Pes=null;
-				// }
-				// if(MoleculeModel.Hes!=null)//Will be displayed before the atoms are removed
-				// {
-				// 	foreach(GameObject box in MoleculeModel.Hes)
-				// 	{
-				// 		Object.DestroyImmediate(box,true);
-				// 	}
-				// 	MoleculeModel.Hes=null;
-				// }
-				// if(MoleculeModel.NOes!=null)//Will be displayed before the atoms are removed
-				// {
-				// 	foreach(GameObject box in MoleculeModel.NOes)
-				// 	{
-				// 		Object.DestroyImmediate(box,true);
-				// 	}
-				// 	MoleculeModel.Nes=null;
-				// }
-				
-						
-				// if(MoleculeModel.boxes!=null)//Will be displayed before the atoms are removed
-				// {
-				// 	foreach(GameObject box in MoleculeModel.boxes)
-				// 	{
-				// 		Object.DestroyImmediate(box,true);
-				// 	}
-				// 	MoleculeModel.boxes=null;
-				// }
+				//Will be displayed before the atoms are removed
+				DestroyBondObject();
 			}
-
-			//21_08_2012 Alex : we want to keep the particles all the time ! Just hide it.
-			//DestroyParticles();
-			ParticleEffect.radiusFactor = 0;
 		}
-
-		public static void DestroyParticles()
-		{
-			GameObject ParticleManager=GameObject.Find("ParticleManager");
-			ParticleEffect particleeffect=ParticleManager.transform.GetComponent<ParticleEffect>();
-			particleeffect.killCurrentEffects();
-		}
-
 		
-		public static void DestroyBondObject()
-		{
-			if(MoleculeModel.clubs!=null)//Will be displayed before the atoms are removed
-			{
+		public static void DestroyBondObject() {
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.clubs!=null) {
 				foreach(GameObject box in MoleculeModel.clubs)
-				{
 					Object.DestroyImmediate(box,true);
-				}
-				MoleculeModel.clubs=null;
+
+				//MoleculeModel.clubs=null;
 			}
 		}
 
-
-		public static void DestroySurfaces()
-		{
+		public static void DestroySurfaces() {
 			GameObject [] SurfaceManager = GameObject.FindGameObjectsWithTag("SurfaceManager");
 			foreach (GameObject Surface in SurfaceManager)
 				Object.Destroy(Surface);
 		}
+		
+		public static void DestroyRingBlending() {
+			GameObject [] PaperChains = GameObject.FindGameObjectsWithTag("RingBlending");
+			foreach (GameObject PaperChain in PaperChains)
+				Object.Destroy(PaperChain);
+		}
 
-		public static void DestroyElectIso()
-		{
+		public static void DestroySugarRibbons() {
+			GameObject [] SugarRibbons;
+			SugarRibbons = GameObject.FindGameObjectsWithTag("SugarRibbons_RING_BIG");
+			foreach (GameObject SugarRibbon in SugarRibbons)
+				Object.Destroy(SugarRibbon);
+			SugarRibbons = GameObject.FindGameObjectsWithTag("SugarRibbons_RING_little");
+			foreach (GameObject SugarRibbon in SugarRibbons)
+				Object.Destroy(SugarRibbon);
+					SugarRibbons = GameObject.FindGameObjectsWithTag("SugarRibbons_BOND");
+			foreach (GameObject SugarRibbon in SugarRibbons)
+				Object.Destroy(SugarRibbon);
+		}
+
+
+		public static void DestroyOxySpheres(){
+			GameObject [] oxyspheres = GameObject.FindGameObjectsWithTag("OxySphere");
+			foreach (GameObject oxysphere in oxyspheres)
+				Object.Destroy(oxysphere);
+		}
+		
+		public static void DestroyElectIso() {
 			GameObject [] ElecIso = GameObject.FindGameObjectsWithTag("Elect_iso_positive");
 			foreach (GameObject Surface in ElecIso)
 				Object.Destroy(Surface);
@@ -633,315 +591,309 @@ namespace Molecule.View
 		}
 
 
-		private static void CreatBondGameObjectArray()
-		{
+		private static void CreatBondGameObjectArray() {
 			MoleculeModel.clubs=GameObject.FindGameObjectsWithTag("Club");
 		}
-		public static void DeleteAllPhysics()
-		{
-			/*
-			if(MoleculeModel.clubs!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.clubs)
-				{
-					Object.DestroyImmediate(box,true);
-				}
-				MoleculeModel.clubs=null;
-			}
-			*/
+		
+		public static void DeleteAllPhysics() {
 			UIData.resetInteractive=false;
-			
-			if(MoleculeModel.Ces!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Ces)
-				{
-					if(box&&box.GetComponent <SpringJoint>())
-						Object.Destroy (box.GetComponent <SpringJoint>());
-					if(box&&box.GetComponent <Rigidbody>())
-						Object.Destroy (box.GetComponent <Rigidbody>());
-					
-				}
-			}
-			
-			if(MoleculeModel.Nes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Nes)
-				{
-					
-					if(box&&box.GetComponent <SpringJoint>())
-						Object.Destroy (box.GetComponent <SpringJoint>());
-					if(box&&box.GetComponent <Rigidbody>())
-						Object.Destroy (box.GetComponent <Rigidbody>());
-				}
-			}
-			
-			if(MoleculeModel.Oes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Oes)
-				{
-					if(box&&box.GetComponent <SpringJoint>())
-						Object.Destroy (box.GetComponent <SpringJoint>());
-					if(box&&box.GetComponent <Rigidbody>())
-						Object.Destroy (box.GetComponent <Rigidbody>());
-				}
-			}
-			
-			if(MoleculeModel.Ses!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Ses)
-				{
-
-					if(box&&box.GetComponent <SpringJoint>())
-						Object.Destroy (box.GetComponent <SpringJoint>());
-					if(box&&box.GetComponent <Rigidbody>())
-						Object.Destroy (box.GetComponent <Rigidbody>());
-				}
-			}
-			
-			if(MoleculeModel.Pes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Pes)
-				{
-					if(box&&box.GetComponent <SpringJoint>())
-						Object.Destroy (box.GetComponent <SpringJoint>());
-					if(box&&box.GetComponent <Rigidbody>())
-						Object.Destroy (box.GetComponent <Rigidbody>());
-				}
-			}
-			if(MoleculeModel.Hes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Hes)
-				{
-					if(box&&box.GetComponent <SpringJoint>())
-						Object.Destroy (box.GetComponent <SpringJoint>());
-					if(box&&box.GetComponent <Rigidbody>())
-						Object.Destroy (box.GetComponent <Rigidbody>());
+			if(MoleculeModel.atomsByChar!=null) {
+				foreach(string key in MoleculeModel.atomsByChar.Keys){
+					foreach(GameObject box in MoleculeModel.atomsByChar[key]) {
+						if(box&&box.GetComponent <SpringJoint>())
+							Object.Destroy (box.GetComponent <SpringJoint>());
+						if(box&&box.GetComponent <Rigidbody>())
+							Object.Destroy (box.GetComponent <Rigidbody>());
+					}
 				}
 			}
 
-			if(MoleculeModel.NOes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.NOes)
-				{
+/*
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Ces!=null) {
+				foreach(GameObject box in MoleculeModel.Ces) {
 					if(box&&box.GetComponent <SpringJoint>())
 						Object.Destroy (box.GetComponent <SpringJoint>());
 					if(box&&box.GetComponent <Rigidbody>())
 						Object.Destroy (box.GetComponent <Rigidbody>());
 				}
 			}
-
+			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Nes!=null)	{
+				foreach(GameObject box in MoleculeModel.Nes) {
+					if(box&&box.GetComponent <SpringJoint>())
+						Object.Destroy (box.GetComponent <SpringJoint>());
+					if(box&&box.GetComponent <Rigidbody>())
+						Object.Destroy (box.GetComponent <Rigidbody>());
+				}
+			}
+			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Oes!=null)	{
+				foreach(GameObject box in MoleculeModel.Oes) {
+					if(box&&box.GetComponent <SpringJoint>())
+						Object.Destroy (box.GetComponent <SpringJoint>());
+					if(box&&box.GetComponent <Rigidbody>())
+						Object.Destroy (box.GetComponent <Rigidbody>());
+				}
+			}
+			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Ses!=null)	{
+				foreach(GameObject box in MoleculeModel.Ses) {
+					if(box&&box.GetComponent <SpringJoint>())
+						Object.Destroy (box.GetComponent <SpringJoint>());
+					if(box&&box.GetComponent <Rigidbody>())
+						Object.Destroy (box.GetComponent <Rigidbody>());
+				}
+			}
+			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Pes!=null) {
+				foreach(GameObject box in MoleculeModel.Pes) {
+					if(box&&box.GetComponent <SpringJoint>())
+						Object.Destroy (box.GetComponent <SpringJoint>());
+					if(box&&box.GetComponent <Rigidbody>())
+						Object.Destroy (box.GetComponent <Rigidbody>());
+				}
+			}
+			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Hes!=null) {
+				foreach(GameObject box in MoleculeModel.Hes) {
+					if(box&&box.GetComponent <SpringJoint>())
+						Object.Destroy (box.GetComponent <SpringJoint>());
+					if(box&&box.GetComponent <Rigidbody>())
+						Object.Destroy (box.GetComponent <Rigidbody>());
+				}
+			}
+			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.NOes!=null) {
+				foreach(GameObject box in MoleculeModel.NOes) {
+					if(box&&box.GetComponent <SpringJoint>())
+						Object.Destroy (box.GetComponent <SpringJoint>());
+					if(box&&box.GetComponent <Rigidbody>())
+						Object.Destroy (box.GetComponent <Rigidbody>());
+				}
+			}
+*/
 		}
-		public static void AddAllPhysics()
-		{
-			
+		
+		public static void AddAllPhysics() {
 			UIData.resetInteractive=false;
 //			Debug.Log("AddAllPhysics");
-			if(MoleculeModel.Ces!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Ces)
-				{
-
-					if(box&&box.GetComponent <Rigidbody>()==null)
-					{
+			
+			if(MoleculeModel.atomsByChar!=null) {
+				foreach(string key in MoleculeModel.atomsByChar.Keys){
+					foreach(GameObject box in MoleculeModel.atomsByChar[key]) {
+						if(box&&box.GetComponent <Rigidbody>()==null) {
+							box.AddComponent<Rigidbody>();
+	    	   				box.rigidbody.useGravity = false;
+	    	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+	    	   				box.GetComponent<Rigidbody>().drag = 0.6f;
+						}
+						if(box&&box.GetComponent <SpringJoint>()==null) {
+	    	   				box.AddComponent<SpringJoint>();
+							box.GetComponent<SpringJoint>().spring = 5;
+						}
+					}
+				}
+			}
+			
+/*
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Ces!=null) {
+				foreach(GameObject box in MoleculeModel.Ces) {
+					if(box&&box.GetComponent <Rigidbody>()==null) {
 						box.AddComponent<Rigidbody>();
     	   				box.rigidbody.useGravity = false;
     	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     	   				box.GetComponent<Rigidbody>().drag = 0.6f;
 					}
-					if(box&&box.GetComponent <SpringJoint>()==null)
-					{
+					if(box&&box.GetComponent <SpringJoint>()==null) {
     	   				box.AddComponent<SpringJoint>();
 						box.GetComponent<SpringJoint>().spring = 5;
 					}
 				}
 			}
 			
-			if(MoleculeModel.Nes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Nes)
-				{
-
-					if(box&&box.GetComponent <Rigidbody>()==null)
-					{
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Nes!=null) {
+				foreach(GameObject box in MoleculeModel.Nes) {
+					if(box&&box.GetComponent <Rigidbody>()==null) {
 						box.AddComponent<Rigidbody>();
     	   				box.rigidbody.useGravity = false;
     	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     	   				box.GetComponent<Rigidbody>().drag = 0.6f;
 					}
-					if(box&&box.GetComponent <SpringJoint>()==null)
-					{
+					if(box&&box.GetComponent <SpringJoint>()==null) {
     	   				box.AddComponent<SpringJoint>();
 						box.GetComponent<SpringJoint>().spring = 5;
 					}
 				}
 			}
 			
-			if(MoleculeModel.Oes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Oes)
-				{
-
-					if(box&&box.GetComponent <Rigidbody>()==null)
-					{
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Oes!=null) {
+				foreach(GameObject box in MoleculeModel.Oes) {
+					if(box&&box.GetComponent <Rigidbody>()==null) {
 						box.AddComponent<Rigidbody>();
     	   				box.rigidbody.useGravity = false;
     	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     	   				box.GetComponent<Rigidbody>().drag = 0.6f;
 					}
-					if(box&&box.GetComponent <SpringJoint>()==null)
-					{
+					if(box&&box.GetComponent <SpringJoint>()==null) {
     	   				box.AddComponent<SpringJoint>();
 						box.GetComponent<SpringJoint>().spring = 5;
 					}
 				}
 			}
 			
-			if(MoleculeModel.Ses!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Ses)
-				{
-
-					if(box&&box.GetComponent <Rigidbody>()==null)
-					{
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Ses!=null) {
+				foreach(GameObject box in MoleculeModel.Ses) {
+					if(box&&box.GetComponent <Rigidbody>()==null) {
 						box.AddComponent<Rigidbody>();
     	   				box.rigidbody.useGravity = false;
     	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     	   				box.GetComponent<Rigidbody>().drag = 0.6f;
 					}
-					if(box&&box.GetComponent <SpringJoint>()==null)
-					{
+					if(box&&box.GetComponent <SpringJoint>()==null) {
     	   				box.AddComponent<SpringJoint>();
 						box.GetComponent<SpringJoint>().spring = 5;
 					}
 				}
 			}
 			
-			if(MoleculeModel.Pes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Pes)
-				{
-
-					if(box&&box.GetComponent <Rigidbody>()==null)
-					{
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Pes!=null) {
+				foreach(GameObject box in MoleculeModel.Pes) {
+					if(box&&box.GetComponent <Rigidbody>()==null) {
 						box.AddComponent<Rigidbody>();
     	   				box.rigidbody.useGravity = false;
     	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     	   				box.GetComponent<Rigidbody>().drag = 0.6f;
 					}
-					if(box&&box.GetComponent <SpringJoint>()==null)
-					{
+					if(box&&box.GetComponent <SpringJoint>()==null) {
     	   				box.AddComponent<SpringJoint>();
 						box.GetComponent<SpringJoint>().spring = 5;
 					}
 				}
 			}
-			if(MoleculeModel.Hes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.Hes)
-				{
-
-					if(box&&box.GetComponent <Rigidbody>()==null)
-					{
+			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Hes!=null) {
+				foreach(GameObject box in MoleculeModel.Hes) {
+					if(box&&box.GetComponent <Rigidbody>()==null) {
 						box.AddComponent<Rigidbody>();
     	   				box.rigidbody.useGravity = false;
     	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     	   				box.GetComponent<Rigidbody>().drag = 0.6f;
 					}
-					if(box&&box.GetComponent <SpringJoint>()==null)
-					{
+					if(box&&box.GetComponent <SpringJoint>()==null) {
     	   				box.AddComponent<SpringJoint>();
 						box.GetComponent<SpringJoint>().spring = 5;
 					}
 				}
 			}
-
-			if(MoleculeModel.NOes!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject box in MoleculeModel.NOes)
-				{
-
-					if(box&&box.GetComponent <Rigidbody>()==null)
-					{
+			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.NOes!=null) {
+				foreach(GameObject box in MoleculeModel.NOes) {
+					if(box&&box.GetComponent <Rigidbody>()==null) {
 						box.AddComponent<Rigidbody>();
     	   				box.rigidbody.useGravity = false;
     	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     	   				box.GetComponent<Rigidbody>().drag = 0.6f;
 					}
-					if(box&&box.GetComponent <SpringJoint>()==null)
-					{
+					if(box&&box.GetComponent <SpringJoint>()==null) {
     	   				box.AddComponent<SpringJoint>();
 						box.GetComponent<SpringJoint>().spring = 5;
 					}
 				}
 			}
-
+*/
 		}
 		
-		public static void AddCombineMesh()
-		{
+		public static void AddCombineMesh() {
 			UIData.resetMeshcombine=false;
 			GameObject 	MeshCombineManager;
-			if(!GameObject.Find("MeshCombineManager"))
-			{
-
+			if(!GameObject.Find("MeshCombineManager")) {
 				MeshCombineManager=GameObject.CreatePrimitive(PrimitiveType.Cube);
 				MeshCombineManager.name="MeshCombineManager";
-
 			}
 			else
-			{
 				MeshCombineManager=GameObject.Find("MeshCombineManager");
-			}
 			
-			if(MoleculeModel.Ces!=null)//Will be displayed before the atoms are removed
-			{
-				foreach(GameObject Atom in MoleculeModel.Oes)
-				{
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.atomsByChar["C"]!=null) {
+				foreach(GameObject Atom in MoleculeModel.atomsByChar["O"])
 					Atom.transform.parent=MeshCombineManager.transform;
-
-				}
+/*			
+			//Will be displayed before the atoms are removed
+			if(MoleculeModel.Ces!=null) {
+				foreach(GameObject Atom in MoleculeModel.Oes)
+					Atom.transform.parent=MeshCombineManager.transform;
+*/
 				Meshcombine combineComp = MeshCombineManager.GetComponent<Meshcombine>();
-    				combineComp.GoOn();
-
-				
+    			combineComp.GoOn();
 			}
-
-
 		}
 		
-		public static void ClearMemory()
-		{
+		public static void ClearMemory() {
 			MoleculeModel.atomsLocationlist=null;
 			MoleculeModel.atomsTypelist=null;
 			MoleculeModel.atomsResnamelist=null;
 			MoleculeModel.CSidList=null;
-			
+			//MoleculeModel.sortedResIndexByList = null;
+
 			MoleculeModel.CSLabelList=null;
 			MoleculeModel.CSRadiusList=null;
 			MoleculeModel.CSColorList=null;
 			MoleculeModel.CSSGDList=null;
 			MoleculeModel.bondEPList=null;
 			MoleculeModel.bondCAList=null;
-			MoleculeModel.bondList = null;//The list of the bond by position and rotation.
-			
+			MoleculeModel.bondList = null;// The list of the bond by position and rotation.
+			MoleculeModel.resChainList = new List<string> (); //For theses 3, we add directly on the list, so can't "null" them.
+			MoleculeModel.resChainList2 =new List<string> ();
+			MoleculeModel.residues = new Dictionary<int, ArrayList> ();
+			MoleculeModel.atomsSugarTypelist = new List<AtomModel>();
+			MoleculeModel.bondEPDict= new Dictionary<int, List<int>>();
+			MoleculeModel.BondListFromPDB = new List<int[]>();
+			MoleculeModel.bondEPSugarList=new List<int[]>();
+			MoleculeModel.atomsSugarNamelist = new List<string>();
+			MoleculeModel.atomsNumberList = new List<int>();
+			MoleculeModel.atomHetTypeList = new List<string>();
+			MoleculeModel.atomsSugarResnamelist = new List<string>();
+			MoleculeModel.atomsSugarLocationlist = new List<float[]>();
+			MoleculeModel.resSugarChainList = new List<string>();
 			MoleculeModel.CaSplineList=null;
 			MoleculeModel.CaSplineTypeList = null;
 			MoleculeModel.CaSplineChainList = null;
-			MoleculeModel.CatomsLocationlist = null;//CA atoms coordinates
+			MoleculeModel.CatomsLocationlist = null;// CA atoms coordinates
 			
 			MoleculeModel.FieldLineList=null;
-			MoleculeModel.FieldLineDist = null;// Field lines distance arrays
-			
-			MoleculeModel.BFactorList = null;
+//			MoleculeModel.FieldLineDist = null;// Field lines distance arrays
+
+			MoleculeModel.backupCaSplineChainList = new List<string>();
+			MoleculeModel.backupCatomsLocationlist = new List<float[]>();
+			MoleculeModel.BFactorList = new List<float>();
+			MoleculeModel.ssHelixList = new List<float[]>();
+			MoleculeModel.ssStrandList = new List<float[]>();
+			MoleculeModel.helixChainList = new List<string>() ;
+			MoleculeModel.strandChainList = new List<string> ();
+
+			MoleculeModel.atomsForEllipsoidsOrientationPerResidue = new Dictionary<int, int>();
+			MoleculeModel.atomsForEllipsoidsPerResidue = new Dictionary<int, int[]>();
+			MoleculeModel.ellipsoidsPerResidue = new Dictionary<int, GameObject>();
+			MoleculeModel.bondsForReplacedAtoms = new List<GameObject>();
+			MoleculeModel.baseIdx = new List<int>();
 		}
 		
-		public static void DeleteCombineMesh()
-		{
-			
-		}
-		
-	
+		// ???
+		public static void DeleteCombineMesh() {}
 	}
-	
 	
 }

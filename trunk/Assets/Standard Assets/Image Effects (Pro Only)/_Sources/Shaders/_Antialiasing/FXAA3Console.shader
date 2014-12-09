@@ -46,6 +46,8 @@ Shader "Hidden/FXAA III (Console)" {
 		#pragma glsl
 		#pragma fragmentoption ARB_precision_hint_fastest
 		#pragma target 3.0
+		#pragma exclude_renderers d3d11_9x
+		
 		#include "UnityCG.cginc"
 
 		uniform sampler2D _MainTex;

@@ -310,6 +310,8 @@ SubShader {
 		#pragma vertex vert
 		#pragma fragment fragFirst
 		//#pragma fragmentoption ARB_precision_hint_fastest 
+        #pragma exclude_renderers d3d11_9x
+        #pragma glsl
 		
 		ENDCG
 	}
@@ -324,6 +326,8 @@ SubShader {
 		#pragma fragment fragSecond
 		//#pragma fragmentoption ARB_precision_hint_fastest 
 		#pragma target 3.0
+        #pragma exclude_renderers d3d11_9x
+        #pragma glsl
 		
 		ENDCG
 	}
@@ -338,6 +342,8 @@ SubShader {
 		#pragma fragment fragThird
 		//#pragma fragmentoption ARB_precision_hint_fastest 
 		#pragma target 3.0
+        #pragma exclude_renderers d3d11_9x
+        #pragma glsl
 		
 		ENDCG
 	}	

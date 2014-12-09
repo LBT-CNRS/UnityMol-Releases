@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: FieldLineStyle.cs 227 2013-04-07 15:21:09Z baaden $
+/// $Id: FieldLineStyle.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -66,6 +66,7 @@
 using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Molecule.Model;
 using Config;
 using UI;
@@ -81,7 +82,7 @@ public class FieldLineStyle
 	public static void DisplayFieldLine()
 	{
 		
-		if (MoleculeModel.FieldLineFileExist) {
+		if (MoleculeModel.fieldLineFileExists) {
 			Color c1 = Color.white;
 			Debug.Log("Entering :: DisplayFieldLine");
 			
@@ -93,7 +94,7 @@ public class FieldLineStyle
 			Vector3 curent = new Vector3(0,0,0);
 		
 			for(int i=0;i<MoleculeModel.FieldLineList.Count;i++)
-	//		for(int i=7;i<8;i++)
+//			for(int i=7;i<8;i++)
 			{
 				GameObject FieldLineF = new GameObject();
 				FieldLineF.name="FieldLineF"+i;
@@ -104,14 +105,13 @@ public class FieldLineStyle
 		   		lineRenderer.material = new Material (Shader.Find("Custom/FieldLineCg"));
 		    	lineRenderer.SetColors(c1, c1);
 		    	lineRenderer.SetWidth(0.2f,0.2f);
-	//		    lineRenderer.SetVertexCount(((ArrayList)MoleculeModel.FieldLineList[i]).Count);
+//			    lineRenderer.SetVertexCount(((ArrayList)MoleculeModel.FieldLineList[i]).Count);
 				lineRenderer.SetVertexCount(5);
-			
+
 				//distance
-				// contenant de la distance
-				//float[] leng= new float[((ArrayList)MoleculeModel.FieldLineList[i]).Count];
-				//leng[0] = UnityEngine.Random.value * 4.0f;
-				
+//				float[] leng= new float[((ArrayList)MoleculeModel.FieldLineList[i]).Count];
+//				leng[0] = UnityEngine.Random.value * 4.0f;
+
 				//For the static cut we need to store the real world position of each vertex.
 				//luMin will store the min values in x,y,z for the line's vertices.
 				//luWidth will store the max - min
@@ -123,16 +123,14 @@ public class FieldLineStyle
 				int j;
 				int nbPoint =0;
 				int nbsegment=0;
-				for(j=0;j<((ArrayList)MoleculeModel.FieldLineList[i]).Count;j++)
-	//			for(j=0;j<1;j++)
+				for(j=0;j<((List<Vector3>)MoleculeModel.FieldLineList[i]).Count;j++)
+//				for(j=0;j<1;j++)
 				{		
-					Vector3 location=new Vector3(((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j]).x,((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j]).y,((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j]).z);
-	
-	//				// ligne qui grandissent avec le renderer
-	//			        lineRenderer.SetPosition(j, location);
+//					Vector3 location=new Vector3(((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j]).x,((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j]).y,((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j]).z);
+					Vector3 location=new Vector3(	((MoleculeModel.FieldLineList[i])[j]).x,
+													((MoleculeModel.FieldLineList[i])[j]).y,
+													((MoleculeModel.FieldLineList[i])[j]).z);
 				
-	//				// ligne homogène
-					
 					if (j==0){
 				        lineRenderer.SetPosition(j, location);
 						nbPoint +=1;
@@ -146,16 +144,18 @@ public class FieldLineStyle
 
 					}
 				
-					if( j>0){
-						float dist = Vector3.Distance (((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j]), ((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j-1]));
+					if(j>0){
+//						float dist = Vector3.Distance (((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j]), ((Vector3)((ArrayList)MoleculeModel.FieldLineList[i])[j-1]));
+						float dist = Vector3.Distance (	((MoleculeModel.FieldLineList[i])[j]),
+														((MoleculeModel.FieldLineList[i])[j-1])	);
 				 		disttot += dist;
-	//					Debug.Log("dist: " + dist + " disttot:" + disttot);
-						//leng[j] = leng[j-1] + dist;
+//						Debug.Log("dist: " + dist + " disttot:" + disttot);
+//						leng[j] = leng[j-1] + dist;
 						if(disttot>1){	
 							xdif = location[0] - locationbegin[0];						//Debug.Log("xdiff: " + xdif);
 							ydif = location[1] - locationbegin[1];						//Debug.Log("ydiff: " + ydif);
 							zdif = location[2] - locationbegin[2];						//Debug.Log("zdiff: " + zdif);
-	//							Debug.Log("longueur "+disttot +" " + (int)disttot);
+//							Debug.Log("longueur "+disttot +" " + (int)disttot);
 	
 							if(disttot-(int)disttot <0.5)
 								nbsegment = 2*(int)disttot;
@@ -163,16 +163,16 @@ public class FieldLineStyle
 								nbsegment = 2	*(int)disttot+1;
 							
 							int k;	
-	//						Debug.Log("Begin "+locationbegin);
+//							Debug.Log("Begin "+locationbegin);
 							curent = locationbegin;
 							for (k=0; k<nbsegment;k++){
-	//							Debug.Log("curent" + curent);
+//								Debug.Log("curent" + curent);
 								curent[0]+=(xdif/nbsegment);
 								curent[1]+=(ydif/nbsegment);
 								curent[2]+=(zdif/nbsegment);
-	//							Debug.Log("curent" + curent);
+//								Debug.Log("curent" + curent);
 								lineRenderer.SetPosition(nbPoint, curent);
-								//Debug.Log(" "+new Vector3((locationbegin[0]+xdif)/nbsegment,(locationbegin[1]+ydif)/nbsegment,(locationbegin[2]+ydif)/nbsegment));
+//								Debug.Log(" "+new Vector3((locationbegin[0]+xdif)/nbsegment,(locationbegin[1]+ydif)/nbsegment,(locationbegin[2]+ydif)/nbsegment));
 								nbPoint +=1;
 								lineRenderer.SetVertexCount(nbPoint+1);
 
@@ -215,7 +215,7 @@ public class FieldLineStyle
 				lineRenderer.material.SetVector("_WidthPosLookup",luWidth);
 
 				lineRenderer.SetVertexCount(nbPoint);
-				//MoleculeModel.FieldLineDist.Add(leng);
+//				MoleculeModel.FieldLineDist.Add(leng);
 				lineRenderer.material.SetFloat("_Unsynchronize",UnityEngine.Random.value * 10.0f);
 				lineRenderer.material.SetFloat("_timeOff",Time.time);
 				lineRenderer.material.SetColor("_Color",Color.white);

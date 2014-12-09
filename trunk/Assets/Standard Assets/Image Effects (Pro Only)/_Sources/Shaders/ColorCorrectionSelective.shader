@@ -24,11 +24,11 @@ Shader "Hidden/ColorCorrectionSelective" {
 		return o;
 	} 
 	
-	float4 frag(v2f i) : COLOR {
-		float4 color = tex2D (_MainTex, i.uv); 
+	fixed4 frag(v2f i) : COLOR {
+		fixed4 color = tex2D (_MainTex, i.uv); 
 	
-		float differenz = 1.0 - saturate (length (color.rgb - selColor.rgb));
-		color = lerp (color, targetColor, differenz);
+		fixed diff = saturate (2.0 * length (color.rgb - selColor.rgb));
+		color = lerp (targetColor, color, diff);
 		return color;
 	}
 

@@ -60,6 +60,8 @@ Subshader {
 
       CGPROGRAM
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vert
       #pragma fragment frag
       ENDCG

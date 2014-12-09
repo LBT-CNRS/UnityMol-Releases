@@ -67,9 +67,9 @@ SubShader {
 		CGPROGRAM
 		
 		#pragma glsl
-		#pragma target 3.0		
+		#pragma target 3.0
+		#pragma exclude_renderers d3d11_9x
 		
-		#pragma fragmentoption ARB_precision_hint_fastest
 		#pragma vertex vert
 		#pragma fragment frag
 		

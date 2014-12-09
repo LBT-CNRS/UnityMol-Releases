@@ -8,13 +8,13 @@
 class Tonemapping extends PostEffectsBase {
 	
 	public enum TonemapperType { 
-		SimpleReinhard = 0x0,
-		UserCurve = 0x1,
-		Hable = 0x2,
-		Photographic = 0x3,
-		OptimizedHejiDawson = 0x4,
-		AdaptiveReinhard = 0x5,	
-		AdaptiveReinhardAutoWhite = 0x6,	
+		SimpleReinhard,
+		UserCurve,
+		Hable,
+		Photographic,
+		OptimizedHejiDawson,
+		AdaptiveReinhard,	
+		AdaptiveReinhardAutoWhite,	
 	};
  
 	public enum AdaptiveTexSize {
@@ -27,7 +27,7 @@ class Tonemapping extends PostEffectsBase {
 		Square1024 = 1024,
 	};
 	
-	public var type : TonemapperType = TonemapperType.SimpleReinhard;
+	public var type : TonemapperType = TonemapperType.Photographic;
 	public var adaptiveTextureSize = AdaptiveTexSize.Square256;
 	
 	// CURVE parameter
@@ -47,6 +47,7 @@ class Tonemapping extends PostEffectsBase {
 	public var validRenderTextureFormat : boolean = true;
 	private var tonemapMaterial : Material = null;	
 	private var rt : RenderTexture = null;
+	private var rtFormat : RenderTextureFormat =  RenderTextureFormat.ARGBHalf;
 	
 	function CheckResources () : boolean {	
 		CheckSupport (false, true);	
@@ -66,7 +67,7 @@ class Tonemapping extends PostEffectsBase {
 
 	public function UpdateCurve () : float {	
         var range : float = 1.0f;		
-		if(!remapCurve)
+		if(remapCurve.keys.length  < 1)
 			remapCurve =  new AnimationCurve(Keyframe(0, 0), Keyframe(2, 1));	
 		if (remapCurve) {		
 			if(remapCurve.length)
@@ -78,32 +79,44 @@ class Tonemapping extends PostEffectsBase {
 			curveTex.Apply ();			
 		}
 		return 1.0f / range;
-	}	
+	}
+
+	function OnDisable () {
+		if (rt) {
+			DestroyImmediate (rt);
+			rt = null;
+		}
+		if (tonemapMaterial) {
+			DestroyImmediate (tonemapMaterial);
+			tonemapMaterial = null;
+		}
+		if (curveTex) {
+			DestroyImmediate (curveTex);
+			curveTex = null;
+		}
+	}
 	
 	function CreateInternalRenderTexture () : boolean {
 		if (rt) {
 			return false;
 		}
-		rt = new RenderTexture(1,1, 0, RenderTextureFormat.ARGBHalf);
-		var oldrt : RenderTexture = RenderTexture.active;
-		RenderTexture.active = rt;
-		GL.Clear(false, true, Color.white);
+		rtFormat = SystemInfo.SupportsRenderTextureFormat (RenderTextureFormat.RGHalf) ? RenderTextureFormat.RGHalf : RenderTextureFormat.ARGBHalf;
+		rt = new RenderTexture(1,1, 0, rtFormat);
 		rt.hideFlags = HideFlags.DontSave;		
-		RenderTexture.active = oldrt;
 		return true;
 	}
 		
 	// a new attribute we introduced in 3.5 indicating that the image filter chain will continue in LDR
 	@ImageEffectTransformsToLDR	
 	function OnRenderImage (source : RenderTexture, destination : RenderTexture) {		
-		if(CheckResources()==false) {
+		if (CheckResources() == false) {
 			Graphics.Blit (source, destination);
 			return;
 		}		
 		
 		#if UNITY_EDITOR
 		validRenderTextureFormat = true;
-		if(source.format != RenderTextureFormat.ARGBHalf) {
+		if (source.format != RenderTextureFormat.ARGBHalf) {
 			validRenderTextureFormat = false;
 		}
 		#endif
@@ -114,7 +127,7 @@ class Tonemapping extends PostEffectsBase {
 		
 		// SimpleReinhard tonemappers (local, non adaptive)
 		
-		if(type == TonemapperType.UserCurve) {
+		if (type == TonemapperType.UserCurve) {
 			var rangeScale : float = UpdateCurve ();
 			tonemapMaterial.SetFloat("_RangeScale", rangeScale);	
 			tonemapMaterial.SetTexture("_Curve", curveTex);		
@@ -122,47 +135,48 @@ class Tonemapping extends PostEffectsBase {
 			return;	
 		}
 		
-		if(type == TonemapperType.SimpleReinhard) {
+		if (type == TonemapperType.SimpleReinhard) {
 			tonemapMaterial.SetFloat("_ExposureAdjustment", exposureAdjustment);	
 			Graphics.Blit(source, destination, tonemapMaterial, 6);		
 			return;	
 		}
 		
-		if(type == TonemapperType.Hable) {
+		if (type == TonemapperType.Hable) {
 			tonemapMaterial.SetFloat("_ExposureAdjustment", exposureAdjustment);
 			Graphics.Blit(source, destination, tonemapMaterial, 5);
 			return;	
 		}
 		
-		if(type == TonemapperType.Photographic) {
+		if (type == TonemapperType.Photographic) {
 			tonemapMaterial.SetFloat("_ExposureAdjustment", exposureAdjustment);
 			Graphics.Blit(source, destination, tonemapMaterial, 8);
 			return;
 		}
 
-		if(type == TonemapperType.OptimizedHejiDawson) {
+		if (type == TonemapperType.OptimizedHejiDawson) {
 			tonemapMaterial.SetFloat("_ExposureAdjustment", 0.5f * exposureAdjustment);
 			Graphics.Blit(source, destination, tonemapMaterial, 7);
 			return;
 		}
 		
 		// still here? 
-		// => more complex adaptive tone mapping:
+		// =>  adaptive tone mapping:
 		// builds an average log luminance, tonemaps according to 
 		// middle grey and white values (user controlled)
+
 		// AdaptiveReinhardAutoWhite will calculate white value automagically
 		
-		var freshlyBrewedInternalRt : boolean = CreateInternalRenderTexture ();
+		var freshlyBrewedInternalRt : boolean = CreateInternalRenderTexture (); // this retrieves rtFormat, so should happen before rt allocations
 			
-		var rtSquared : RenderTexture = RenderTexture.GetTemporary(adaptiveTextureSize, adaptiveTextureSize, 0, RenderTextureFormat.ARGBHalf);
+		var rtSquared : RenderTexture = RenderTexture.GetTemporary(adaptiveTextureSize, adaptiveTextureSize, 0, rtFormat);
 		Graphics.Blit(source, rtSquared);
 				
 		var downsample : int = Mathf.Log(rtSquared.width * 1.0f, 2);
 				
 		var div : int = 2;
 		var rts : RenderTexture[] = new RenderTexture[downsample];
-		for(var i : int = 0; i < downsample; i++) {
-			rts[i] = RenderTexture.GetTemporary(rtSquared.width / div, rtSquared.width / div, 0, RenderTextureFormat.ARGBHalf);
+		for (var i : int = 0; i < downsample; i++) {
+			rts[i] = RenderTexture.GetTemporary(rtSquared.width / div, rtSquared.width / div, 0, rtFormat);
 			div *= 2;
 		}
 
@@ -188,36 +202,36 @@ class Tonemapping extends PostEffectsBase {
 		// we have the needed values, let's apply adaptive tonemapping
 	
 		adaptionSpeed = adaptionSpeed < 0.001f ? 0.001f : adaptionSpeed;	
+		tonemapMaterial.SetFloat ("_AdaptionSpeed", adaptionSpeed);
+
 		#if UNITY_EDITOR
-			tonemapMaterial.SetFloat("_AdaptionSpeed", adaptionSpeed);
 			if(Application.isPlaying && !freshlyBrewedInternalRt)
-				Graphics.Blit(lumRt, rt, tonemapMaterial, 2); 	
-			else 
-				Graphics.Blit(lumRt, rt, tonemapMaterial, 3); 		
+				Graphics.Blit (lumRt, rt, tonemapMaterial, 2); 
+			else
+				Graphics.Blit (lumRt, rt, tonemapMaterial, 3);
 		#else
-				tonemapMaterial.SetFloat("_AdaptionSpeed", adaptionSpeed);
-				Graphics.Blit(lumRt, rt, tonemapMaterial, 2); 	
+			Graphics.Blit (lumRt, rt, tonemapMaterial, freshlyBrewedInternalRt ? 3 : 2); 	
 		#endif	
 
 		middleGrey = middleGrey < 0.001f ? 0.001f : middleGrey;	
-		tonemapMaterial.SetVector("_HdrParams", Vector4(middleGrey, middleGrey, middleGrey, white*white));
-		tonemapMaterial.SetTexture("_SmallTex", rt);		
+		tonemapMaterial.SetVector ("_HdrParams", Vector4 (middleGrey, middleGrey, middleGrey, white*white));
+		tonemapMaterial.SetTexture ("_SmallTex", rt);
 		if (type == TonemapperType.AdaptiveReinhard) {
 			Graphics.Blit (source, destination, tonemapMaterial, 0); 
 		}
-		else if(type == TonemapperType.AdaptiveReinhardAutoWhite) {
+		else if (type == TonemapperType.AdaptiveReinhardAutoWhite) {
 			Graphics.Blit (source, destination, tonemapMaterial, 10); 		
 		}
 		else {
-			Debug.LogError("No valid adaptive tonemapper type found!");
+			Debug.LogError ("No valid adaptive tonemapper type found!");
 			Graphics.Blit (source, destination); // at least we get the TransformToLDR effect
 		}
 			
 		// cleanup for adaptive
 			
 		for(i = 0; i < downsample; i++) {
-			RenderTexture.ReleaseTemporary(rts[i]);
+			RenderTexture.ReleaseTemporary (rts[i]);
 		}
-		RenderTexture.ReleaseTemporary(rtSquared);
+		RenderTexture.ReleaseTemporary (rtSquared);
 	}
 }

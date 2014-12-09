@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ImprovedFileBrowser.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: ImprovedFileBrowser.cs 635 2014-08-01 13:03:26Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -71,6 +71,7 @@ using System.Collections.Generic;
 /*
     File browser for selecting files or folders at runtime.
  */
+using UI;
 
 public enum FileBrowserType {
     File,
@@ -79,6 +80,8 @@ public enum FileBrowserType {
 
 public class ImprovedFileBrowser {
    
+	private int buttonWidth;
+	
     // Called when the user clicks cancel or select
     public delegate void FinishedCallback(string path);
     // Defaults to working directory
@@ -185,6 +188,7 @@ public class ImprovedFileBrowser {
     public ImprovedFileBrowser(Rect screenRect, string name, FinishedCallback callback) {
         m_name = name;
         m_screenRect = screenRect;
+		buttonWidth = (int) m_screenRect.width / 3;
         m_browserType = FileBrowserType.File;
         m_callback = callback;
         SetNewDirectory(Directory.GetCurrentDirectory());
@@ -195,6 +199,7 @@ public class ImprovedFileBrowser {
 	public ImprovedFileBrowser(Rect screenRect, string name, FinishedCallback callback, string startingPath) {
         m_name = name;
         m_screenRect = screenRect;
+		buttonWidth = (int) m_screenRect.width / 3;
         m_browserType = FileBrowserType.File;
         m_callback = callback;
         SetNewDirectory(startingPath);
@@ -361,8 +366,13 @@ public class ImprovedFileBrowser {
                 GUI.enabled = true;
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
+		    UIData.loadHireRNA = GUILayout.Toggle(UIData.loadHireRNA, "HiRERNA model");
+			UIData.readHetAtom = GUILayout.Toggle (UIData.readHetAtom, "Read HetAtm?");
+			UIData.readWater = GUILayout.Toggle (UIData.readWater, "Read Water?");
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Cancel", GUILayout.Width(50))) {
+                if (GUILayout.Button("Cancel", GUILayout.Width(buttonWidth))) {
                     m_callback(null);
                 }
                 if (BrowserType == FileBrowserType.File) {
@@ -379,7 +389,7 @@ public class ImprovedFileBrowser {
                                         );
                     }
                 }
-                if (GUILayout.Button("Select", GUILayout.Width(50))) {
+                if (GUILayout.Button("Select", GUILayout.Width(buttonWidth))) {
                     if (BrowserType == FileBrowserType.File) {
                         m_callback(Path.Combine(m_currentDirectory, m_files[m_selectedFile]));
                     } else {

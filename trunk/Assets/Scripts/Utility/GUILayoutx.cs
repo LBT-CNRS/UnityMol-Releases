@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: GUILayoutx.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: GUILayoutx.cs 306 2013-06-19 10:08:20Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -66,7 +66,7 @@
 using UnityEngine;
 
 public class GUILayoutx {
-   
+	
     public delegate void DoubleClickCallback(int index);
    
     public static int SelectionList(int selected, GUIContent[] list) {

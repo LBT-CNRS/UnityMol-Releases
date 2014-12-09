@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BondCubeUpdate.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: BondCubeUpdate.cs 350 2013-08-23 13:55:39Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -68,48 +68,108 @@ using System.Collections;
 using UI;
 
 public class BondCubeUpdate : MonoBehaviour {
+	
+	public static float scale = 1.0f;
+	public static float radiusFactor = 1.0f;
+	public GameObject atompointer1=null;
+	public GameObject atompointer2=null;
+	public int atomnumber1;
+	public int atomnumber2;
+	
+	public static float oldscale = 1.0f;
+	public static float width = GUIMoleculeController.bondWidth ;
+	public static float oldWidth = GUIMoleculeController.bondWidth ;
+//	private float oldrayon1 = 2.0f;
+//	private float oldrayon2 = 2.0f;
 
-public static float scale = 1.0f;
-public static float radiusFactor = 1.0f;
-public GameObject atompointer1=null;
-public GameObject atompointer2=null;
-public int atomnumber1;
-public int atomnumber2;
-
-private float oldscale = 1.0f;
-//private float oldrayon1 = 2.0f;
-//private float oldrayon2 = 2.0f;
 
 
-
-// Only check for d3d once
-//private bool d3d= false;
-void  Start (){
-//	d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
-
-}
-
-void  Update ()
-{
-	if(atompointer1==null||atompointer2==null)
-	{
-		DestroyImmediate(this);
-	}
-
-	if(oldscale!=scale)
-	{
-		renderer.material.SetFloat("_Scale",scale);
-		oldscale=scale;
-	}
-	if(UIData.EnableUpdate)
-	{	
+	//Only check for d3d once
+//	private bool d3d= false;
+	void  Start () {
+//		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
+//		Debug.Log("BondCubeUpdate: Start()");
+		width = GUIMoleculeController.bondWidth ;
+		if (atompointer1 != null && atompointer2 != null) {
+			Vector3 v_dist = atompointer2.transform.position - atompointer1.transform.position ;
+			float length = v_dist.magnitude ;
+			Vector3 lscale = new Vector3(transform.localScale.x, transform.localScale.y, length);
+			this.transform.localScale = lscale ;
+		}
 		transform.position = (atompointer1.transform.position + atompointer2.transform.position)/2.0f;
 		transform.LookAt(atompointer2.transform.position);
-
-		renderer.material.SetVector("_Pos1", atompointer1.transform.position);
-		renderer.material.SetVector("_Pos2", atompointer2.transform.position);
+	
+		Vector3 pos1 = atompointer1.transform.position;
+		renderer.material.SetVector("_Pos1", pos1);
+		
+		Vector3 pos2 = atompointer2.transform.position;
+		renderer.material.SetVector("_Pos2", pos2);
+		
+		Color32 color1 = atompointer1.renderer.material.GetColor("_Color");
+		//Debug.Log(color1.ToString());
 		renderer.material.SetColor("_Color1", atompointer1.renderer.material.GetColor("_Color"));
+		
+		Color32 color2 = atompointer2.renderer.material.GetColor("_Color");
+		//Debug.Log(color2.ToString());
 		renderer.material.SetColor("_Color2", atompointer2.renderer.material.GetColor("_Color"));
-	}//if(UIData.EnableUpdate)
-}//Update()
+		
+		Mesh mesh = GetComponent<MeshFilter>().mesh;
+		Vector3[] vertices = mesh.vertices;
+		Color32[] colors = new Color32[vertices.Length];
+		float dist1, dist2;
+		Matrix4x4 localToWorld = transform.localToWorldMatrix;
+		
+		Vector3 pos;
+		for(int i=0; i<vertices.Length; i++) {
+			pos = localToWorld.MultiplyPoint3x4(vertices[i]);
+			dist1 = Vector3.Distance(pos1, pos);
+			dist2 = Vector3.Distance(pos2, pos);
+			if( dist1 < dist2 )
+				colors[i] = color1;
+			else
+				colors[i] = color2;
+		}
+		
+		mesh.colors32 = colors;
+		GetComponent<MeshFilter>().mesh = mesh;
+		renderer.material.shader = Shader.Find("Custom/Ribbons");
+		
+	}
+
+/*
+	void  Update ()
+	{
+		if (!lengthAdjusted && atompointer1 != null && atompointer2 != null) {
+				Vector3 v_dist = atompointer2.transform.position - atompointer1.transform.position ;
+				float length = v_dist.magnitude ;
+				Vector3 lscale = new Vector3(transform.localScale.x, transform.localScale.y, length);
+				this.transform.localScale = lscale ;
+				lengthAdjusted = true ;
+			}
+		if (width != oldWidth) {
+			Vector3 lscale = new Vector3(width, width, transform.localScale.z); 
+			this.transform.localScale = lscale ;	
+		}
+		if(atompointer1==null||atompointer2==null)
+		{
+			DestroyImmediate(this);
+		}
+	
+		if(oldscale!=scale)
+		{
+			renderer.material.SetFloat("_Scale",scale);
+			oldscale=scale;
+		}
+		if(UIData.EnableUpdate)
+		{	
+			transform.position = (atompointer1.transform.position + atompointer2.transform.position)/2.0f;
+			transform.LookAt(atompointer2.transform.position);
+	
+			renderer.material.SetVector("_Pos1", atompointer1.transform.position);
+			renderer.material.SetVector("_Pos2", atompointer2.transform.position);
+			renderer.material.SetColor("_Color1", atompointer1.renderer.material.GetColor("_Color"));
+			renderer.material.SetColor("_Color2", atompointer2.renderer.material.GetColor("_Color"));
+		}//if(UIData.EnableUpdate)
+	}//Update()
+*/
 }

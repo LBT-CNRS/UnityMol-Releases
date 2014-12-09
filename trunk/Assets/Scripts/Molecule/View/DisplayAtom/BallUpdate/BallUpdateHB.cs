@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BallUpdateHB.cs 247 2013-04-07 20:38:19Z baaden $
+/// $Id: BallUpdateHB.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -75,21 +75,22 @@ public class BallUpdateHB : BallUpdate {
 	// Only check for d3d once
 
 	public float z=0.0f;
-	public static float depthfactor = 1.0f;
-	public static bool hide = false;
+//	public static float depthfactor = 1.0f;
+	public static bool hide = false;	
 
-	public  bool xgmml=false;
+//	public  bool xgmml=false;
 
 	public static float maxV = 0;
 
 	public static float drag=0.6f;
 	public static float spring=5;
 	public static Color EnergyGrayColor=Color.black;
+	public bool hasMouseOverMolecule = false;
 
 	
-	private float olddepthfactor = 2.0f;
+//	private float olddepthfactor = 2.0f;
 
-	// public long number=0;
+//	public long number=0;
 
 //	private bool d3d= false;
 		
@@ -103,10 +104,28 @@ public class BallUpdateHB : BallUpdate {
 	public static void SetTexture(Texture text){
 		text2D = text;
 	}
-
-	public static void SetTexture(string resource_name){
+	
+/*
+	public static void SetTexture(string resource_name)
+	{
+		Debug.Log("BallUpdateHB: SetTexture()");
 		texture = resource_name;
 		text2D = (Texture)Resources.Load(texture);
+		BallUpdateHB[] hyperBalls = Object.FindObjectsOfType(typeof(BallUpdateHB)) as BallUpdateHB[];
+		foreach(BallUpdateHB hb in hyperBalls){
+			hb.renderer.material.SetTexture("_MatCap", text2D);
+		}
+	}
+*/
+	
+	public static void ResetColors()
+	{
+		BallUpdateHB[] hyperBalls = Object.FindObjectsOfType(typeof(BallUpdateHB)) as BallUpdateHB[];
+		foreach(BallUpdateHB hb in hyperBalls)
+		{
+			hb.renderer.material.SetColor("_Color", hb.atomcolor);
+		}
+		resetColors = false;
 	}
 
 	public static Color HexToColor(string hexColor)
@@ -143,8 +162,9 @@ public class BallUpdateHB : BallUpdate {
 	void  Start (){
 //		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
 		atomcolor=renderer.material.GetColor("_Color");
-		//atomcolor = new Color(0.5f,0.5f,0.5f);
+//		atomcolor = new Color(0.5f,0.5f,0.5f);
 		renderer.material.SetFloat("_Cut", 0f);
+		renderer.material.SetTexture("_MatCap", text2D);
 	}
 
 	public override void SetRayonFactor(float rf)
@@ -162,11 +182,11 @@ public class BallUpdateHB : BallUpdate {
 	{
 		return rayon*radiusFactor*2.0f;
 	}
-
+	
+/*
 	void  Update (){
 		if(independant)
 			return;
-		renderer.material.SetTexture("_MatCap",text2D);
 
 		// if(cut == 1f)
 		// {
@@ -177,49 +197,51 @@ public class BallUpdateHB : BallUpdate {
 		// if(cut == 0f && renderer.material.GetFloat("_Cut") == 1f)
 		// 	renderer.material.SetFloat("_Cut", cut);
 
-		if(!rigidbody)
+		//if(!rigidbody)
+		if(!GUIMoleculeController.toggle_NA_INTERACTIVE)
 		{
-			if(oldatomcolor!=atomcolor)
-			{
-				renderer.material.SetColor("_Color", atomcolor);
-				oldatomcolor=atomcolor;
-
-			}
+			//if(resetColors)
+			//	ResetColors();
+			
 			if(oldradiusFactor!=radiusFactor)
 			{
 				renderer.material.SetFloat("_Rayon",rayon*radiusFactor);
 				oldradiusFactor=radiusFactor;
 			}
-			if(olddepthfactor!=depthfactor)
-			{
-				olddepthfactor=depthfactor;
-			}
+			
 
-			if(xgmml)
+			if(xgmml) // move this
 			{
 				if(xgmml)this.transform.localPosition = new Vector3(this.transform.localPosition.x,this.transform.localPosition.y,z*depthfactor);
-			}
+
 			
 			//renderer.material.SetVector("_Rotation",MoleculeModel.Center);
 			
 		}
-			
+		
+
 		if(GUIMoleculeController.toggle_NA_INTERACTIVE)
 		{
 			if(!GetComponent<MouseOverMolecule>())
 			{
-				 gameObject.AddComponent<MouseOverMolecule>();
+				gameObject.AddComponent<MouseOverMolecule>();
+				hasMouseOverMolecule = true;
 			}
 		}
 		else
 		{
-			if(GetComponent<MouseOverMolecule>())
+			//if(GetComponent<MouseOverMolecule>())
+			if(hasMouseOverMolecule)
 			{
-				Destroy(GetComponent<MouseOverMolecule>());	
+				Destroy(GetComponent<MouseOverMolecule>());
+				hasMouseOverMolecule = false;
 			}	
 		}
+
 		
-		if(rigidbody)
+		//if(rigidbody)
+
+		if(GUIMoleculeController.toggle_NA_INTERACTIVE)
 		{
 			GetComponent<Rigidbody>().drag=drag;
 			
@@ -243,13 +265,9 @@ public class BallUpdateHB : BallUpdate {
 	//		oldatomcolor = Color.black;
 	//		olddepthfactor = 2.0f;
 		}
-
-		if(UIData.atomtype != UIData.AtomType.hyperball)
-		{
-			renderer.enabled = false;
-		}
-		else
-			renderer.enabled = true;
+		
+		renderer.enabled = (UIData.atomtype == UIData.AtomType.hyperball);
 	}
+*/
 
 }

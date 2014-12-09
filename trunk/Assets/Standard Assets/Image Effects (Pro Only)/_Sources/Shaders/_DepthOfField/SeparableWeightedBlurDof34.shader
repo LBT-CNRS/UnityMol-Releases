@@ -73,7 +73,7 @@ Shader "Hidden/SeparableWeightedBlurDof34" {
 		
 		blurredColor *= 0.2;
 		
-		blurredColor.a = max(tex2D(_TapHigh, i.uv.xy).a, blurredColor.a);
+		blurredColor.a = max(UNITY_SAMPLE_1CHANNEL(_TapHigh, i.uv.xy), blurredColor.a);
 
 		return blurredColor;
 	}
@@ -161,7 +161,7 @@ Shader "Hidden/SeparableWeightedBlurDof34" {
 		
 		blurredColor /= 3.5;
 		
-		blurredColor.a = max(tex2D(_TapHigh, i.uv.xy).a, blurredColor.a);
+		blurredColor.a = max(UNITY_SAMPLE_1CHANNEL(_TapHigh, i.uv.xy), blurredColor.a);
 
 		return blurredColor;
 	}	

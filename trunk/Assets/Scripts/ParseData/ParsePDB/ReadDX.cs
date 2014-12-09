@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ReadDX.cs 247 2013-04-07 20:38:19Z baaden $
+/// $Id: ReadDX.cs 480 2014-05-02 14:51:10Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -75,8 +75,7 @@
 	using System.Text;	
 	using System.Text.RegularExpressions;
 	using UI;
-public class ReadDX : MonoBehaviour
-{
+public class ReadDX : MonoBehaviour {
 //	
 //	public int NX;
 //	public int NY;
@@ -98,36 +97,30 @@ public class ReadDX : MonoBehaviour
 	public int Z;
 
 	private bool loaded = false;
-	public bool Loaded
-	{
+	public bool Loaded {
 		get{ return loaded; }
 	}
 //	
-	public Vector3 GetDelta()
-		{
+	public Vector3 GetDelta() {
 			Debug.Log (_delta);
 			return _delta;
-		}
+	}
 	
-	public Vector3 GetOrigin()
-		{
+	public Vector3 GetOrigin() {
 			Debug.Log(" ori: "+ _origin);
 			return _origin;
-		}
+	}
 	
 	
-	public float getVal(int x, int y, int z)
-		{
+	public float getVal(int x, int y, int z) {
 			return _grid[x,y,z];
-		}
+	}
 	
-	public Vector3 getGradient(int x, int y, int z)
-		{
-			return gradient[x,y,z];	
-		}
+	public Vector3 getGradient(int x, int y, int z) {
+			return gradient[x,y,z];
+	}
 //
-	public void ReadFile(string file_name)
-	{
+	public void ReadFile(string file_name) {
 		ReadFile(file_name, Vector3.zero);
 	}
 
@@ -168,8 +161,7 @@ public class ReadDX : MonoBehaviour
 	}
 	
 
-	public void ReadFile(TextReader sr, Vector3 offset)
-	{
+	public void ReadFile(TextReader sr, Vector3 offset) {
 		DateTime temps = DateTime.Now;
 		string line = "#"; // decalage jusqu'a la taille de la grille
 		while (line[0] == '#')line = sr.ReadLine(); // lecture de la taille de la grille
@@ -284,10 +276,7 @@ public class ReadDX : MonoBehaviour
 						val = float.Parse(vals[0]);
 						_grid[i,j,k]=val;
 						l=1;
-
 					}
-					
-				
 				}
 			}
 		}
@@ -357,22 +346,19 @@ public class ReadDX : MonoBehaviour
 	
 	}
 
-	private void RightHandedToLeftHanded(Mesh m)
-	{
+	private void RightHandedToLeftHanded(Mesh m) {
 		Vector3[] vertices = m.vertices;
 		for(int i=0; i < vertices.Length; i++)
-		{
 			vertices[i].x = -vertices[i].x;
-		}
-		
 		
 		int[] triangles = m.triangles;
-		for(int tri=0; tri < triangles.Length; tri=tri+3)
-	    {
+		
+		for(int tri=0; tri < triangles.Length; tri=tri+3) {
 	        int tmp = triangles[tri];
 	        triangles[tri] = triangles[tri+2];
 	        triangles[tri+2] = tmp;
 	    }
+		
 	    Color[] colors = m.colors;
 	    m.Clear();
 	    m.vertices = vertices;
@@ -381,7 +367,7 @@ public class ReadDX : MonoBehaviour
 	    m.RecalculateNormals();
 	}	
 	
-	public void isoSurface(float seuil, Color color, string tag="SurfaceManager"){
+	public void isoSurface(float threshold, Color color, string tag="SurfaceManager", bool transparency=false){
 		
 		
 		Vector4[] points;
@@ -432,22 +418,40 @@ public class ReadDX : MonoBehaviour
 				}
 			}
 		}
-
+		
+		
+		
+		
 		Debug.Log("Entering :: before marching cubes instance");
-		MarchingCubesRec MCInstance;
-		MCInstance = new MarchingCubesRec();
+		//MarchingCubesRec MCInstance;
+		//MCInstance = new MarchingCubesRec();
 		// PDBtoDEN.DestroySurface();
 		
-		if (seuil >= 0){
-			MCInstance.MCRecMain(X, Y, Z, seuil, points, 0f,false, _delta, _origin,colors,tag);
+		
+		/*
+		
+		if (threshold >= 0){
+			MCInstance.MCRecMain(X, Y, Z, threshold, points, 0f,false, _delta, _origin,colors,tag);
 		}else {
-			MCInstance.MCRecMain(X, Y, Z, seuil, points, 0f,true , _delta, _origin,colors,tag);
+			MCInstance.MCRecMain(X, Y, Z, threshold, points, 0f,true , _delta, _origin,colors,tag);
 			// GameObject iso_neg = GameObject.FindGameObjectWithTag("Elect_iso_negative");
 			// Mesh mesh_neg = iso_neg.GetComponent<MeshFilter>().mesh;
 			// //Unity has a left-handed coordinates system while Molecular obj are right-handed
 			// //So we have to negate the x axis and change the winding order
 			// RightHandedToLeftHanded(mesh_neg);
 		}
+		
+		
+		*/
+		
+		
+		// Works for a single mesh
+		//GenerateMesh.RegularGM(_grid, threshold, _delta, _origin, colors, tag);
+		
+		
+		GenerateMesh.CreateSurfaceObjects(_grid, threshold, _delta, _origin, colors, tag, true);
+		
+			
 		points = null;
 		GC.GetTotalMemory(true);
 		GC.Collect();
@@ -461,8 +465,18 @@ public class ReadDX : MonoBehaviour
 			// //Unity has a left-handed coordinates system while Molecular obj are right-handed
 			// //So we have to negate the x axis and change the winding order
 			RightHandedToLeftHanded(mesh_pos);
-			iso.renderer.material.shader =	Shader.Find("Mat Cap Cut");
-			iso.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
+			if(transparency) {
+				// TransparentZ is a custom shader that uses transparent objects, but with per-triangle transparency sorting,
+				// versus Unity's default per-object transparency sorting. This is necessary because of our intersecting,
+				// non-convex transparent objects.
+				iso.renderer.material.shader = Shader.Find("Transparent/Zsorted");
+				color.a = 0.5f;
+			}
+			else {
+				iso.renderer.material.shader = Shader.Find("Diffuse");
+				//iso.renderer.material.shader =	Shader.Find("Mat Cap Cut");
+				//iso.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
+			}
 			iso.renderer.material.SetColor("_Color", color);
 		}
 //		MCInstance.MCRecMain(NX, NY, NZ, 0.5f, points, 0f);

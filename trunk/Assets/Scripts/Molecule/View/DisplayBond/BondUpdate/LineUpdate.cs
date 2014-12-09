@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: LineUpdate.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: LineUpdate.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -69,79 +69,99 @@ using UI;
 
 public class LineUpdate : MonoBehaviour {
 
-public GameObject atompointer1=null;
-public GameObject atompointer2=null;
-
-public static float scale = 1.0f;
-
-
-private Color oldatomcolor1=Color.black;
-//private Color oldatomcolor2=Color.black;
-
-private Vector3 oldatomposition1=new Vector3(0,0,0);
-private Vector3 oldatomposition2=new Vector3(0,0,0);
-
-private float oldscale = 2.0f;
-
-private float oldradius1 = 1.0f;
-private float oldradius2 = 1.0f;
-
-// Only check for d3d once
-void  Start (){
-}
-
-void  Update ()
-{
-	LineRenderer lineRenderer = GetComponent<LineRenderer>();
-	//lineRenderer.SetVertexCount(2);
-	if(UIData.EnableUpdate)
+	public GameObject atompointer1=null;
+	public GameObject atompointer2=null;
+	
+	public static float scale = 1.0f;
+	
+	
+	public Color oldatomcolor1=Color.black;
+//	private Color oldatomcolor2=Color.black;
+	
+//	private Vector3 oldatomposition1=new Vector3(0,0,0);
+//	private Vector3 oldatomposition2=new Vector3(0,0,0);
+	
+	public float oldscale = 2.0f;
+	
+	public float oldradius1 = 1.0f;
+	public float oldradius2 = 1.0f;
+		
+	public static float width = GUIMoleculeController.bondWidth ;
+	public static float oldWidth = GUIMoleculeController.bondWidth ;
+		
+	public LineRenderer lineRenderer;
+	
+	// Only check for d3d once
+	void  Start ()
 	{
-			if((oldatomcolor1!=atompointer1.renderer.material.GetColor("_Color"))||(oldatomcolor1!=atompointer2.renderer.material.GetColor("_Color")))
-			{
-				lineRenderer.SetColors(atompointer1.renderer.material.GetColor("_Color"), atompointer2.renderer.material.GetColor("_Color"));   
-				
-				oldatomcolor1=atompointer1.renderer.material.GetColor("_Color");
-//				oldatomcolor2=atompointer2.renderer.material.GetColor("_Color");
-			}
-			if((oldatomposition1!=atompointer1.transform.position)||(oldatomposition2!=atompointer2.transform.position))
-			{
-				lineRenderer.SetPosition(0, atompointer1.transform.position);
-				lineRenderer.SetPosition(1, atompointer2.transform.position);
-				oldatomposition1=atompointer1.transform.position;
-				oldatomposition2=atompointer2.transform.position;
-			}
-			
-			if(oldscale!=scale)
-			{
-				if(atompointer1.renderer.material.HasProperty("_Rayon")&&atompointer2.renderer.material.HasProperty("_Rayon"))
-					lineRenderer.SetWidth(	scale*atompointer1.renderer.material.GetFloat("_Rayon"), 
-											scale*atompointer2.renderer.material.GetFloat("_Rayon")); 
-				else
-					lineRenderer.SetWidth(	scale*atompointer1.transform.lossyScale.x/2, 
-											scale*atompointer2.transform.lossyScale.x/2); 
-				oldscale=scale;
-			}
-			
-			if(atompointer1.renderer.material.HasProperty("_Rayon") && atompointer2.renderer.material.HasProperty("_Rayon"))
-			{
-				if((oldradius1!=atompointer1.renderer.material.GetFloat("_Rayon"))||(oldradius2!=atompointer2.renderer.material.GetFloat("_Rayon")))
-				{
-					lineRenderer.SetWidth(	scale*atompointer1.renderer.material.GetFloat("_Rayon"), 
-											scale*atompointer2.renderer.material.GetFloat("_Rayon")); 
-					oldradius1=atompointer1.renderer.material.GetFloat("_Rayon");
-					oldradius2=atompointer2.renderer.material.GetFloat("_Rayon");
-				}
-			}
-			else
-			{
-				if((oldradius1!=atompointer1.transform.lossyScale.x/2)||(oldradius2!=atompointer2.transform.lossyScale.x/2))
-				{
-					lineRenderer.SetWidth(	scale*atompointer1.transform.lossyScale.x/2, 
-											scale*atompointer2.transform.lossyScale.x/2); 
-					oldradius1=atompointer1.transform.lossyScale.x/2;
-					oldradius2=atompointer2.transform.lossyScale.x/2;
-				}
-			}
+		lineRenderer = GetComponent<LineRenderer>();
+		lineRenderer.SetPosition(0, atompointer1.transform.position);
+		lineRenderer.SetPosition(1, atompointer2.transform.position);
+		lineRenderer.SetWidth(width, width);
+//		oldatomposition1=atompointer1.transform.position;
+//		oldatomposition2=atompointer2.transform.position;
 	}
-}
+	
+		
+/*
+	void  Update ()
+	{
+		//lineRenderer.SetVertexCount(2);
+		if(UIData.EnableUpdate)
+		{
+				if((oldatomcolor1!=atompointer1.renderer.material.GetColor("_Color"))||(oldatomcolor1!=atompointer2.renderer.material.GetColor("_Color")))
+				{
+					lineRenderer.SetColors(atompointer1.renderer.material.GetColor("_Color"), atompointer2.renderer.material.GetColor("_Color"));   
+					
+					oldatomcolor1=atompointer1.renderer.material.GetColor("_Color");
+	//				oldatomcolor2=atompointer2.renderer.material.GetColor("_Color");
+				}
+				if((oldatomposition1!=atompointer1.transform.position)||(oldatomposition2!=atompointer2.transform.position))
+				{
+					lineRenderer.SetPosition(0, atompointer1.transform.position);
+					lineRenderer.SetPosition(1, atompointer2.transform.position);
+					oldatomposition1=atompointer1.transform.position;
+					oldatomposition2=atompointer2.transform.position;
+				}
+				
+				if(oldscale!=scale)
+				{
+					if(atompointer1.renderer.material.HasProperty("_Rayon")&&atompointer2.renderer.material.HasProperty("_Rayon"))
+						lineRenderer.SetWidth(	scale*atompointer1.renderer.material.GetFloat("_Rayon"), 
+												scale*atompointer2.renderer.material.GetFloat("_Rayon")); 
+					else
+						lineRenderer.SetWidth(	scale*atompointer1.transform.lossyScale.x/2, 
+												scale*atompointer2.transform.lossyScale.x/2); 
+					oldscale=scale;
+				}
+				
+				if(atompointer1.renderer.material.HasProperty("_Rayon") && atompointer2.renderer.material.HasProperty("_Rayon"))
+				{
+					if((oldradius1!=atompointer1.renderer.material.GetFloat("_Rayon"))||(oldradius2!=atompointer2.renderer.material.GetFloat("_Rayon")))
+					{
+						lineRenderer.SetWidth(	scale*atompointer1.renderer.material.GetFloat("_Rayon"), 
+												scale*atompointer2.renderer.material.GetFloat("_Rayon")); 
+						oldradius1=atompointer1.renderer.material.GetFloat("_Rayon");
+						oldradius2=atompointer2.renderer.material.GetFloat("_Rayon");
+					}
+				}
+				else
+				{
+					
+					width = GUIMoleculeController.bondWidth ;
+					if (width != oldWidth) {
+						lineRenderer.SetWidth(width, width);
+					}
+					
+					if((oldradius1!=atompointer1.transform.lossyScale.x/2)||(oldradius2!=atompointer2.transform.lossyScale.x/2))
+					{
+						lineRenderer.SetWidth(	scale*atompointer1.transform.lossyScale.x/2, 
+												scale*atompointer2.transform.lossyScale.x/2); 
+						oldradius1=atompointer1.transform.lossyScale.x/2;
+						oldradius2=atompointer2.transform.lossyScale.x/2;
+					}
+				}
+		}
+	}
+*/
 }
