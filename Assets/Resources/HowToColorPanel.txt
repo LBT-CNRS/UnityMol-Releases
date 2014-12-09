@@ -1,0 +1,30 @@
+[Erwan - 22/10/13 - r350]
+ColorPanel.txt contains all the premade that can be used in UnityMol through the "Panels" menu.
+You should found it at :
+Assets/Resources/ColorPanel.txt
+Here's how the parser reads informations in the file, if you want to add/edit panels.
+------------------------------------------------------
+The name of the panel must start with a "$" so the parser knows it's a name.
+
+$NAME
+
+You can then use the name (without the "$") in the program to call a panel with SetColorPanel(name) or SetTexturePanel(name).
+------------------------------------------------------
+The contents of the panel are written like this :
+
+ATOM;	RESIDUE;	CHAIN;	R;	G;	B;	A;	TEXTURE_PATH
+
+(please respect the indentation in the file for a better readability)
+Remember to fill every field :
+with "All" for atom/residue/chain if you don't want to be specific about them, 
+with white (1.0, 1.0, 1.0, 1.0) for the color if you want a texture panel,
+with "lit_spheres/divers/daphz05" for the texture if you don't use it (it's the default texture for hyperballs).
+------------------------------------------------------
+Remember to end the file with a last "$"
+
+$
+
+It's for the parser, he really cares about it !
+------------------------------------------------------
+
+Thanks for reading, you can now ColorPanel everything !

@@ -1,0 +1,70 @@
+$Draw Style #1
+None;dessin/draw3;dessin/article-new-ehow-images-a02-00-ep-draw-crosshatching-hatching-800x800;dessin/05-how-shading-crosshatch-3b;dessin/400px-Draw-a-Sphere-Step-7;dessin/draw-shade-spheres-1.3-800X800;dessin/sphere_1_mth;dessin/images-7;dessin/toon;dessin/georgetownatelier_sphere_posterized;dessin/sphere-_tutorial_6;dessin/sphere-1p;dessin/sphere1_1;dessin/sphere1copy;dessin/tumblr_lsyq66Y15D1r0o2eb
+$Draw Style #2
+dessin/how_to_draw_a_basic_sphere_by_unknowntone-d4yfqee;dessin/E-C-S (386);dessin/Sketch 10 - sphere1;dessin/Sketch 9 - sphere;dessin/zbVZE;dessin/0-2;dessin/CharcoalSphere;dessin/74027;dessin/8289_Making_a_metallic_sphere_;dessin/crayon1;dessin/b11;dessin/chiaroscuro-valuescale;dessin/draw-shade-spheres-1.4-800X800;dessin/400px-Draw-a-Sphere-Step-8;dessin/sph_draw_MC
+$Photo Style
+psurftex/2-photos-sphere 2;psurftex/2-photos-sphere;psurftex/1396091264285309;psurftex/basic_shapes_monochrome_oil_painting-(0);psurftex/starter sphere240 2;psurftex/silvery2;objets/MatcapQuartz;artext/white_01;artext/shopblack2;artext/shine_blue;objets/moon2;objets/planet2;objets/bowling1;metal/bronze1;metal/bille-en-acier-359590
+$Mixed Styles #1
+dessin/hayward_sphere;dessin/basic_shapes_monochrome_oil_painting-(81);dessin/sphere-2j;dessin/hqdefault;artistic/caspern;artistic/images;divers/draw2;wood/wood1;glass/glass;artext/or;artext/greenglass;artext/water1;artext/orpur;artext/5_04;artext/banane
+$Mixed Styles #2
+artext/perle;artext/1stwindow;objets/green_glass_860;artext/kirsch;artext/expo;artext/natural_01;organic/bone;organic/skin;wood/sph_orange_MC;divers/binary-sphere-logo
+$Drawn #1
+None;dessin/crayon1;dessin/toon;dessin/draw3;dessin/melon1;dessin/74027;dessin/287457d8aba0f677ac18a913b9f0f441;dessin/article-new-ehow-images-a02-00-ep-draw-crosshatching-hatching-800x800;dessin/bruckner;dessin/gray;dessin/0-2;dessin/05-how-shading-crosshatch-3b;dessin/400px-Draw-a-Sphere-Step-7;dessin/8289_Making_a_metallic_sphere_;dessin/b11
+$Drawn #2
+dessin/chiaroscuro-valuescale;dessin/CharcoalSphere;dessin/cracked_sphere;dessin/draw-shade-spheres-1.3-800X800;dessin/how_to_draw_a_basic_sphere_by_unknowntone-d4yfqee;dessin/E-C-S (386);dessin/escher_3_spheres_1 2;dessin/escher_3_spheres_1 3;dessin/droppedImage;dessin/draw-shade-spheres-1.4-800X800;dessin/ex2_2_carter;dessin/eye2;dessin/fig14-charcoal-sphere;dessin/georgetownatelier_sphere_posterized;dessin/GlhTq
+$Drawn #3
+dessin/GRD3_LS03_IMG01;dessin/GRD3_LS03_IMG21;dessin/images-7;dessin/IMG_1339_2;dessin/IMG_1345_2;dessin/mqdefault;dessin/nancy_sphere;dessin/pointillism 2;dessin/pointillism 3;dessin/rZ0eX;dessin/Scan23c;dessin/Scan23d;dessin/shaded-sphere-1;dessin/Sketch 10 - sphere1;dessin/Sketch 9 - sphere
+$Drawn #4
+dessin/sphere_1_mth;dessin/sphere-_tutorial_6;dessin/sphere-1j;dessin/sphere-1p;dessin/sphere-2p;dessin/sphere-drawingj1;dessin/sphere-exercise-3;dessin/sphere1_1;dessin/sphere1copy;dessin/sphere2-1;dessin/sphere2p;dessin/SphereAndShadow;dessin/spheregif;dessin/spheregif2;dessin/spherewhatches
+$Drawn #5
+dessin/starter sphere240 3;dessin/starter sphere240;dessin/tumblr_lsyq66Y15D1r0o2eb;dessin/tYIlA;dessin/zbVZE;dessin/400px-Draw-a-Sphere-Step-2;dessin/400px-Draw-a-Sphere-Step-8;dessin/sph_draw_MC
+$Drawn #6
+dessin/inks;dessin/blue;dessin/toon2;dessin/hayward_sphere;dessin/basic_shapes_monochrome_oil_painting-(81);dessin/exercise2;dessin/hand_with_reflecting_sphere;dessin/hqdefault;dessin/source;dessin/sphere-2j;dessin/spherej;dessin/sphere2copykw6;dessin/sphere05
+$Surface Textures #1
+psurftex/2-photos-sphere 2;psurftex/2-photos-sphere;psurftex/1396091264285309;psurftex/basic_shapes_monochrome_oil_painting-(0);psurftex/shading-sphere-photo-005;psurftex/sphere-drawing-reference;psurftex/starter sphere240 2;psurftex/thumbnail-140x140-ehow-images-a08-49-it-draw-planets-800x800;psurftex/silvery2
+$objets #1
+objets/green_glass_860;objets/blood;objets/petanque1;objets/moon1;objets/moon2;objets/earth1;objets/earth2;objets/uk1;objets/planet1;objets/planet2;objets/bowling1;objets/tablet1;objets/bille-en-plastique-359520;objets/bille;objets/blu_green_litsphere_by_jujikabane
+$objets #2
+objets/bluew;objets/mat;objets/matcap;objets/MatcapQuartz;objets/stone
+$Fun #1
+fun/pig1;fun/pumpkin1;fun/skull1;fun/skull2;fun/skull3;fun/explode1;fun/china1;fun/china2;fun/euro1;fun/heart1;fun/head1;fun/head2;fun/ballon
+$Bio #1
+bio/fluo1;bio/fluo2;bio/fluo3;bio/fluo4;bio/fluo5;bio/fluo6;bio/fluo7;bio/fluo8;bio/fluo9;bio/fluo10;bio/em1;bio/em2;bio/em3
+$Metal #1
+metal/silvery1;metal/silvery2;metal/puzzle1;metal/black1;metal/chrome1;metal/bronze1;metal/bille-en-acier-359590;metal/gold;metal/metal;metal/silver10
+$Organic #1
+organic/wool1;organic/nobs1;organic/nobs2;organic/spike1;organic/spike2;organic/splinter1;organic/leaves1;organic/anemone;organic/blood2;organic/bone;organic/skin;organic/Skin;organic/vessel
+$Artistic #1
+artistic/caspern;artistic/carspen2;artistic/Gloss_Black;artistic/images;artistic/tableau-moderne-bille
+$Wood #1
+wood/wood1;wood/sph_orange_MC
+$Glass #1
+glass/glass;glass/glass2;glass/glassbw
+$Various #1
+divers/choco;divers/daphz1;divers/daphz2;divers/daphz3;divers/draw2;divers/email;divers/eye3;divers/eye3gray;divers/eye4;divers/eyes2;divers/eyes2gray;divers/eyes5;divers/gooch;divers/hexa;divers/LitSphere_Example1
+$Various #2
+divers/matcap_2;divers/material37;divers/noise;divers/truc;divers/vertical1;divers/hyperballparticle4;divers/hyperballparticlegray;divers/inks2;divers/round_alpha;divers/round;divers/round1;divers/round2;divers/roundlight
+$Art Text v2 #1
+artext/belight;artext/blackNblue;artext/kirsch;artext/chocolat;artext/defaultball;artext/disco;artext/disco2;artext/expo;artext/vert;artext/l+s1;artext/l+s2;artext/lightgray;artext/natural_01;artext/natural_02;artext/neon
+$Art Text v2 #2
+artext/pasha1;artext/piggybank;artext/rougebrillant;artext/red_1;artext/red_simple;artext/redtowhite;artext/rgestampage;artext/rouille;artext/shad1;artext/shad2;artext/shad3;artext/shadow1;artext/shadow2;artext/estampage;artext/simple10
+$Art Text v2 #3
+artext/simple2;artext/simple4;artext/simple6;artext/simple7;artext/simple8;artext/simple9;artext/simple_01;artext/simple_02;artext/simple_03;artext/simple_blue;artext/simple_contrast;artext/simple_doberman;artext/simple_goldcopy;artext/simple_gold;artext/simple_grey
+$Art Text v2 #4
+artext/transp_01;artext/transp_02;artext/transp_03;artext/transp_04;artext/white_01;artext/white_02;artext/white_03;artext/x;artext/aqua;artext/army;artext/balloon1;artext/balloon2;artext/balloon3;artext/balloon4;artext/noir
+$Art Text v2 #5
+artext/bluebuz;artext/blue1;artext/blue2;artext/blue3;artext/blue4;artext/bronze;artext/chocolatlait;artext/concave;artext/sombre;artext/oeuf;artext/or;artext/gris;artext/verrebuz;artext/greenglass;artext/vertvelours
+$Art Text v2 #6
+artext/hameleon;artext/encre;artext/lightgray;artext/peinture;artext/paint1;artext/paint2;artext/paint3;artext/rosebuz;artext/rose;artext/violet;artext/purple1;artext/rougebuz;artext/red1;artext/red2;artext/removableeye
+$Art Text v2 #7
+artext/water1;artext/water2;artext/water3;artext/rayonx;artext/aquarelle;artext/asperge;artext/banane;artext/noirmetal;artext/bronze2;artext/fruits;artext/glossy;artext/lumiereor;artext/bijou;artext/lemon;artext/orclair
+$Art Text v2 #8
+artext/mango;artext/lune;artext/neon4;artext/verreorange;artext/orpur;artext/raye;artext/transparent;artext/water;artext/jaune;artext/1_01;artext/1_02;artext/1_03;artext/1_04;artext/2_01;artext/2_02
+$Art Text v2 #9
+artext/2_03;artext/2_05;artext/4;artext/5_01;artext/5_02;artext/5_03;artext/5_04;artext/6_01;artext/6_02;artext/6_03;artext/6_04;artext/7;artext/8_01;artext/8_02;artext/art_01
+$Art Text v2 #10
+artext/art_02;artext/art_03;artext/art_04;artext/art_06;artext/art_07;artext/art_10;artext/art_11;artext/art_red;artext/ceramique;artext/keramic_01;artext/perle;artext/rainbow_01;artext/rainbow_02;artext/rainbow_03;artext/rainbow_04
+$Art Text v2 #11
+artext/shine_blue;artext/artball1;artext/artball10;artext/artball11;artext/artball2;artext/artball3;artext/artball4;artext/artball5;artext/artball6;artext/artball7;artext/artball8;artext/artball9;artext/shopblack1;artext/shopblack1invert;artext/shopblack2
+$Art Text v2 #12
+artext/shopblack3;artext/shopblack4;artext/shopgreen1;artext/shopgreen2;artext/shoppink1;artext/shoppink2;artext/shoppink3;artext/shopred1;artext/shopred2;artext/shopred3;artext/shopred4;artext/1stwindow;artext/3;artext/7_12;artext/glass1
