@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: PreloadFromPDB.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: PreloadFromPDB.cs 268 2013-05-08 11:15:28Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -102,7 +102,7 @@ public class PreloadFromPDB : MonoBehaviour {
 		fetch_progress = 1.0f;
 
 		StartCoroutine(requestPDB.LoadPDBWWW(UIData.server_url+"pdb_files/"+pdbID+".pdb"));
-		while(!requestPDB.isDone)
+		while(!RequestPDB.isDone)
 		{
 			pdb_progress = requestPDB.progress;
 			yield return new WaitForEndOfFrame();
@@ -111,8 +111,8 @@ public class PreloadFromPDB : MonoBehaviour {
 		pdb_progress = 1.0f;
 		UIData.atomtype = UIData.AtomType.particleball;
 		UIData.bondtype = UIData.BondType.nobond;
-		GUIMoleculeController.menuOpen_show=false;
-		GUIMoleculeController.menuAtom_show=true;
+		GUIMoleculeController.showOpenMenu=false;
+		GUIMoleculeController.showAtomMenu=true;
 		SendMessage("Display",SendMessageOptions.DontRequireReceiver);	
 	}
 	

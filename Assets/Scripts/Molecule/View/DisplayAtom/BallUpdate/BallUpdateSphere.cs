@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BallUpdateSphere.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: BallUpdateSphere.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -69,7 +69,7 @@ using UI;
 
 
 
-public class BallUpdateSphere	 : BallUpdate {
+public class BallUpdateSphere : BallUpdate {
 	// Only check for d3d once
 
 
@@ -77,10 +77,18 @@ public class BallUpdateSphere	 : BallUpdate {
 
 //	private bool d3d= false;
 	void  Start (){
-//		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
+/*
+		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
+ 		// Can be used for transparent spheres. Might be useful?
+		renderer.material.shader = Shader.Find("Transparent/Zsorted");
+		Color tmp = renderer.material.GetColor("_Color");
+		tmp.a = 0.5f;
+		renderer.material.color = tmp;
+*/
 		atomcolor=renderer.material.GetColor("_Color");
 	}
-
+	
+/*
 	void  Update (){
 
 		if(oldatomcolor!=atomcolor)
@@ -91,11 +99,9 @@ public class BallUpdateSphere	 : BallUpdate {
 
 		if((oldradiusFactor!=radiusFactor)||(oldrayonFactor!=rayonFactor))
 		{
-		
 			this.transform.localScale = new Vector3(rayon*radiusFactor*rayonFactor,rayon*radiusFactor*rayonFactor,rayon*radiusFactor*rayonFactor);
 			oldradiusFactor=radiusFactor;
 			oldrayonFactor=rayonFactor;
-		
 		}
 
 		if(UIData.atomtype != UIData.AtomType.sphere)
@@ -107,7 +113,7 @@ public class BallUpdateSphere	 : BallUpdate {
 			renderer.enabled = true;
 	//		renderer.material.SetFloat("_Rayon",rayon*radiusFactor);
 	//		renderer.material.SetColor("_Color", atomcolor);
-
 	}
+*/
 
 }

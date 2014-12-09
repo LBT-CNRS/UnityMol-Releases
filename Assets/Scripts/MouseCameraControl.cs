@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: MouseCameraControl.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: MouseCameraControl.cs 385 2014-03-31 14:37:56Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -69,6 +69,7 @@ using UnityEngine;
 public class MouseCameraControl : MonoBehaviour
 {
     // Mouse buttons in the same order as Unity
+
     public enum MouseButton { Left = 0, Right = 1, Middle = 2, None = 3 }
 
     [System.Serializable]

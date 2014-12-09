@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: GenInterpolationArray.cs 231 2013-04-07 17:44:22Z baaden $
+/// $Id: GenInterpolationArray.cs 405 2014-04-09 08:26:05Z roudier $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -65,49 +65,59 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class GenInterpolationArray {
 
-	public ArrayList InputKeyNodes;
-	public ArrayList InputTypeArray;
+	public List<float[]> InputKeyNodes;
+	public List<string> InputTypeArray;
 	
-	public ArrayList OutputKeyNodes;
-	public ArrayList OutputTypeArray;
+	public List<float[]> OutputKeyNodes;
+	public List<string> OutputTypeArray;
 
 	// Use this for initialization
 	void Start () {}
 
-	public void CalculateSplineArray()
-	{
+	public void CalculateSplineArray() {
 		Debug.Log("Entering :: CalculateSplineArray()");
-		OutputKeyNodes=new ArrayList();
-		OutputTypeArray=new ArrayList();
+		OutputKeyNodes=new List<float[]>();
+		OutputTypeArray=new List<string>();
 		ArrayList ChainAtomList=new ArrayList();
-		ArrayList CaSplineTypeList=new ArrayList();
-		for(int i=1;i<InputKeyNodes.Count;i++)
-		{
-				if(((string)(InputTypeArray[i-1])==(string)(InputTypeArray[i]))&&(i<InputKeyNodes.Count-1))
-				{
-					ChainAtomList.Add(InputKeyNodes[i]);
-					CaSplineTypeList.Add(InputTypeArray[i]);
-				}
-				else
-				{
-					GenInterpolationPoint geninterpolationpoint = new GenInterpolationPoint();
-					geninterpolationpoint.InputKeyNodes=ChainAtomList;
-					geninterpolationpoint.InputTypeArray=CaSplineTypeList;
-					geninterpolationpoint.CalculateSpline();
-										
-					OutputKeyNodes.AddRange(geninterpolationpoint.OutputKeyNodes);
-					OutputTypeArray.AddRange(geninterpolationpoint.OutputTypeArray);
-					ChainAtomList=null;
-					ChainAtomList=new ArrayList();
-					CaSplineTypeList=null;
-					CaSplineTypeList=new ArrayList();
-					ChainAtomList.Add(InputKeyNodes[i]);
-					CaSplineTypeList.Add(InputTypeArray[i]);
-					Debug.Log("(string)(InputTypeArray[i-1])!=(string)(InputTypeArray[i])");
-				}
+		List<string> CaSplineTypeList=new List<string>();
+		for(int i=1;i<InputKeyNodes.Count;i++) {
+			//Debug.Log ("InputType " + InputTypeArray[i] + " " + InputTypeArray.Count);
+			if(((string)(InputTypeArray[i-1])==(string)(InputTypeArray[i]))&&(i<InputKeyNodes.Count-1)) {
+				ChainAtomList.Add(InputKeyNodes[i]);
+				CaSplineTypeList.Add(InputTypeArray[i]);
+				//Debug.Log ("InputTypeArray ==");
+			}
+			else {
+				GenInterpolationPoint geninterpolationpoint = new GenInterpolationPoint();
+				geninterpolationpoint.InputKeyNodes=ChainAtomList;
+				geninterpolationpoint.InputTypeArray=CaSplineTypeList;
+				geninterpolationpoint.CalculateSpline();
+									
+				OutputKeyNodes.AddRange(geninterpolationpoint.OutputKeyNodes);
+				OutputTypeArray.AddRange(geninterpolationpoint.OutputTypeArray);
+				ChainAtomList=null;
+				ChainAtomList=new ArrayList();
+				CaSplineTypeList=null;
+				CaSplineTypeList=new List<string>();
+				ChainAtomList.Add(InputKeyNodes[i]);
+				CaSplineTypeList.Add(InputTypeArray[i]);
+				Debug.Log("(string)(InputTypeArray[i-1])!=(string)(InputTypeArray[i])");
+			}
 		}
 	}
+	
+	
+	/*
+	void Update()
+	{
+		if (UI.UIData.resetSpline)
+		{
+			CalculateSplineArray();
+			UI.UIData.resetSpline = false;
+		}
+	} */
 }

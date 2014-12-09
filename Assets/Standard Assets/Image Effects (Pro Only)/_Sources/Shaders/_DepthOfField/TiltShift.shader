@@ -12,7 +12,7 @@
 	struct v2f {
 		float4 pos : POSITION;
 		float2 uv : TEXCOORD0;
-		#if SHADER_API_D3D9 
+		#if UNITY_UV_STARTS_AT_TOP 
 		float2 uv1 : TEXCOORD1;		
 		#endif
 	};
@@ -46,7 +46,7 @@
 		o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
 		o.uv.xy = v.texcoord;
 		
-		#if SHADER_API_D3D9 
+		#if UNITY_UV_STARTS_AT_TOP 
 		o.uv1.xy = v.texcoord;
 		if (_MainTex_TexelSize.y < 0)
 			o.uv1.y = 1-o.uv1.y;		
@@ -58,7 +58,7 @@
 	} 
 	
 	half4 fragCocFg (v2f i) : COLOR {
-		#if SHADER_API_D3D9 
+		#if UNITY_UV_STARTS_AT_TOP 
 		float d = UNITY_SAMPLE_DEPTH(tex2D (_CameraDepthTexture, i.uv1.xy));
 		#else
 		float d = UNITY_SAMPLE_DEPTH(tex2D (_CameraDepthTexture, i.uv.xy));
@@ -78,7 +78,7 @@
 
 	half4 fragCocBgAfterFg (v2f i) : COLOR 
 	{
-		#if SHADER_API_D3D9 
+		#if UNITY_UV_STARTS_AT_TOP 
 		float d = UNITY_SAMPLE_DEPTH(tex2D (_CameraDepthTexture, i.uv1.xy));
 		#else
 		float d = UNITY_SAMPLE_DEPTH(tex2D (_CameraDepthTexture, i.uv.xy));
@@ -95,7 +95,7 @@
 		
 		coc = clamp (  ( (coc / (curve))), 0.0, 0.999);	
 		
-		#if SHADER_API_D3D9 
+		#if UNITY_UV_STARTS_AT_TOP 
 		half4 cocTex = tex2D (_Coc, i.uv1.xy);
 		#else
 		half4 cocTex = tex2D (_Coc, i.uv.xy);
@@ -108,13 +108,13 @@
 	{
 		half4 color = tex2D (_MainTex, i.uv.xy);
 		
-		#if SHADER_API_D3D9 
+		#if UNITY_UV_STARTS_AT_TOP 
 		half4 blurred = tex2D (_Blurred, i.uv1.xy);
 		#else
 		half4 blurred = tex2D (_Blurred, i.uv.xy);
 		#endif
 		
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		half coc = DecodeFloatRGBA (tex2D (_Coc, i.uv1.xy));
 		#else
 		half coc = DecodeFloatRGBA (tex2D (_Coc, i.uv.xy));
@@ -127,7 +127,7 @@
 	{
 		half4 color = tex2D (_MainTex, i.uv.xy);
 		
-		#if SHADER_API_D3D9 
+		#if UNITY_UV_STARTS_AT_TOP 
 		half4 blurred = tex2D (_Blurred, i.uv1.xy);
 		#else
 		half4 blurred = tex2D (_Blurred, i.uv.xy);
@@ -135,7 +135,7 @@
 		
 		blurred = (half4(0,1,0,1) + blurred) * 0.5;
 		
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		half coc = DecodeFloatRGBA (tex2D (_Coc, i.uv1.xy));
 		#else
 		half coc = DecodeFloatRGBA (tex2D (_Coc, i.uv.xy));
@@ -250,6 +250,8 @@ Subshader {
       CGPROGRAM
       
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vert
       #pragma fragment fragCocFg
 
@@ -261,6 +263,8 @@ Subshader {
       CGPROGRAM
       
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vert
       #pragma fragment fragDofApply
 
@@ -272,6 +276,8 @@ Subshader {
       CGPROGRAM
       
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vertBlur
       #pragma fragment fragDependentBlur
 
@@ -283,6 +289,8 @@ Subshader {
       CGPROGRAM
       
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vertBlur
       #pragma fragment fragBlurMax
 
@@ -294,6 +302,8 @@ Subshader {
       CGPROGRAM
       
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vert
       #pragma fragment fragDofDebug
 
@@ -305,6 +315,8 @@ Subshader {
       CGPROGRAM
       
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vert
       #pragma fragment fragCocBgAfterFg
 
@@ -316,6 +328,8 @@ Subshader {
       CGPROGRAM
       
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vertBlur
       #pragma fragment fragBlurWeighted
 
@@ -327,6 +341,8 @@ Subshader {
       CGPROGRAM
       
       #pragma fragmentoption ARB_precision_hint_fastest
+      // not enough temporary registers for flash
+      #pragma exclude_renderers flash
       #pragma vertex vert
       #pragma fragment fragUp
 

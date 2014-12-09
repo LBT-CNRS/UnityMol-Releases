@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BallUpdateRC.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: BallUpdateRC.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -71,12 +71,11 @@ using UI;
 public class BallUpdateRC : BallUpdate {
 	// Only check for d3d once
 	public static float maxV = 0;
-	// public long number=0;
+//	public long number=0;
 
 
 	void  Start (){
 		atomcolor=renderer.material.GetColor("_Color");
-
 	}
 
 	void  Update ()
@@ -89,10 +88,10 @@ public class BallUpdateRC : BallUpdate {
 
 		if(!rigidbody)
 		{
-			if(oldradiusFactor!=radiusFactor)
+			if(oldRadiusFactor!=radiusFactor)
 			{
 				renderer.material.SetFloat("_Rayon",rayon*radiusFactor);
-				oldradiusFactor=radiusFactor;
+				oldRadiusFactor=radiusFactor;
 			}
 			if(oldatomcolor!=atomcolor)
 			{

@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: MarchingCubesRec.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: MarchingCubesRec.cs 325 2013-07-23 17:36:53Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -240,7 +240,7 @@ public class MarchingCubesRec {
 			MarchingModel.Mvertices[i] = MarchingModel.TMPvertices[i];
 			MarchingModel.MColors[i] = MarchingModel.TMPColors[i];
 		}		
-		GMInstance.GM(MarchingModel.Mvertices, MarchingModel.Mtriangles, center, surfaceNb,MarchingModel.MColors,tag); // generate display, eventually split on several objects
+		GMInstance.GM(MarchingModel.Mvertices, MarchingModel.Mtriangles, center, surfaceNb,MarchingModel.MColors,tag); // generate display, potentially split on several objects
 		
 		SetAllVariablesToNull() ;
 	}
@@ -1941,7 +1941,7 @@ public class MarchingCubesRec {
 //						Debug.Log("New vert : "+intVerts[index[h]]);
 						MarchingModel.TMPvertices[nbIndVertices] = intVerts[index[h]];
 						if(colors != null)
-							MarchingModel.TMPColors[nbIndVertices] = colors[sliceNb*sliceSize+ind];
+							MarchingModel.TMPColors[nbIndVertices] = Color.black;//colors[sliceNb*sliceSize+ind];
 						else
 							MarchingModel.TMPColors[nbIndVertices] = Color.white;
 						nbIndVertices++;

@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: MoleculeModel.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: MoleculeModel.cs 660 2014-08-26 13:46:34Z sebastien $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -63,69 +63,306 @@
 /// J. Comput. Chem., 2011, 32, 2924
 ///
 
-namespace Molecule.Model
-{	
+namespace Molecule.Model {	
 	using UnityEngine;
 	using System.Collections;
+	using System.Collections.Generic;
 	using Config;
 
-	public class MoleculeModel
-	{
-		public static ArrayList atomsLocationlist=new ArrayList();//Atoms coordinates
-		public static ArrayList CatomsLocationlist=new ArrayList();//CA atoms coordinates
+	public class MoleculeModel : MonoBehaviour {
+		public static string sequence = "";
+			
+		/// <summary>
+		/// The coordinates of each atom. List of float[3].
+		/// </summary>
+		public static List<float[]> atomsLocationlist = new List<float[]>();
+		
+		/// <summary>
+		/// The coordinates of each atom, simulated through MDDriver. List of float[3].
+		/// </summary>
+		public static List<Vector3> atomsMDDriverLocationlist;
+		
+		/// <summary>
+		/// The coordinates of each Carbon alpha. List of float[3].
+		/// </summary>
+		public static List<float[]> CatomsLocationlist = new List<float[]>();
 
-		public static ArrayList atomsTypelist=new ArrayList();	//Type of each atom
-		public static ArrayList atomsNamelist=new ArrayList(); //Name of each atom
-		public static ArrayList atomsResnamelist=new ArrayList(); //Residue name of each atom
+		/// <summary>
+		/// Backup of the coordinates of each Carbon alpha. List of float[3].
+		/// </summary>
+		public static List<float[]> backupCatomsLocationlist = new List<float[]>();
 		
-		public static ArrayList bondList=new ArrayList();//The list of the bond by position and rotation.
-		public static ArrayList bondEPList=new ArrayList();//The list of the bond by the position of the two atoms.
-		public static ArrayList CSidList=new ArrayList();
+		/// <summary>
+		/// The coordinates of each Carbon alpha in the CA-Spline. List of float[3].
+		/// </summary>
+		public static List<float[]> CaSplineList = new List<float[]>();
 		
-		public static ArrayList CSSGDList=new ArrayList();
-		public static ArrayList CSRadiusList=new ArrayList();
-		public static ArrayList CSColorList=new ArrayList();
-		public static ArrayList CSLabelList=new ArrayList();
+		/// <summary>
+		/// The type of each atom. List of AtomModel.
+		/// </summary>
+		public static List<AtomModel> atomsTypelist = new List<AtomModel>();
 		
-		public static ArrayList FieldLineList= null;
-		public static ArrayList FieldLineDist= null;// Field lines distance arrays
-		
-		public static ArrayList CaSplineList=new ArrayList();
-		
-		public static ArrayList bondCAList=new ArrayList();
-		
-		public static ArrayList CaSplineTypeList=new ArrayList();
-		public static ArrayList CaSplineChainList=new ArrayList();
-		public static ArrayList BFactorList=new ArrayList();
+		/// <summary>
+		/// The name of each atom. E.g.: O, N, C, H1, H2, etc. List of strings.
+		/// </summary>
+		public static List<string> atomsNamelist = new List<string>();
 
+
+		/// <summary>
+		/// The number of each atoms (in the PDB file)
+		/// </summary>
+		public static List<int> atomsNumberList = new List<int>();
+
+		public static List<string> atomsSugarNamelist = new List<string>();
+		public static List<string> atomsSugarResnamelist = new List<string>();
+		public static List<string> sugarResname = new List<string> {"ABE","ACE","ALT","API","ARA","DHA","FRU","FUC","GAL",
+			"GLC","GUL","IDO","DKN","KDO","MAN","NEG","RHA","RIB","SIA","TAG","TAL","XYL",
+			"GLA","FUL","GLB","NAG","NDG","BMA","MMA","A2G","AAL","BGC"};
+		public static List<float[]> atomsSugarLocationlist = new List<float[]>();
+		public static List<string> resSugarChainList = new List<string>();
+		public static List<int[]> bondEPSugarList = new List<int[]>(); // Not sure of what EP means btw
+		public static List<AtomModel> atomsSugarTypelist = new List<AtomModel>();
+		public static List<int> sortedResIndexByListSugar = new List<int>();
+
+		public static List<int[]> BondListFromPDB = new List<int[]>();
+
+		public static List<string> atomHetTypeList = new List<string>();
+
+
+		/// <summary>
+		/// List of the names existing in the molecule.
+		/// </summary>
+		public static List<string> existingName = new List<string>();
+		
+		/// <summary>
+		/// The name of the residue to which each atom belongs. E.g.: ALA, LEU, ASP, etc. List of strings.
+		/// </summary>
+		public static List<string> atomsResnamelist = new List<string>();
+		
+		/// <summary>
+		/// List of the residues existing in the molecule.
+		/// </summary>
+		public static List<string> existingRes = new List<string>();
+			
+		/// <summary>
+		/// The residue identifiers. One per atom.
+		/// </summary>
+		public static List<int> residueIds = new List<int>();
+		
+		/// <summary>
+		/// The residues. Keys: residue IDs. Values: list of atoms IDs.
+		/// </summary>
+		public static Dictionary<int, ArrayList> residues = new Dictionary<int, ArrayList>();
+		
+		/// <summary>
+		/// The chain of each atom.
+		/// </summary>
+		public static List<string> atomsChainList = new List<string>();
+
+		/// <summary>
+		/// The chain of each residue (only work if residues are numbered by chain).
+		/// </summary>
+		public static List<string> resChainList = new List<string>();
+
+		/// <summary>
+		/// The chain of each residue.
+		/// </summary>
+		public static List<string> resChainList2 = new List<string>();
+
+		/// <summary>
+		/// First residue number in pdb.
+		/// </summary>
+		public static int firstresnb = new int();
+
+		/// <summary>
+		/// List of the chains existing in the molecule.
+		/// </summary>
+		public static List<string> existingChain = new List<string>();
+		
+		/// <summary>
+		/// The color of each atom.
+		/// </summary>
+		public static List<Color> atomsColorList = new List<Color>();
+
+		public static List<float> atomsLocalScaleList = new List<float>();
+
+		/// <summary>
+		/// Terminal residue number of each subunits. 
+		/// </summary>
+		public static List<int> splits = new List<int>();
+		
+		/// <summary>
+		/// Not used anymore.
+		/// The bonds between atoms. Each element of this list is an int[2] where:
+		/// int[0] is the index of the first atom,
+		/// int[1] is the second one.
+		/// </summary>
+		public static List<int[]> bondList = new List<int[]>();
+
+		/// <summary>
+		/// The bonds between atoms. Each element of this list is an int[2] where:
+		/// int[0] is the index of the first atom,
+		/// int[1] is the second one.
+		/// </summary>
+		public static List<int[]> bondEPList = new List<int[]>(); // Not sure of what EP means btw
+
+		/// <summary>
+		/// Dictionary of every bounded atoms (which atoms whith which atoms).
+		/// </summary>
+		public static Dictionary<int, List<int>> bondEPDict= new Dictionary<int, List<int>>();
+
+		public static List<int[]> CSidList = new List<int[]>(); // List of IDs for networks, or something like that.
+		public static List<string[]> CSSGDList = new List<string[]>(); // Dunno
+		public static List<float[]> CSRadiusList = new List<float[]>(); // Mystery too.
+		public static List<string[]> CSColorList = new List<string[]>(); // List of colors, I guess. Probably for networks.
+		public static List<string[]> CSLabelList = new List<string[]>(); // And of labels.
+		
+		public static List<List<Vector3>> FieldLineList= null;
+		//public static ArrayList FieldLineDist= null;// Field lines distance arrays // Apparently not used anywhere
+		
+		//public static ArrayList CaSplineList=new ArrayList();
+
+		/// <summary>
+		/// The bonds between carbon alpha in the CA-Spline. Each element of this list is an int[2] where:
+		/// int[0] is the index of the first CA,
+		/// int[1] is the second one.
+		/// </summary>
+		public static List<int[]> bondCAList=new List<int[]>();
+
+		/// <summary>
+		/// Type of each carbon alpha in the CA-Spline. List of AtomModel.
+		/// </summary>
+		public static List<AtomModel> CaSplineTypeList = new List<AtomModel>();
+
+		/// <summary>
+		/// The chain of each carbon alpha in the CA-Spline.
+		/// </summary>
+		public static List<string> CaSplineChainList = new List<string>();
+
+		/// <summary>
+		/// Sometimes inside pdbs lists are not sorted, and residues mixed
+		/// So I had to create this list to sort residues index by chain ID.
+		/// </summary>
+		public static List<int> sortedResIndexByList = new List<int>();
+
+		/// <summary>
+		/// Backup CaSplineChainList (chain of each carbon alpha in the CA-Spline).
+		/// Used in ReSpline and BfactorRep
+		/// </summary>
+		public static List<string> backupCaSplineChainList = new List<string>();
+
+		/// <summary>
+		/// Bfactor of each atom.
+		/// </summary>
+		public static List<float> BFactorList = new List<float>();
+		
+		/// <summary>
+		/// The atoms per ellipsoids per residue for HiRERNA rendering
+		/// Key is the residue id
+		/// Value is an array of atom ids (3 in any case) parameterizing the ellipsoid
+		/// </summary>
+		public static Dictionary<int, int[]> atomsForEllipsoidsPerResidue = new Dictionary<int, int[]>();
+		
+		public static Dictionary<int, int> atomsForEllipsoidsOrientationPerResidue = new Dictionary<int, int>();
+		
+		/// <summary>
+		/// The index (in tables) of the base extremity.
+		/// </summary>
+		public static List<int> baseIdx = new List<int>();
+		
+		/// <summary>
+		/// RNA Scale parameters
+		/// </summary>
+		public static List<float> scale_RNA = new List<float>();
+		
+		/// <summary>
+		/// Contiguous (really?) list of ellipsoids
+		/// </summary>
+		public static List<GameObject> ellipsoids = new List<GameObject>();
+		
+		/// <summary>
+		/// The ellipsoids per residue.
+		/// </summary>
+		public static Dictionary<int, GameObject> ellipsoidsPerResidue = new Dictionary<int, GameObject>();
+		
+		public static List<GameObject> bondsForReplacedAtoms = new List<GameObject>();
+
+		public static List<Dictionary<string, Vector3>> residueDictionaries;
+		public static List<Dictionary<string, Vector3>> residueDictionariesSugar;
+
+		/// <summary>
+		/// List of informations about each helix (extract from the pdb)
+		/// float[0] is the first residue of each helix
+		/// float[1] is the last residue of each helix
+		/// float[2] the length of each helix
+		/// float[3] the class of each helix
+		/// </summary>
+		public static List<float[]> ssHelixList    = new List<float[]> ();
+
+		/// <summary>
+		/// First and last residue of each strand (extract from the pdb)
+		/// float[0] is the first residue of each strand
+		/// float[1] is the last residue of each strand
+		/// </summary>
+		public static List<float[]> ssStrandList   = new List<float[]> ();
+
+		/// <summary>
+		/// The helix chain list (extract from the pdb).
+		/// </summary>
+		public static List<string> helixChainList  = new List<string>() ;
+
+		/// <summary>
+		/// The strand chain list (extract from the pdb).
+		/// </summary>
+		public static List<string> strandChainList = new List<string> ();
+		
 		public static Vector3 target=new Vector3(0f,0f,0f);//
-		public static Vector3 cameraLocation=new Vector3(0f,0f,0f);//
+		public static Vector3 cameraLocation=new Vector3(10f,10f,10f);//
 		
+		/// <summary>
+		/// The offset for the molecule. The original barycenter of the molecule + this = (0,0,0). Vector3.
+		/// Also used for density grids.
+		/// </summary>
 		public static Vector3 Offset=new Vector3(0f,0f,0f);
+		
+		/// <summary>
+		/// The barycenter of the molecule. Vector3.
+		/// </summary>
 		public static Vector3 Center=new Vector3(0f,0f,0f);
+		
+		/// <summary>
+		/// The "smallest" corner of the bounding box that encloses the molecule.
+		/// </summary>
 		public static Vector3 MinValue= new Vector3(0f,0f,0f);
+		
+		/// <summary>
+		/// The "biggest" corner of the bounding box that encloses the molecule.
+		/// </summary>
 		public static Vector3 MaxValue= new Vector3(0f,0f,0f);
-
-		// OLD BASIC COLOR SCHEME
-//		public static Color oxygenColor=Color.red;
-//		public static Color carbonColor=Color.green;	
-//		public static Color nitrogenColor=Color.blue;
-//		public static Color hydrogenColor=Color.white;					
-//		public static Color sulphurColor=Color.yellow;
-//		//public static string lodineColor="Purple";
-//		//public static string chlorineColor="Green";		
-//		public static Color phosphorusColor=new Color(0.6f,0.3f,0.0f,1f);
-//		public static Color unknownColor=Color.black;
+		
 		// NEW PASTEL COLOR THEME
-		public static Color oxygenColor=new Color(0.827f,0.294f,0.333f,1f);
-		public static Color carbonColor=new Color(0.282f,0.6f,0.498f,1f);	
-		public static Color nitrogenColor=new Color(0.443f,0.662f,0.882f,1f);
-		public static Color hydrogenColor=Color.white;					
-		public static Color sulphurColor=new Color(1f,0.839f,0.325f,1f);
-		public static Color phosphorusColor=new Color(0.960f,0.521f,0.313f,1f);
-		public static Color unknownColor=Color.black;
+		public static ColorObject oxygenColor = new ColorObject(new Color(0.827f,0.294f,0.333f,1f));
+		public static ColorObject carbonColor = new ColorObject(new Color(0.282f,0.6f,0.498f,1f));	
+		public static ColorObject nitrogenColor = new ColorObject(new Color(0.443f,0.662f,0.882f,1f));
+		public static ColorObject hydrogenColor = new ColorObject(Color.white);					
+		public static ColorObject sulphurColor = new ColorObject(new Color(1f,0.839f,0.325f,1f));
+		public static ColorObject phosphorusColor = new ColorObject(new Color(0.960f,0.521f,0.313f,1f));
+		public static ColorObject unknownColor = new ColorObject(Color.black);
+//		public static ColorObject selectionColor = new ColorObject(Color.red);
+//		public static ColorObject residueColor = new ColorObject(Color.white);
 		
-		
+		public static Color GetAtomColor(string atomType) {
+			switch(atomType) {
+			case "O": return oxygenColor.color;
+			case "C": return carbonColor.color;
+			case "N": return nitrogenColor.color;
+			case "H": return hydrogenColor.color;
+			case "S": return sulphurColor.color;
+			case "P": return phosphorusColor.color;	
+			default: return unknownColor.color;
+			}
+		}
+	
 		public static string oxygenNumber="0";
 		public static string carbonNumber="0";
 		public static string nitrogenNumber="0";	
@@ -137,7 +374,7 @@ namespace Molecule.Model
 		public static string unknownNumber="0";
 		
 		// public static GameObject [] boxes;
-		
+/*
 		public static GameObject[] Oes;		
 		public static GameObject[] Ces;
 		public static GameObject[] Nes;
@@ -147,9 +384,12 @@ namespace Molecule.Model
 		//public static GameObject[] Cles;
 		public static GameObject[] Pes;		
 		public static GameObject[] NOes;
+*/
+		
+		public static Dictionary<string, GameObject[]> atomsByChar = new Dictionary<string, GameObject[]>();
+		public static ArrayList atoms = new ArrayList();
 		
 		public static GameObject[] clubs;
-		
 		
 		//public static float []atomsScaleList={1.72f,1.6f,1.32f,2.08f,2.6f,1f};//c\n\o\s\p\n
 		
@@ -178,24 +418,27 @@ namespace Molecule.Model
 		
 		public static string FPS="";
 		
-
-		public static ArrayList atoms = new ArrayList();
-		
 		public static Particle[] p;
 		
 		public static Particle[] fieldlinep;
 
 		public static string newtooltip;
 		
-		public static bool FieldLineFileExist=false;
+		public static bool fieldLineFileExists=false;
+		
+		public static bool dxFileExists = false ; // true if a DX file was found
 
-		public static bool SurfaceFileExist=false;
+		public static bool surfaceFileExists=false;
+
+		public static bool useHetatmForSurface = false;
+
+		public static bool useSugarForSurface = false;
+
+
+		public static bool networkLoaded = false; // set to true when a network is present
 		
 		public static Vector3[] vertices;
 		
-		public MoleculeModel()
-		{
-
-		}
+		public MoleculeModel() {}
 	}
 }

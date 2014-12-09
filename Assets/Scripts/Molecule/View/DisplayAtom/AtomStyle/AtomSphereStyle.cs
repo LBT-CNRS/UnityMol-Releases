@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: AtomSphereStyle.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: AtomSphereStyle.cs 387 2014-04-02 08:21:11Z roudier $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -90,26 +90,36 @@ namespace Molecule.View.DisplayAtom
 		{
 			if(type_atom != UIData.AtomType.particleball || !UIData.isParticlesInitialized ||force_display)
 			{
-				if(MoleculeModel.atoms != null)
-				{
-					MoleculeModel.atoms.Clear();
-					MoleculeModel.atoms=null;
-				}
-				MoleculeModel.atoms=new ArrayList();
-
-				atomtype = type_atom;
-
-				if(atomtype==UIData.AtomType.sphere)
-				{
-					if(UIData.secondarystruct)
-						DisplayAtomMethodBySphere(MoleculeModel.CaSplineList, MoleculeModel.CaSplineTypeList);
-					else
-						DisplayAtomMethodBySphere(MoleculeModel.atomsLocationlist, MoleculeModel.atomsTypelist);
-				}
+				//if(!UIData.isSphereLoaded){
+					if(AtomCubeParent == null)
+						AtomCubeParent = new GameObject("AtomCubeParent");
+					
+					if(MoleculeModel.atoms != null)
+					{
+						MoleculeModel.atoms.Clear();
+						MoleculeModel.atoms=null;
+					}
+					MoleculeModel.atoms=new ArrayList();
+	
+					atomtype = type_atom;
+	
+					if(atomtype==UIData.AtomType.sphere)
+					{
+						
+						if(UIData.secondarystruct){
+							DisplayAtomMethodBySphere(MoleculeModel.CaSplineList, MoleculeModel.CaSplineTypeList);}
+						else
+							DisplayAtomMethodBySphere(MoleculeModel.atomsLocationlist, MoleculeModel.atomsTypelist);
+					}
+					GameObject sphereManagerObj = GameObject.FindGameObjectWithTag("SphereManager");
+					SphereManager sphereManager =  sphereManagerObj.GetComponent<SphereManager>();
+					sphereManager.Init();
+					UIData.isSphereLoaded = true;
+				//}
 			}
 		}
 		
-		public void DisplayAtomMethodBySphere(ArrayList alist, ArrayList typelist)
+		private void DisplayAtomMethodBySphere(IList alist, IList typelist) // used to be public
 		{
 			Vector3 vl=new Vector3();
 			MoleculeModel.atomsnumber=alist.Count;
@@ -120,13 +130,13 @@ namespace Molecule.View.DisplayAtom
 				GameObject o;
 				
 				float [] a=alist[i] as float[];
-				AtomModel aModel= (typelist[i] as AtomModel);
+				AtomModel aModel = (AtomModel)typelist[i];
 				vl.x=a[0];
 				vl.y=a[1];
 				vl.z=a[2];
 				BallUpdateSphere comp1;
 
-				// o=(GameObject)MonoBehaviour.Instantiate(Resources.Load(aModel.type),vl,new Quaternion(0f,0f,0f,0f));
+//				o=(GameObject)MonoBehaviour.Instantiate(Resources.Load(aModel.type),vl,new Quaternion(0f,0f,0f,0f));
 				o = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 				o.transform.position = vl;
 				MoleculeModel.atoms.Add(o);
@@ -135,10 +145,13 @@ namespace Molecule.View.DisplayAtom
 				comp1.rayon = aModel.radius*2;
 				comp1.number=i;
 				comp1.enabled = true;
-				o.transform.renderer.materials[0].SetColor("_Color", aModel.baseColor);
+				comp1.atomcolor = aModel.baseColor; // Why is this suddenly necessary???
+				o.transform.renderer.material.SetColor("_Color", aModel.baseColor);
+//				Debug.Log(o.transform.renderer.material.GetColor("_Color").ToString());
 				comp1.SetRayonFactor(aModel.scale/100);
 				o.tag=aModel.type;
 			}
+			
 		}
 
 

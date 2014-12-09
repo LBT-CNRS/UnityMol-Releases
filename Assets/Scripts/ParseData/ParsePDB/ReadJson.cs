@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ReadJson.cs 223 2013-04-06 22:32:11Z baaden $
+/// $Id: ReadJson.cs 266 2013-05-06 10:41:42Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -67,25 +67,23 @@ namespace  ParseData.ParsePDB
 {
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 public class ReadJson 
 {
 	
-	private ArrayList m_fieldlines;
+	private List<List<Vector3>> m_fieldlines;
 	
-	public ArrayList GetFieldLines()
+	public List<List<Vector3>> GetFieldLines()
 	{
 		return m_fieldlines;
 	}
 			
 			
-	public ArrayList ReadFile(string fieldlines_file_content, Vector3 Offset) 
+	public List<List<Vector3>> ReadFile(string fieldlines_file_content, Vector3 Offset) 
 	{
-		
-
-
-		ArrayList linelist=new ArrayList();
+		List<List<Vector3>> linelist=new List<List<Vector3>>();
 		StringReader sr = new StringReader(fieldlines_file_content);
 		string line = null;
 		line = sr.ReadLine();
@@ -94,14 +92,14 @@ public class ReadJson
 		if(tok[0] == "n")
 		{
 			// We have an .apf file (animated potential fieldlines)
-			ArrayList particlelist = new ArrayList();
+			List<Vector3> particlelist = new List<Vector3>();
 			while(line != null)
 			{
 				tok = line.Split(' ');
 				if(tok[0] == "n" && particlelist.Count > 0)
 				{
 					linelist.Add(particlelist);
-					particlelist = new ArrayList();
+					particlelist = new List<Vector3>();
 				}
 				if(tok[0] == "v")
 				{
@@ -134,7 +132,7 @@ public class ReadJson
 
 			for (int i=0; i<FieldLinesarray.Count; i++) 
 			{
-				ArrayList particlelist=new ArrayList();
+				List<Vector3> particlelist=new List<Vector3>();
 				for(int j=0;j<((ArrayList)FieldLinesarray[i]).Count;j+=3)
 				{
 	//				Debug.Log("FieldLine: " +((ArrayList)FieldLinesarray[i])[j]+", "+((ArrayList)FieldLinesarray[i])[j+1]+", "+((ArrayList)FieldLinesarray[i])[j+2]);

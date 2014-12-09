@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ScenePreload_Network.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: ScenePreload_Network.cs 368 2013-08-29 13:10:00Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -75,7 +75,7 @@ public class ScenePreload_Network : MonoBehaviour {
 	IEnumerator InitScene(RequestPDB requestPDB)
 	{
 		StartCoroutine(requestPDB.LoadXGMML(UIData.server_url+"Scenes/Network/galFiltered.sif.xgmml"));
-		while(!requestPDB.isDone)
+		while(!RequestPDB.isDone)
 		{
 			xml_progress = requestPDB.progress;
 			yield return new WaitForEndOfFrame();
@@ -85,11 +85,11 @@ public class ScenePreload_Network : MonoBehaviour {
 		GUIDisplay.file_extension = "xgmml";	
 		UIData.atomtype=UIData.AtomType.hyperball;
 		UIData.bondtype=UIData.BondType.hyperstick;
-		GUIMoleculeController.rayon = 0.7f;
+		GUIMoleculeController.globalRadius = 0.7f;
 		GUIMoleculeController.shrink = 0.0001f;
-		GUIMoleculeController.linkscale = 0.3f;
-		GUIMoleculeController.menuOpen_show=false;
-		GUIMoleculeController.menuAtom_show=true;
+		GUIMoleculeController.linkScale = 0.3f;
+		GUIMoleculeController.showOpenMenu = false;
+		GUIMoleculeController.showAtomMenu = true;
 		SendMessage("Display",SendMessageOptions.DontRequireReceiver);	
 	}
 	

@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ScenePreload_1KX2.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: ScenePreload_1KX2.cs 368 2013-08-29 13:10:00Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -86,7 +86,7 @@ public class ScenePreload_1KX2 : MonoBehaviour {
 	IEnumerator InitScene(RequestPDB requestPDB)
 	{
 		StartCoroutine(requestPDB.LoadPDBWWW(UIData.server_url+"Scenes/1KX2/1KX2.pdb"));
-		while(!requestPDB.isDone)
+		while(!RequestPDB.isDone)
 		{
 			pdb_progress = requestPDB.progress;
 			Debug.Log(pdb_progress);
@@ -97,11 +97,11 @@ public class ScenePreload_1KX2 : MonoBehaviour {
 		//requestPDB.LoadPDBResource("1KX2");
 		UIData.atomtype = UIData.AtomType.hyperball;
 		UIData.bondtype = UIData.BondType.hyperstick;
-		GUIMoleculeController.menuOpen_show = false;
-		GUIMoleculeController.menuAtom_show = false;
-		GUIMoleculeController.rayon = 0.3f;
+		GUIMoleculeController.showOpenMenu = false;
+		GUIMoleculeController.showAtomMenu = false;
+		GUIMoleculeController.globalRadius = 0.3f;
 		GUIMoleculeController.shrink = 0.0001f;
-		GUIMoleculeController.linkscale = 0.4f;
+		GUIMoleculeController.linkScale = 0.4f;
 		SendMessage("Display",SendMessageOptions.DontRequireReceiver);	
 	}
 	

@@ -157,7 +157,7 @@
 	half4 fragDofApplyBg (v2fDofApply i) : COLOR {		
 		half4 tapHigh = tex2D (_MainTex, i.uv.xy);
 		
-		#if SHADER_API_D3D9 || SHADER_API_D3D11 || SHADER_API_XBOX360
+		#if UNITY_UV_STARTS_AT_TOP
 		if (_MainTex_TexelSize.y < 0)
 			i.uv.xy = i.uv.xy * half2(1,-1)+half2(0,1);
 		#endif
@@ -185,7 +185,7 @@
 	half4 fragDofApplyFg (v2fDofApply i) : COLOR {
 		half4 fgBlur = tex2D(_TapLowForeground, i.uv.xy);	
 		
-		#if SHADER_API_D3D9 || SHADER_API_D3D11 || SHADER_API_XBOX360
+		#if UNITY_UV_STARTS_AT_TOP
 		if (_MainTex_TexelSize.y < 0)
 			i.uv.xy = i.uv.xy * half2(1,-1)+half2(0,1);
 		#endif
@@ -234,7 +234,7 @@
 		half4 color = tex2D (_MainTex, i.uv1.xy);
 		color.a = 0.0;
 
-		#if SHADER_API_D3D9 || SHADER_API_D3D11 || SHADER_API_XBOX360
+		#if UNITY_UV_STARTS_AT_TOP
 		if (_MainTex_TexelSize.y < 0)
 			i.uv1.xy = i.uv1.xy * half2(1,-1)+half2(0,1);
 		#endif

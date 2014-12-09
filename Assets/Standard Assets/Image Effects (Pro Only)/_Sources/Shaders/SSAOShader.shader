@@ -13,7 +13,7 @@ CGINCLUDE
 #pragma exclude_renderers gles
 struct v2f_ao {
 	float4 pos : POSITION;
-	float2 uv : TEXCOORD0; 
+	float2 uv : TEXCOORD0;
 	float2 uvr : TEXCOORD1;
 };
 
@@ -26,14 +26,14 @@ v2f_ao vert_ao (appdata_img v)
 	o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
 	o.uv = TRANSFORM_TEX(v.texcoord, _CameraDepthNormalsTexture);
 	o.uvr = v.texcoord.xy * _NoiseScale;
-	return o; 
+	return o;
 }
 
 sampler2D _CameraDepthNormalsTexture;
 sampler2D _RandomTexture;
 float4 _Params; // x=radius, y=minz, z=attenuation power, w=SSAO power
 
-#if defined(SHADER_API_XBOX360)|| defined(SHADER_API_D3D11)
+#ifdef UNITY_COMPILER_HLSL
 
 #	define INPUT_SAMPLE_COUNT 8
 #	include "frag_ao.cginc"
@@ -48,10 +48,8 @@ float4 _Params; // x=radius, y=minz, z=attenuation power, w=SSAO power
 #	include "frag_ao.cginc"
 
 #else
-
 #	define INPUT_SAMPLE_COUNT
 #	include "frag_ao.cginc"
-
 #endif
 
 ENDCG

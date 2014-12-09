@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: StickUpdate.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: StickUpdate.cs 346 2013-08-19 18:14:34Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -68,88 +68,136 @@ using System.Collections;
 using UI;
 
 public class StickUpdate : MonoBehaviour {
-
-public static float shrink = 0.01f;
-public static float scale = 1.0f;
-public static float radiusFactor = 1.0f;
-public GameObject atompointer1=null;
-public GameObject atompointer2=null;
-public int atomnumber1;
-public int atomnumber2;
-
-private float oldshrink = 0.01f;
-private float oldscale = 1.0f;
-private float oldrayon1 = 2.0f;
-private float oldrayon2 = 2.0f;
-
-public ParticleEmitter emitter;
-
-public bool independant = false;
-
-
-// Only check for d3d once
-//private bool d3d= false;
-void  Start (){
-//	d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
-
-}
-
-void  Update ()
-{
-	if(independant)
-		return;
-		
-	if(atompointer1==null||atompointer2==null)
+	
+	public static bool resetColors = false;
+	
+	public static float shrink = 0.01f;
+	public static float oldshrink = 0.01f;
+	
+	public static float scale = 1.0f;
+	public static float oldscale = 1.0f;
+	
+	public static float radiusFactor = 1.0f;
+	public GameObject atompointer1=null;
+	public GameObject atompointer2=null;
+	public int atomnumber1;
+	public int atomnumber2;
+	
+	
+	
+	public float oldrayon1 = 2.0f;
+	public float oldrayon2 = 2.0f;
+	
+	public ParticleEmitter emitter;
+	
+	public bool independant = false;
+	
+/*
+	public static void SetTexture()
 	{
-		DestroyImmediate(this);
+		StickUpdate[] stickUpdates = Object.FindObjectsOfType(typeof(StickUpdate)) as StickUpdate[];
+		foreach(StickUpdate stu in stickUpdates)
+		{
+			stu.renderer.material.SetTexture("_MatCap", BallUpdateHB.text2D);
+		}
 	}
-	if(oldshrink!=shrink)
-	{
-		renderer.material.SetFloat("_Shrink",shrink);
-		oldshrink=shrink;
+*/
+	
+	public static void ResetColors() {
+		StickUpdate[] stickUpdates = Object.FindObjectsOfType(typeof(StickUpdate)) as StickUpdate[];
+		foreach(StickUpdate stu in stickUpdates) {
+			stu.renderer.material.SetColor("_Color", stu.atompointer1.renderer.material.GetColor("_Color"));
+			stu.renderer.material.SetColor("_Color2", stu.atompointer2.renderer.material.GetColor("_Color"));
+		}
+		resetColors = false;
 	}
-	if(oldscale!=scale)
-	{
-		renderer.material.SetFloat("_Scale",scale);
-		oldscale=scale;
-	}
-	if(UIData.EnableUpdate)
-	{	
-		renderer.material.SetTexture("_MatCap",BallUpdateHB.text2D);
-		renderer.material.SetVector("_TexPos1", atompointer1.transform.position);
-		transform.position = atompointer1.transform.position;
-		renderer.material.SetVector("_TexPos2", atompointer2.transform.position);
+	
+	// Only check for d3d once
+//	private bool d3d= false;
+	void  Start (){
+//		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
 		renderer.material.SetColor("_Color", atompointer1.renderer.material.GetColor("_Color"));
 		renderer.material.SetColor("_Color2", atompointer2.renderer.material.GetColor("_Color"));
 		
-		//If atoms are hyperballs
-		if(atompointer1.renderer.material.HasProperty("_Rayon") && atompointer2.renderer.material.HasProperty("_Rayon"))
+		renderer.material.SetVector("_TexPos1", atompointer1.transform.position);
+		transform.position = atompointer1.transform.position;
+		renderer.material.SetVector("_TexPos2", atompointer2.transform.position);
+//		renderer.material.SetTexture("_MatCap",BallUpdateHB.text2D);
+		if(UIData.atomtype == UIData.AtomType.hyperball) {
+			renderer.material.SetTexture("_MatCap", atompointer1.renderer.material.GetTexture("_MatCap"));
+			renderer.material.SetTexture("_MatCap2", atompointer2.renderer.material.GetTexture("_MatCap"));
+		}
+		else {
+			renderer.material.SetTexture("_MatCap", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
+			renderer.material.SetTexture("_MatCap2", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
+		}
+	}
+	
+/*
+	void  Update ()
+	{
+		if(independant)
+			return;
+			
+		if(atompointer1==null||atompointer2==null)
 		{
-			if(oldrayon1!=atompointer1.renderer.material.GetFloat("_Rayon"))
+			DestroyImmediate(this);
+		}
+		
+		
+		if(UIData.EnableUpdate)
+		{	
+			if(oldshrink!=shrink)
 			{
-				renderer.material.SetFloat("_Rayon1",atompointer1.renderer.material.GetFloat("_Rayon"));
-				oldrayon1=atompointer1.renderer.material.GetFloat("_Rayon");
+				renderer.material.SetFloat("_Shrink",shrink);
+				oldshrink=shrink;
 			}
-			if(oldrayon2!=atompointer2.renderer.material.GetFloat("_Rayon"))
+			if(oldscale!=scale)
 			{
-				if(atompointer2.renderer.material.HasProperty("_Rayon"))
-				renderer.material.SetFloat("_Rayon2",atompointer2.renderer.material.GetFloat("_Rayon"));
-				oldrayon2=atompointer2.renderer.material.GetFloat("_Rayon");
+				renderer.material.SetFloat("_Scale",scale);
+				oldscale=scale;
+			}
+			//if(resetColors)
+			//	ResetColors();
+			
+			if(GUIMoleculeController.toggle_NA_INTERACTIVE)
+			{
+				renderer.material.SetVector("_TexPos1", atompointer1.transform.position);
+				transform.position = atompointer1.transform.position;
+				renderer.material.SetVector("_TexPos2", atompointer2.transform.position);
+			}
+
+			//If atoms are hyperballs
+			//if(atompointer1.renderer.material.HasProperty("_Rayon") && atompointer2.renderer.material.HasProperty("_Rayon"))
+			
+			if(UIData.atomtype == UIData.AtomType.hyperball)
+			{
+				if(oldrayon1!=atompointer1.renderer.material.GetFloat("_Rayon"))
+				{
+					renderer.material.SetFloat("_Rayon1",atompointer1.renderer.material.GetFloat("_Rayon"));
+					oldrayon1=atompointer1.renderer.material.GetFloat("_Rayon");
+				}
+				if(oldrayon2!=atompointer2.renderer.material.GetFloat("_Rayon"))
+				{
+					if(atompointer2.renderer.material.HasProperty("_Rayon")) // ????
+					renderer.material.SetFloat("_Rayon2",atompointer2.renderer.material.GetFloat("_Rayon"));
+					oldrayon2=atompointer2.renderer.material.GetFloat("_Rayon");
+				}
+			}
+			else
+			{
+				if(oldrayon1!=atompointer1.transform.lossyScale.x/2)
+				{	
+					renderer.material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
+					oldrayon1=atompointer1.transform.lossyScale.x/2;
+				}
+				if(oldrayon2!=atompointer2.transform.lossyScale.x/2)
+				{
+					renderer.material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
+					oldrayon2=atompointer2.transform.lossyScale.x/2;
+				}
 			}
 		}
-		else
-		{
-			if(oldrayon1!=atompointer1.transform.lossyScale.x/2)
-			{	
-				renderer.material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
-				oldrayon1=atompointer1.transform.lossyScale.x/2;
-			}
-			if(oldrayon2!=atompointer2.transform.lossyScale.x/2)
-			{
-				renderer.material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
-				oldrayon2=atompointer2.transform.lossyScale.x/2;
-			}
-		}
-	}//if(UIData.EnableUpdate)		
-}//Update()
+	}
+*/
 }

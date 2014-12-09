@@ -17,8 +17,8 @@ Shader "Hidden/ColorCorrectionCurvesSimple" {
 	};
 	
 	sampler2D _MainTex;
-	
 	sampler2D _RgbTex;
+	fixed _Saturation;
 	
 	v2f vert( appdata_img v ) 
 	{
@@ -37,8 +37,10 @@ Shader "Hidden/ColorCorrectionCurvesSimple" {
 		fixed3 blue = tex2D(_RgbTex, half2(color.b, 2.5/4.0)).rgb * fixed3(0,0,1);
 		
 		color = fixed4(red+green+blue, color.a);
-		
-		return color;
+
+		fixed lum = Luminance(color.rgb);
+		color.rgb = lerp(fixed3(lum,lum,lum), color.rgb, _Saturation);
+		return color;		
 	}
 
 	ENDCG 

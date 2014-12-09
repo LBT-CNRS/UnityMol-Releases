@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: BallUpdateCube.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: BallUpdateCube.cs 270 2013-06-07 10:58:33Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -79,35 +79,4 @@ public class BallUpdateCube	 : BallUpdate {
 //		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
 		atomcolor=renderer.material.GetColor("_Color");
 	}
-
-	void  Update (){
-
-		if(oldatomcolor!=atomcolor)
-		{
-			renderer.material.SetColor("_Color", atomcolor);
-			oldatomcolor=atomcolor;
-
-		}
-
-		if((oldradiusFactor!=radiusFactor)||(oldrayonFactor!=rayonFactor))
-		{
-			
-			this.transform.localScale = new Vector3(rayon*radiusFactor*rayonFactor,rayon*radiusFactor*rayonFactor,rayon*radiusFactor*rayonFactor);
-			oldradiusFactor=radiusFactor;
-			oldrayonFactor=rayonFactor;
-		
-		}
-
-		if(UIData.atomtype != UIData.AtomType.cube)
-		{
-			renderer.enabled = false;
-			return;
-		}
-		else
-			renderer.enabled = true;
-	//		renderer.material.SetFloat("_Rayon",rayon*radiusFactor);
-	//		renderer.material.SetColor("_Color", atomcolor);
-
-	}
-
 }

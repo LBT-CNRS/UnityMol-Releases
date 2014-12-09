@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: UIData.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: UIData.cs 647 2014-08-06 12:20:04Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -75,38 +75,50 @@ namespace UI
 	 * Unity3D Doc :<BR>
 	 * <A HREF="http://docs.unity3d.com/Documentation/ScriptReference/Color.html">Color</A>
 	 */
-	public class UIData 
-	{
-		// public static bool standalone=true;
+	public class UIData {
+//		public static bool standalone=true;
+		
 		//Initial molecule to load from resources
 		public static string init_molecule = "";
 
 		#if UNITY_EDITOR
-			// public static string server_url = "http://172.27.0.170/";
+//			public static string server_url = "http://172.27.0.170/";
 			public static string server_url = "http://www.shaman.ibpc.fr/umolweb/";
 		#else
 			public static string server_url = "";
 		#endif
-		//public static string server_url = "http://localhost:8888/";
-
+//			public static string server_url = "http://localhost:8888/";
+		
+		
 		public static bool fetchPDBFile = false;
-		public static bool isConfirm=false;//
+		public static bool isConfirm = false;
 		public static bool changeStructure = false;
-		public static bool hasMoleculeDisplay=false;//
+		public static bool hasMoleculeDisplay = false;
+		public static bool hasResidues = false;
+		public static bool hasChains = false;
 		public static bool isclear=false;
 		public static bool isOpenFile=false;
 		public static bool isParticlesInitialized = false;
-
-		public static bool readHetAtom = false;
 		
-		public static bool resetDisplay=false;//
-		public static bool isCubeToSphere=false;//
-		public static bool isSphereToCube=true;//
+		public static bool isCubeLoaded = false;
+		public static bool isSphereLoaded = false;
+		public static bool isHBallLoaded = false;
+		
+		public static bool isRenderDictInit = false;
+		public static bool isTexturesMenuListInit = false;
+		
+		public static bool readHetAtom = true;
+		public static bool readWater = false;
+		public static bool connectivity_calc = true;
+		public static bool connectivity_PDB = false;
+		public static bool resetDisplay=false;
+		public static bool isCubeToSphere=false;
+		public static bool isSphereToCube=true;
 		
 		public static bool resetBondDisplay=false;
 		
-		public static bool toggleMouse = true;//
-		public static bool toggleKey = false;//
+		public static bool toggleMouse = true;
+		public static bool toggleKey = false;
 			
 		public static bool toggleClip =true;
 		public static bool togglePlane=false;
@@ -114,14 +126,14 @@ namespace UI
 		public static bool toggleGray =false;
 		public static bool toggleColor=true;
 		
-		public static bool backGroundIs = false;//
-		public static bool backGroundNo = true;//
+		public static bool backGroundIs = false;
+		public static bool backGroundNo = true;
 		
 		public static bool cameraStop = false;
 		
 		public static bool cameraStop2 = false;
 
-		public static bool loginSucess=false;//
+		public static bool loginSucess=false;
 		
 		public static AtomType atomtype=AtomType.particleball;
 
@@ -142,26 +154,53 @@ namespace UI
 		public static bool switchmode=false;
 		
 		public static bool hballsmoothmode=false;
-
+		
+		public static bool grayscalemode = false;
+		
 		public static bool hiddenUI=false;
 		
 		public static bool hiddenUIbutFPS=false;
 		
 		public static bool hiddenCamera=false;
+
+		public static bool up_part=true;
+		public static bool down_part=false;
 		
 		public static bool openAllMenu=false;
 		
 		public static bool openBound=false;
 		
 		public static bool secondarystruct=false;
+		public static bool toggle_bf = false;
+		public static bool isRescale = false;
+		public static bool toggle_SS = false;
+		public static bool ssColChain = false;
+		public static bool ssColStruct = false;
+		public static bool ssDivCol = false;
+		public static bool surfColChain = false;
+		public static bool surfColHydroKD = false;
+		public static bool surfColHydroEng = false;
+		public static bool surfColHydroWO = false;
+		public static bool surfColHydroEis = false;
+		public static bool surfColHydroHW = false;
+		public static bool surfColPChim = false;
+		public static bool surfColBF = false;
+		public static bool isGLIC = false;
+		public static bool spread_tree = false;
 
 		public static bool firststruct=true;
 		
 		public static bool toggleSurf=true;
 		public static bool toggleBfac=false;
+
+		// Guided navigation mode
+		public static bool guided=false;
+		// Optimal view mode
+		public static bool optim_view=false;
+		public static Vector3 optim_view_start_point;
+		public static float start_time;
 		
-		public enum AtomType
-		{
+		public enum AtomType {
 			cube=0,
 			sphere=1,	
 			hyperball=2,
@@ -177,8 +216,7 @@ namespace UI
 			noatom = 12
 		}
 		
-		public enum BondType
-		{
+		public enum BondType {
 			cube=0,
 			line=1,
 			hyperstick=2,
@@ -188,12 +226,12 @@ namespace UI
 			nobond=6	
 		}
 
-		public enum FFType
-		{
+		public enum FFType {
 			atomic = 0,
 			HiRERNA = 1
 		}
 
+		public static bool loadHireRNA = false;
 		public static FFType ffType = FFType.atomic;
 	}
 

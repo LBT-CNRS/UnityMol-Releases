@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: SocketPDB.cs 224 2013-04-06 23:00:34Z baaden $
+/// $Id: SocketPDB.cs 564 2014-07-01 12:46:16Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -67,11 +67,12 @@
 
 	using UnityEngine;
 	using System.Collections;
+	using System.Collections.Generic;
 	using System.IO;
 	using ParseData.IParsePDB;
 	using System.Net;
 	using System;
-	using System.Net.Sockets;
+	//using System.Net.Sockets;
 
 	using SocketConnect.UnitySocket;
 	using Cmd;
@@ -83,9 +84,9 @@ namespace  ParseData.ParsePDB
 	public class SocketPDB
 	{
 		
-		public ArrayList alist=new ArrayList();
+		public List<float[]> alist=new List<float[]>();
 		
-		private ArrayList typelist=new ArrayList();
+		private List<AtomModel> typelist=new List<AtomModel>();
 		
 		public ArrayList clubLocationalist=new ArrayList();
 		private ArrayList clubRotationList =new ArrayList();
@@ -163,8 +164,10 @@ namespace  ParseData.ParsePDB
 
 			MoleculeModel.atomsLocationlist=alist;
 			MoleculeModel.atomsTypelist=typelist;
-			MoleculeModel.bondList=ControlMolecule.CreateBondsList(alist,typelist);
+			//MoleculeModel.bondList=ControlMolecule.CreateBondsList(alist,typelist);
+			//Debug.Log("======================= Bond List" + MoleculeModel.bondList.ToString());
 			MoleculeModel.bondEPList=ControlMolecule.CreateBondsEPList(alist,typelist);
+			MoleculeModel.bondEPSugarList = ControlMolecule.CreateBondsEPList(MoleculeModel.atomsSugarLocationlist,MoleculeModel.atomsSugarTypelist);
 			
 //			float [] a0=alist[0] as float[];
 //			MoleculeModel.cameraLocation.x=MoleculeModel.target.x=a0[0];
@@ -205,14 +208,15 @@ namespace  ParseData.ParsePDB
 
 			
 			
-			MoleculeModel.bondList=ControlMolecule.CreateBondsList(alist,typelist);
+			//MoleculeModel.bondList=ControlMolecule.CreateBondsList(alist,typelist);
 			MoleculeModel.bondEPList=ControlMolecule.CreateBondsEPList(alist,typelist);
+			MoleculeModel.bondEPSugarList = ControlMolecule.CreateBondsEPList(MoleculeModel.atomsSugarLocationlist,MoleculeModel.atomsSugarTypelist);
 			
 			
 			
 			
 			MoleculeModel.atomsnumber = alist.Count;
-			MoleculeModel.bondsnumber = MoleculeModel.bondList.Count;
+			MoleculeModel.bondsnumber = MoleculeModel.bondEPList.Count;
 			
 			
 						string [] sClubArray=Clubs.Split('$');
@@ -238,7 +242,7 @@ namespace  ParseData.ParsePDB
 			
 		}
 		
-		public ArrayList getAtoms()
+		public List<float[]> getAtoms()
 		{
 			
 			return alist;
@@ -246,7 +250,7 @@ namespace  ParseData.ParsePDB
 		}
 		
 		
-		public ArrayList getTypes()
+		public List<AtomModel> getTypes()
 		{
 			return typelist;
 		}

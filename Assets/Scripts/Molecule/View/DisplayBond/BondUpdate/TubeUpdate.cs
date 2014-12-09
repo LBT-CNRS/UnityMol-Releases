@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: TubeUpdate.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: TubeUpdate.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -90,6 +90,7 @@ public GameObject atompointer2=null;
 	}
 	
 	// Update is called once per frame
+/*	
 	void Update () {
 		if(UIData.EnableUpdate)
 		{
@@ -100,4 +101,5 @@ public GameObject atompointer2=null;
 			// tubeRenderer.SetPoints ( points ,   0.1f ,   Color.yellow  );
 		}
 	}
+*/
 }

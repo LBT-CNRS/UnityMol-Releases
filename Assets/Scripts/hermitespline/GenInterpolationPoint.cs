@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: GenInterpolationPoint.cs 226 2013-04-07 14:43:54Z baaden $
+/// $Id: GenInterpolationPoint.cs 405 2014-04-09 08:26:05Z roudier $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -74,12 +74,14 @@ public class GenInterpolationPoint {
 	public float Duration = 1.0f;
 	public int lineCount=1000;
 	public ArrayList InputKeyNodes;
-	public ArrayList InputTypeArray;
+	public List<string> InputTypeArray;
 	
-	public ArrayList OutputKeyNodes;
-	public ArrayList OutputTypeArray;
+	public List<float[]> OutputKeyNodes;
+	public List<string> OutputTypeArray;
 //	private Transform[] mTransforms;
 	private List<SplineNode> mNodes;
+	
+	public static int smoothnessFactor = 8 ;
 	
 	//test the node data varibles
 	
@@ -96,17 +98,15 @@ public class GenInterpolationPoint {
 	private Vector3[] Nodes;
 	
 
-	public void CalculateSpline()
-	{
-			lineCount=InputKeyNodes.Count*8;
+	public void CalculateSpline() {
+			lineCount=InputKeyNodes.Count*smoothnessFactor;
 
 		    SetupSplineInterpolator();
-		    OutputKeyNodes=new ArrayList();
-		    OutputTypeArray=new ArrayList();
+		    OutputKeyNodes=new List<float[]>();
+		    OutputTypeArray=new List<string>();
 		    
 			Gizmos.color = new Color(0.0f, 0.0f, 1.0f);
-		    for (int c=1; c <lineCount; c++)
-		    {
+		    for (int c=1; c <lineCount; c++) {
 		        float currTime = c * Duration / lineCount;
 		        Vector3 currPos = GetHermiteAtTime(currTime);
 		        
@@ -116,23 +116,18 @@ public class GenInterpolationPoint {
 		        currposfloat[2]=currPos.z;
 		        OutputKeyNodes.Add(currposfloat);
 		        OutputTypeArray.Add(InputTypeArray[0]);
+		//	Debug.Log ("InputTypePoint " + InputTypeArray[0]);
 //				MonoBehaviour.print("CalculateSpline");
 		    }
-
-
 	}
 
-
-	
-	void SetupSplineInterpolator()
-	{
+	void SetupSplineInterpolator() {
 		int c;
 		float step;
 	    mNodes = new List<SplineNode>();
 	    step = Duration/InputKeyNodes.Count;
 	    
-	    for (c = 0; c < InputKeyNodes.Count; c++)
-	    {
+	    for (c = 0; c < InputKeyNodes.Count; c++) {
 	    	float[] vect=(float[])InputKeyNodes[c];
 	    	Vector3 inputnode=new Vector3(vect[0],vect[1],vect[2]);
 			mNodes.Add(new SplineNode(inputnode, step*c));

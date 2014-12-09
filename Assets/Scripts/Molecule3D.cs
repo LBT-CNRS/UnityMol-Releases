@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: Molecule3D.cs 247 2013-04-07 20:38:19Z baaden $
+/// $Id: Molecule3D.cs 672 2014-10-02 08:13:56Z tubiana $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -72,7 +72,7 @@ using ParseData.ParsePDB;
 using ParseData.IParsePDB;
 using UI;
 using Molecule.View;
-using System.Net.Sockets;
+//using System.Net.Sockets;
 using System.Net;
 
 using SocketConnect.UnitySocket;
@@ -81,13 +81,12 @@ using DisplayControl;
 using Config;
 using Molecule.Model;
 using System.IO;
-//using BehaveLibrary;
-public class Molecule3D:MonoBehaviour
-{
 
-	// Use this for initialization
+public class Molecule3D:MonoBehaviour {
 
 	private GameObject molecule;
+	
+	private bool fontInitialized = false;
 
 	public float rotationSpeed = 100.0F;
 	private GameObject[] Boxes;
@@ -106,13 +105,8 @@ public class Molecule3D:MonoBehaviour
 	private int fpsCount = 0;
 	private float fpsSum = 0;
 
-
-//	private float speed=0.0001f;
-//	private float rangle0=0f;
-//	private float rangle1=0f;
-//	private Vector3 vr=new Vector3(0f,0f,0f);
 	private GameObject Target;
-	private Vector3 Deta;
+//	private Vector3 Deta;
 //	private 	string textField="";
 //	private string id="";
 	public GUIDisplay gUIDisplay;
@@ -126,9 +120,9 @@ public class Molecule3D:MonoBehaviour
 //	private float rotationX=0f;
 //	private float rotationY=0f;
 //	private float rotationZ=0f;
-	private Vector3 axisX=new Vector3(1,0,0);
-	private Vector3 axisY=new Vector3(0,1,0);
-	private Vector3 axisZ=new Vector3(0,0,1);
+//	private Vector3 axisX=new Vector3(1,0,0);
+//	private Vector3 axisY=new Vector3(0,1,0);
+//	private Vector3 axisZ=new Vector3(0,0,1);
 //	private Vector3 newPosition=new Vector3(0,0,0);
 	public float []atomsScaleList={1.72f,1.6f,1.32f,2.08f,2.6f,1.55f,1f};
 	public ArrayList clubLocationalist=new ArrayList();
@@ -159,26 +153,32 @@ public class Molecule3D:MonoBehaviour
 	private float accum= 0.0f; // FPS accumulated over the interval
 	private float frames= 0; // Frames drawn over the interval
 	private float timeleft; // Left time for current interval
+	
+	//T.T DEBUG
+	public bool fileLoadingFinished=false;
 
 //		private string FPS="";
 
 	//To keep track of the normal type when hiding atoms or in LOD mode
     private UIData.AtomType previous_AtomType = UIData.AtomType.noatom;
-    public UIData.AtomType PreviousAtomType
-    {
-    	get
-    	{
+    public UIData.AtomType PreviousAtomType {
+    	get {
     		return previous_AtomType;
     	}
     }
+	
+	private UIData.BondType previous_BondType = UIData.BondType.nobond;
+	public UIData.BondType PreviousBondType {
+		get {
+			return previous_BondType;
+		}
+	}
 
-	void Awake()
-	{
+	void Awake() {
 		System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");	
 	}
 
-	void Start()
-	{		
+	void Start() {		
 		DebugStreamer.message = "Hello world!";
 		LocCamera=GameObject.Find("Camera");
 		DebugStreamer.message = "Find Camera";
@@ -186,7 +186,7 @@ public class Molecule3D:MonoBehaviour
 
 		scenecontroller = GameObject.Find("LoadBox");
 		scenecontroller.AddComponent<ReadDX>();
-
+		
 		gUIDisplay=new GUIDisplay();
 		DebugStreamer.message = "new GUIDisplay()";
 		//Init
@@ -196,250 +196,236 @@ public class Molecule3D:MonoBehaviour
 		//requestPDB.mySkin=mySkin;
 		
 		timeleft = updateInterval;
-		// AtomModel.InitHiRERNA();
+		
+//		AtomModel.InitHiRERNA();
 		AtomModel.InitAtomic();
+		
 		SendMessage("InitScene",requestPDB,SendMessageOptions.DontRequireReceiver);
 	}
 
-	public void Display()
-	{
-//		Debug.Log("Display display");
+	public void Display() {
 		DisplayMolecule.Display();
 		DisplayMolecule.DisplayFieldLine();
-		Deta=MoleculeModel.target;
+//		Deta=MoleculeModel.target;
 		isControl=true;
 
 		GUIMoleculeController.InitMoleculeParameters();
-		
 		SetCenter(0);
 	}
 
-	public void HideAtoms()
-	{
-		if(UIData.atomtype != UIData.AtomType.noatom)
-		{
+	public void HideAtoms() {
+		if(UIData.atomtype != UIData.AtomType.noatom) {
+			Debug.Log("Hiding all atoms now.");
+			DisplayMolecule.HideAtoms();
 			previous_AtomType = UIData.atomtype;
 			UIData.atomtype = UIData.AtomType.noatom;
-			DisplayMolecule.HideAtoms();
 		}
 	}
 
-	public void ShowAtoms()
-	{
-		if(UIData.atomtype == UIData.AtomType.noatom)
-		{
+	public void ShowAtoms() {
+		if(UIData.atomtype == UIData.AtomType.noatom) {
 			UIData.atomtype = previous_AtomType;
 			previous_AtomType = UIData.AtomType.noatom;
+			DisplayMolecule.ShowAtoms();
 		}
-		DisplayMolecule.ShowAtoms();
 	}
-	
-	void OnGUI()
-	{	
-		
+
+	void OnGUI() {	
 		GUI.skin = mySkin;
-		if(GUIMoleculeController.m_fileBrowser != null)
-		{
-			GUIMoleculeController.m_fileBrowser.OnGUI();
-		}
 		
-		if(gUIDisplay.m_fileBrowser != null)
-		{
+		if(!fontInitialized) {
+			Rectangles.SetFontSize();
+			fontInitialized = true;
+		}
+	
+		if(GUIMoleculeController.m_fileBrowser != null)
+			GUIMoleculeController.m_fileBrowser.OnGUI();
+
+
+
+		if(gUIDisplay.m_fileBrowser != null) {
 			GUIMoleculeController.FileBrowser_show=true;
 			gUIDisplay.m_fileBrowser.OnGUI();
-		}else
+		} else
 			GUIMoleculeController.FileBrowser_show=false;
 		
 		UIData.EnableUpdate=false;
 		if((!UIData.hiddenUI)&&(!UIData.hiddenUIbutFPS))
-		{
 			gUIDisplay.Display();
+		
+		if((!UIData.hiddenUI)&&(UIData.hiddenUIbutFPS)){
+			GUIMoleculeController.toggle_INFOS = true;
 		}
 		
 		if(!UIData.hiddenUI)
-		{ 
-			if (GUIMoleculeController.SetAtomScale_show){
-				gUIDisplay.SetAtomScale();
-				
+			if(GUIMoleculeController.showPanelsMenu)
+				GUIMoleculeController.SetPanels();
+		
+		if(!UIData.hiddenUI)
+			if (GUIMoleculeController.showResiduesMenu)
+				GUIMoleculeController.SetResidues();
+		
+		if(!UIData.hiddenUI)
+			if (GUIMoleculeController.showAtomsExtendedMenu)
+				GUIMoleculeController.SetAtomsExtended();
+		
+		if(!UIData.hiddenUI)
+			if (GUIMoleculeController.showChainsMenu)
+				GUIMoleculeController.SetChains();
 
-			}
-		}
-
-		if(UIData.isConfirm && UIData.hasMoleculeDisplay)
-		{
-			// if(UIData.atomtype == UIData.AtomType.particleball)
-			// {	
-			// 	DisplayMolecule.ResetDisplay();
-			// }
-			// else
-			{
-				DisplayMolecule.AmendDisplay();
-			}
-			UIData.isConfirm=false;
-		}
-
-		if(UIData.changeStructure)
-		{
+		if(UIData.changeStructure) {
 			DisplayMolecule.ResetDisplay();
 			UIData.changeStructure = false;
+			UIData.isParticlesInitialized = false;
 		}
 		
-		if(UIData.isclear)
-		{
+		if(UIData.isclear) {
 			DisplayMolecule.DestroyFieldLine();
 			DisplayMolecule.DestroyObject();
-			DisplayMolecule.DestroyParticles();
+			DisplayMolecule.DestroyRingBlending();
+			DisplayMolecule.DestroySugarRibbons();
+			DisplayMolecule.DestroyOxySpheres();
 			DisplayMolecule.DestroyBondObject();
 			DisplayMolecule.DestroySurfaces();
 			DisplayMolecule.DestroyElectIso();
 			DisplayMolecule.ClearMemory();
-
-//			id="";
-			UIData.isclear=false;
+			
+			// ----- Clearing all variables -----
+			UIData.isCubeLoaded = false;
+			UIData.isSphereLoaded = false;
+			UIData.isHBallLoaded = false;
+			LoadTypeGUI.buildSurfaceDone = false;
+			LoadTypeGUI.surfaceTextureDone = false;
+			LoadTypeGUI.toggle_RING_BLENDING = false;
+			LoadTypeGUI.toggle_NA_HIDE = false;
+			LoadTypeGUI.toggle_TWISTER= false;
+			LoadTypeGUI.toggle_HIDE_HYDROGEN = false;
+			LoadTypeGUI.toggle_OXYGEN = false;
+			LoadTypeGUI.ColorationModeBond=0;
+			LoadTypeGUI.ColorationModeRing=0;
 			UIData.isParticlesInitialized=false;
-			GUIMoleculeController.rayon = 1.0f;
+			GUIMoleculeController.globalRadius = 1.0f;
 			UIData.secondarystruct = false;
+			UIData.atomtype = UIData.AtomType.noatom;
+			UIData.bondtype = UIData.BondType.nobond;
+			MoleculeModel.existingName.Clear();
+			MoleculeModel.existingRes.Clear();
+			MoleculeModel.existingChain.Clear();
+//			id="";
+			//T.T test debug
+			Molecule.Model.MoleculeModel.atomsLocalScaleList.Clear();
+			RequestPDB.isDone=false;
+			
+			UIData.isclear=false;
 			Debug.Log("UIData.isclear");
 		}
-		if(UIData.resetDisplay&&UIData.isCubeToSphere)
-		{
+		
+		if(UIData.resetDisplay&&UIData.isCubeToSphere) {
 			DisplayMolecule.CubeToSphere();
 			Debug.Log ("UIData :: resetDisplay && iscubetoSphere");
 		}
 		
-		if(UIData.resetDisplay&&UIData.isSphereToCube)
-		{
+		if(UIData.resetDisplay&&UIData.isSphereToCube) {
 			DisplayMolecule.SphereToCube();
 			Debug.Log ("UIData :: reset display && is spheretocube");
 		}
 		
-		if(UIData.resetBondDisplay)
-		{
+		if(UIData.resetBondDisplay) {
 			DisplayMolecule.ResetBondDisplay();
-			Debug.Log ("UIData :: reset bonddisplay");
+			Debug.Log ("UIData :: reset bonddisplay ");
 		}
 		
-		
-		if(UIData.isOpenFile)
-		{
-			// if(boxes!=null)
-			// {
-			// 	foreach(GameObject box in boxes)
-			// 	{
-			// 		Destroy(box);
-			// 	}
-			// }
-			
-			UIData.isOpenFile = false;
-			
-			StartCoroutine(loadFile());	
-			Display();		
+		if(UIData.isOpenFile) {	
+			StartCoroutine(loadLoadFile());
 		}
 		
 		if(UIData.backGroundIs)
-		{
 			LocCamera.GetComponent<Skybox>().enabled=true;
-			
-
-		}
-		
 		else
-		{
 			LocCamera.GetComponent<Skybox>().enabled=false;
-		}
+
 		UIData.EnableUpdate=true;
 		
-		if(UIData.interactive&&UIData.resetInteractive)
-		{
+		if(UIData.interactive&&UIData.resetInteractive)	{
 			DisplayMolecule.AddAllPhysics();
 			UIData.resetInteractive=false;			
 		}
-		else if(!UIData.interactive&&UIData.resetInteractive)
-		{
+		else if(!UIData.interactive && UIData.resetInteractive) {
 			DisplayMolecule.DeleteAllPhysics();
-			UIData.resetInteractive=false;			
+			UIData.resetInteractive = false;
 		}
 		
-		if(UIData.meshcombine)
-		{
+		if(UIData.meshcombine) {
 			DisplayMolecule.AddCombineMesh();
 			UIData.resetMeshcombine=false;			
 		}
-		else if(!UIData.meshcombine)
-		{
+		else if(!UIData.meshcombine) {
 			DisplayMolecule.DeleteCombineMesh();
 			UIData.resetMeshcombine=false;			
 		}
 		
-		if (requestPDB.Loading)
-        {
-
-            	//GUI.Label(new Rect(100, 15, 200, 30), "", "bj");
-            	//GUI.Label(new Rect(100,15, requestPDB.progress * 200, 30), "", "qj");
-        }
+		/*if (requestPDB.Loading) {
+            	GUI.Label(new Rect(100, 15, 200, 30), "", "bj");
+            	GUI.Label(new Rect(100,15, requestPDB.progress * 200, 30), "", "qj");
+        }*/
 
 //		if(GUI.tooltip != "")GUI.Label ( new Rect(180,Screen.height-35,Screen.width-360,20), GUI.tooltip);
 //		if(MoleculeModel.newtooltip != "")GUI.Label ( new Rect(180,Screen.height-35,Screen.width-360,20), MoleculeModel.newtooltip);
 		if(GUI.tooltip != "")GUI.Box ( new Rect(180,Screen.height-55,450,25), GUI.tooltip);
 		if(MoleculeModel.newtooltip != "")GUI.Box ( new Rect(180,Screen.height-55,450,25), MoleculeModel.newtooltip);
-		
+
+
+	}
+	
+	//this fonction is used to synchronise the file loading and the Display
+	//Otherwise Display is execute before the end of the loading.
+	public IEnumerator loadLoadFile(){
+			UIData.isOpenFile = false;
+			yield return StartCoroutine(loadFile());
+			Debug.Log ("T.T ==> BEFORE DISPLAY");
+			Display();		
 	}
 	
 	
 	// loading the file in all possibilities
-	public  IEnumerator loadFile()
-	{
+	public  IEnumerator loadFile() {
 		#if !UNITY_WEBPLAYER
 		{
-
-
 //				alist=requestPDB.LoadPDBRequest(url,id);
 		
 		// check all format reading by unitymol PDB, XGMML and OBJ
-			if(UIData.fetchPDBFile)
-			{
+			if(UIData.fetchPDBFile) {
 				Debug.Log("pdbServer/pdbID :: "+GUIDisplay.pdbServer + GUIDisplay.pdbID);
 				Debug.Log("proxyServer+proxyPort :: "+GUIDisplay.proxyServer + GUIDisplay.proxyPort);
 				int proxyport = 0;
 				if(GUIDisplay.proxyPort != "")
-				{
 					proxyport = int.Parse(GUIDisplay.proxyPort);
-				}else{
+				else
 					proxyport = 0;
-				}
 
-				requestPDB.FetchPDB(GUIDisplay.pdbServer, 
-										  GUIDisplay.pdbID,
-										  GUIDisplay.proxyServer,
-										  proxyport);
+				requestPDB.FetchPDB(GUIDisplay.pdbServer, GUIDisplay.pdbID, GUIDisplay.proxyServer, proxyport);
 			}
 		// if we laod a pdb file launch the reading of file
 			else if(GUIDisplay.file_extension=="pdb")
-			{
-					requestPDB.LoadPDBRequest(GUIDisplay.file_base_name);
-			}
+				requestPDB.LoadPDBRequest(GUIDisplay.file_base_name);
 
 		// check the format of xgmml	
-			else if(UI.GUIDisplay.file_extension=="xgmml")
-			{
-			
-					StartCoroutine(requestPDB.LoadXGMML("file://"+GUIDisplay.file_base_name+"."+GUIDisplay.file_extension));
-					while(!requestPDB.isDone)
-					{
+			else if(UI.GUIDisplay.file_extension=="xgmml") {
+					yield return StartCoroutine(requestPDB.LoadXGMML("file://"+GUIDisplay.file_base_name+"."+GUIDisplay.file_extension));
+					while(!RequestPDB.isDone) {
 						Debug.Log(requestPDB.progress);
 						yield return new WaitForEndOfFrame();
 					}
 					UIData.atomtype=UIData.AtomType.hyperball;
 					UIData.bondtype=UIData.BondType.hyperstick;
-					GUIMoleculeController.rayon = 0.7f;
+					GUIMoleculeController.globalRadius = 0.22f;
 					GUIMoleculeController.shrink = 0.0001f;
-					GUIMoleculeController.linkscale = 0.3f;
+					GUIMoleculeController.linkScale = 0.70f;
 					SendMessage("Display",SendMessageOptions.DontRequireReceiver);
 			}
-			else if(UI.GUIDisplay.file_extension=="obj")
-			{
+			else if(UI.GUIDisplay.file_extension=="obj") {
 					requestPDB.LoadOBJRequest(GUIDisplay.file_base_name+"."+GUIDisplay.file_extension);
-					MoleculeModel.SurfaceFileExist=true;
+					MoleculeModel.surfaceFileExists=true;
 					GUIMoleculeController.modif=true;
 			}	
 //				requestPDB.GetTypelist();
@@ -454,121 +440,85 @@ public class Molecule3D:MonoBehaviour
 // 			clubLocationalist=socketPDB.getClubLocation();
 // 			clubRotationList=socketPDB.getClubRotation();
 			if(UIData.init_molecule != "")
-			{
 				requestPDB.LoadPDBResource(UIData.init_molecule);
-			}
 		}			
 		#endif
 		//Debug.Log("SDGFSDGSDGDSG");
-		GUIMoleculeController.menuAtom_show = true;
+		GUIMoleculeController.showAtomMenu = true;
 		Camera.main.GetComponent<SplashScreen>().enabled = false;
-		yield return null;
+		Debug.Log("T.T ==> END OF LOADING");
+}
 
-	}
-	
-
-	
-	
 	// Update is called once per frame
-	void Update()
-	{
-	//	DebugStreamer.message = ("Current time is: " + Time.time);
-		
-		if (requestPDB.isDone){
+	void Update() {
+		// requestPDB.Loading looks actually useless since progress bar is commented (see below)
+		/*if (RequestPDB.isDone){
             requestPDB.Loading = false;
-        }
+		}
         else{
             requestPDB.Loading = true;
-        }
-
-
-		if(isControl&&(!UIData.cameraStop2))
-		{
-
+		}*/
+		
+		if(isControl&&(!UIData.cameraStop2)) { // Seems to be true as long as the mouse is in the game window and not on the gui
 			MouseOperate();
 			KeyOperate();
 			
-			SetCenterbySpace();
+			//SetCenterbySpace();
 			HiddenOperate();
 			OpenMenuOperate();
 			OpenBoundOperate();
 		}
-		if (GUIMoleculeController.toggle_HB_SANIM)
-		{
+		
+		// Always false ?
+		/*if (GUIMoleculeController.toggle_HB_SANIM) {
 			GUIMoleculeController.shrink +=  Time.deltaTime * GUIMoleculeController.hb_sanim * GUIMoleculeController.hb_ssign;
-			if (GUIMoleculeController.shrink > 0.95f ) { GUIMoleculeController.hb_ssign = -1.0f; }
-			if (GUIMoleculeController.shrink < 0.05f ) { GUIMoleculeController.hb_ssign = 1.0f; }
-		}
-		if (GUIMoleculeController.toggle_HB_RANIM) 
-		{
-			GUIMoleculeController.rayon +=  Time.deltaTime * GUIMoleculeController.hb_ranim * GUIMoleculeController.hb_rsign;
-			if (GUIMoleculeController.rayon > 0.95f ) { GUIMoleculeController.hb_rsign = -1.0f; }
-			if (GUIMoleculeController.rayon < 0.05f ) { GUIMoleculeController.hb_rsign = 1.0f; }
-		}
+			if (GUIMoleculeController.shrink > 0.95f )
+				GUIMoleculeController.hb_ssign = -1.0f;
+			if (GUIMoleculeController.shrink < 0.05f )
+				GUIMoleculeController.hb_ssign = 1.0f;
+		}*/
+		
+		// Always false ?
+		/*if (GUIMoleculeController.toggle_HB_RANIM) {
+			GUIMoleculeController.globalRadius +=  Time.deltaTime * GUIMoleculeController.hb_ranim * GUIMoleculeController.hb_rsign;
+			if (GUIMoleculeController.globalRadius > 0.95f )
+				GUIMoleculeController.hb_rsign = -1.0f;
+			if (GUIMoleculeController.globalRadius < 0.05f )
+				GUIMoleculeController.hb_rsign = 1.0f;
+		}*/
 	
-		if(GUIMoleculeController.toggle_HB_TRANS) 
-		{
-			GUIMoleculeController.transDelta = 25.0f;	
-		}
+		if(GUIMoleculeController.toggle_HB_TRANS) // Always true ?
+			GUIMoleculeController.transDelta = 25.0f;
 		else
-		{
-			GUIMoleculeController.transDelta = 1.0f;	
-		}
+			GUIMoleculeController.transDelta = 1.0f;
 	
-		if (GUIMoleculeController.transCPK_LICORICE)
-		{
-			GUIMoleculeController.rayon = transition(GUIMoleculeController.rayon, GUIMoleculeController.newRadius, GUIMoleculeController.deltaRadius);
-			GUIMoleculeController.linkscale = transition(GUIMoleculeController.linkscale, GUIMoleculeController.newScale, GUIMoleculeController.deltaScale);
+		if (GUIMoleculeController.transMETAPHOR) {
+			GUIMoleculeController.globalRadius = transition(GUIMoleculeController.globalRadius, GUIMoleculeController.newGlobalRadius, GUIMoleculeController.deltaRadius);
+			GUIMoleculeController.linkScale = transition(GUIMoleculeController.linkScale, GUIMoleculeController.newScale, GUIMoleculeController.deltaScale);
 			GUIMoleculeController.shrink = transition(GUIMoleculeController.shrink, GUIMoleculeController.newShrink, GUIMoleculeController.deltaShrink);
-			if(GUIMoleculeController.rayon == GUIMoleculeController.newRadius && GUIMoleculeController.linkscale == GUIMoleculeController.newScale && GUIMoleculeController.shrink == GUIMoleculeController.newShrink) 			
-			GUIMoleculeController.transCPK_LICORICE = false;
+			if(GUIMoleculeController.globalRadius == GUIMoleculeController.newGlobalRadius && GUIMoleculeController.linkScale == GUIMoleculeController.newScale && GUIMoleculeController.shrink == GUIMoleculeController.newShrink) 			
+				GUIMoleculeController.transMETAPHOR = false;
 		}
 		
+		LineUpdate.scale=GUIMoleculeController.linkScale;
 		
-		LineUpdate.scale=GUIMoleculeController.linkscale;
-		
-		StickUpdate.radiusFactor = GUIMoleculeController.rayon;
+		StickUpdate.radiusFactor = GUIMoleculeController.globalRadius;
 		StickUpdate.shrink      = GUIMoleculeController.shrink;
-		StickUpdate.scale 		= GUIMoleculeController.linkscale;
-		BallUpdateHB.radiusFactor = GUIMoleculeController.rayon;
-		BallUpdateHB.depthfactor = GUIMoleculeController.depthfactor;
-		BallUpdateSphere.radiusFactor = GUIMoleculeController.rayon;
-		BallUpdateCube.radiusFactor = GUIMoleculeController.rayon;
-		BallUpdateRC.radiusFactor = GUIMoleculeController.rayon;
-		
-		
-		
+		StickUpdate.scale 		= GUIMoleculeController.linkScale;
+		BallUpdateHB.radiusFactor = GUIMoleculeController.globalRadius;
+//		BallUpdateHB.depthfactor = GUIMoleculeController.depthfactor;
+		HBallManager.depthFactor = GUIMoleculeController.depthfactor;
+		HStickManager.depthFactor = GUIMoleculeController.depthfactor;
+		BallUpdateSphere.radiusFactor = GUIMoleculeController.globalRadius;
+		BallUpdateCube.radiusFactor = GUIMoleculeController.globalRadius;
+		BallUpdateRC.radiusFactor = GUIMoleculeController.globalRadius;
 		
 		BallUpdateHB.drag = GUIMoleculeController.drag;
 		BallUpdateHB.spring = GUIMoleculeController.spring;
 		
-		BallUpdateHB.EnergyGrayColor = GUIMoleculeController.EnergyGrayColor.color;
+		BallUpdateHB.EnergyGrayColor = GUIMoleculeController.EnergyGrayColor.color;		
 		
-		//Hiding the particles if not in particle mode.
-		if(UIData.atomtype == UIData.AtomType.particleball)
-			ParticleEffect.radiusFactor = GUIMoleculeController.rayon;
-		else
-			ParticleEffect.radiusFactor = 0.000001f;
-
-		// if ( GUIMoleculeController.surface_staticcut)
-		// {
-		// 	BallUpdateHB.cut = 1f;
-		// 	BallUpdateHB.cutplane = new Vector4(GUIMoleculeController.cutX,
-		// 									GUIMoleculeController.cutY,
-		// 									GUIMoleculeController.cutZ,
-		// 									GUIMoleculeController.depthcut);
-		// }
-
-
-
-//		particleeffect.radiuschange=true;
-		
-		// movement of fieldline =============================================================================================		
-		// Send all the paramter to the field line shader
-		
-		
-		// GameObject scenecontroller= GameObject.Find("LoadBox");
-		
+		// TODO: This is gross. Should be fixed.
 		GameObject[] FieldLines = GameObject.FindGameObjectsWithTag("FieldLineManager");
 		foreach (GameObject FieldLine in FieldLines) {
 			LineRenderer curLineRenderer;
@@ -578,7 +528,7 @@ public class Molecule3D:MonoBehaviour
 			// for benoist video comment next line
 			curLineRenderer.material.SetColor("_Color", GUIMoleculeController.EnergyGrayColor.color);
 			
-			if (GUIMoleculeController.FieldLineColorGradient)
+			if (GUIMoleculeController.fieldLineColorGradient)
 				curLineRenderer.material.SetFloat("_colormode", 0f);
 			else
 				curLineRenderer.material.SetFloat("_colormode", 1f);
@@ -587,215 +537,80 @@ public class Molecule3D:MonoBehaviour
 			curLineRenderer.material.SetFloat("_Density",GUIMoleculeController.density);
 			curLineRenderer.material.SetFloat("_Length", GUIMoleculeController.linelength);
 			curLineRenderer.SetWidth(GUIMoleculeController.linewidth,GUIMoleculeController.linewidth);
-			curLineRenderer.material.SetFloat("_depthcut", (GUIMoleculeController.depthcut-maxCamera.currentDistance));
-			curLineRenderer.material.SetFloat("_adjust",(GUIMoleculeController.adjustFieldLinecut));
+			curLineRenderer.material.SetFloat("_depthcut", (GUIMoleculeController.depthCut-maxCamera.currentDistance));
+			curLineRenderer.material.SetFloat("_adjust",(GUIMoleculeController.adjustFieldLineCut));
 			curLineRenderer.material.SetVector("_SurfacePos", FieldLine.transform.position);
 
-			
-			if (GUIMoleculeController.surface_mobilecut)
+			if (GUIMoleculeController.surfaceMobileCut)
 				curLineRenderer.material.SetFloat("_cut", 2f);
-			else if ( GUIMoleculeController.surface_staticcut){
+			else if ( GUIMoleculeController.surfaceStaticCut){
 				curLineRenderer.material.SetFloat("_cut", 1f);
 				curLineRenderer.material.SetVector("_cutplane",new Vector4(GUIMoleculeController.cutX,
 																			GUIMoleculeController.cutY,
 																			GUIMoleculeController.cutZ,
-																			GUIMoleculeController.depthcut));
+																			GUIMoleculeController.depthCut));
 			}
 		}
-//		LineRenderer curLineRenderertemp;
-		
-		
-//Video with Benoit =============================================================================================		
-		
-		// if (Input.GetKey("w") & polop ==0 ){
-		// 	polop=1;
-		// 	for (int i=296; i< 305;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=321; i< 460;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=481; i<510 ;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=550; i< 757;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=762; i< 818;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=823; i< 839;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=843; i< 895;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=896; i< 1000;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=1100; i< 1340;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=1376; i< 1431;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-		// 	for (int i=1934; i< 2001;i++){
-		// 		FieldLines[i].SetActiveRecursively(false);
-		// 	}
-			
-		// 	FieldLines[239].SetActiveRecursively(true);
-		// 	FieldLines[275].SetActiveRecursively(true);
-		// 	FieldLines[316].SetActiveRecursively(true);
-		// 	FieldLines[384].SetActiveRecursively(true);
-		// 	FieldLines[386].SetActiveRecursively(true);
-		// 	FieldLines[405].SetActiveRecursively(true);
-		// 	FieldLines[411].SetActiveRecursively(true);
-		// 	FieldLines[426].SetActiveRecursively(true);
-		// 	FieldLines[426].SetActiveRecursively(true);
-		// 	FieldLines[433].SetActiveRecursively(true);
-		// 	FieldLines[657].SetActiveRecursively(true);
-		// 	FieldLines[910].SetActiveRecursively(true);
-		// 	FieldLines[1045].SetActiveRecursively(true);
-		// 	FieldLines[1096].SetActiveRecursively(true);	
-		// 	FieldLines[1194].SetActiveRecursively(true);
-		// 	FieldLines[1306].SetActiveRecursively(true);
-		// 	FieldLines[1336].SetActiveRecursively(true);
-		// 	FieldLines[1339].SetActiveRecursively(true);
-		// 	FieldLines[1414].SetActiveRecursively(true);
-		// 	FieldLines[1440].SetActiveRecursively(true);
-		// 	FieldLines[1444].SetActiveRecursively(true);
-		// }
-		
-		// if (Input.GetKey("x")){
-		// 		curLineRenderertemp =FieldLines[161].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[239].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[275].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[316].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[384].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[386].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[405].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[411].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[426].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[433].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[657].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1045].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1096].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1194].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1306].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1336].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1339].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1341].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1414].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1440].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1444].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1534].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1535].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1538].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1609].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1684].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1685].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1763].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1830].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);curLineRenderertemp =FieldLines[1874].GetComponent<LineRenderer>();
-		// 		curLineRenderertemp.material.SetColor("_Color",Color.blue);
-		// }
-		
+
 		GameObject[] Surfaces = GameObject.FindGameObjectsWithTag("SurfaceManager");
-		
-		
-// // color and all for benoist =============================================================================================		
-// // can be reuse in unitymol classic, butwe have to choose all the color and workd with less than 6 surfaces
-// 		if (MoleculeModel.SurfaceFileExist){
-		
-			// if (Input.GetKey("c") ){
-			// 	Color purple = Color.black;
-			// 	Color orange = Color.black;
-			// 	Color grey = Color.black;
-			// 	Color cyan = Color.white;	
-			// 	Color yellow = Color.white;
-				
-				
-			// 	purple.r=251f/255f; purple.b=255f/255f;
-			// 	orange.r=255f/255f;orange.g=193f/255f;orange.b=12f/255f;
-			// 	grey.r=148f/255f; grey.g= 148f/255f; grey.b=148f/255f;	
-			// 	cyan.r=108f/255f;
-			// 	yellow.b=66f/255f;
-			// 	Surfaces[0].renderer.material.SetColor("_Color", cyan);
-			// 	Surfaces[1].renderer.material.SetColor("_Color", yellow);
-			// 	Surfaces[2].renderer.material.SetColor("_Color", grey);
-			// 	Surfaces[3].renderer.material.SetColor("_Color", purple);
-			// 	Surfaces[4].renderer.material.SetColor("_Color", orange);
-				
-			// }
 			
-			// // remove 2 structure of the protein (for benoist)
-			// if (Input.GetKey("v") & masque == 0){
-			// 	Surfaces[0].SetActiveRecursively(false);
-			// 	Surfaces[1].SetActiveRecursively(false);
-			// 	masque =1;
-			// }
+		foreach (GameObject Surface in Surfaces) {
 			
-// =============================================================================================				
-//			if (Input.GetKey("n")){  // stop la mise a jour des surface afin de changer la couleur que de certaine surface
-			
-			foreach (GameObject Surface in Surfaces) 
-			{ 	
-				
-				if (GUIMoleculeController.SurfaceGrayColor.color != Color.white){
-					Surface.renderer.material.SetFloat("_colormode", 1f);
-				}else
-					Surface.renderer.material.SetFloat("_colormode", 0f);
-				
-				
-				if (GUIMoleculeController.surface_texture){
-						Surface.renderer.material.shader =	Shader.Find("Mat Cap Cut");
-						Surface.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load(GUIMoleculeController.surface_texture_name));
+			if ((GUIMoleculeController.surfaceTexture || GUIMoleculeController.externalSurfaceTexture) && !GUIMoleculeController.surfaceTextureDone) {
+				if(GUIMoleculeController.externalSurfaceTexture){
+					if(!UIData.grayscalemode)
+						Surface.renderer.material.SetTexture("_MatCap",GUIMoleculeController.extSurf);
+					else{
+						GameObject hbManagerObj = GameObject.FindGameObjectWithTag("HBallManager");
+						HBallManager hbManager = hbManagerObj.GetComponent<HBallManager>();
+						Surface.renderer.material.SetTexture("_MatCap",hbManager.ToGray(GUIMoleculeController.extSurf));
+					}
+					Debug.Log("File choose surface texture");
 				}
-				else if(GUIMoleculeController.external_surface_texture){
-					
-					Surface.renderer.material.shader =	Shader.Find("Mat Cap Cut");
-					Surface.renderer.material.SetTexture("_MatCap",GUIMoleculeController.ext_surf);
-				}else if(GUIMoleculeController.surface_build || GUIMoleculeController.dxread){
-					Surface.renderer.material.shader =	Shader.Find("Mat Cap Cut");
-					Surface.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
-				
-				}else{
-					Surface.renderer.material.shader= Shader.Find("Bumped Specular cut");
-					Surface.renderer.material.SetColor("_SpecColor", Color.black);
-	
+				else{
+					if(!UIData.grayscalemode)
+						Surface.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load(GUIMoleculeController.surfaceTextureName)); // do not do that every frame!
+					else{
+						GameObject hbManagerObj = GameObject.FindGameObjectWithTag("HBallManager");
+						HBallManager hbManager = hbManagerObj.GetComponent<HBallManager>();
+						Surface.renderer.material.SetTexture("_MatCap",hbManager.ToGray((Texture)Resources.Load(GUIMoleculeController.surfaceTextureName)));
+					}
+					Debug.Log("Quick choose surface texture");
 				}
-				// send all the paramter to the surface shader
-					// Surface.renderer.material.SetFloat("_Shininess", GUIMoleculeController.intensity);
-					// if (Input.GetKey("n")) // uncoment for benoist
-						Surface.renderer.material.SetColor("_Color", GUIMoleculeController.SurfaceGrayColor.color); 
-//					Surface.renderer.material.SetColor("_Color", new Color(1f,1f,1f)); // couleur blanche fixé
-					Surface.renderer.material.SetFloat("_depthcut", GUIMoleculeController.depthcut);
-					Surface.renderer.material.SetFloat("_cutX", GUIMoleculeController.cutX);
-					Surface.renderer.material.SetFloat("_cutY", GUIMoleculeController.cutY);
-					Surface.renderer.material.SetFloat("_cutZ", GUIMoleculeController.cutZ);
-					Surface.renderer.material.SetVector("_SurfacePos", Surface.transform.position);
-					if (GUIMoleculeController.surface_mobilecut)	// set the cutting mode
-						Surface.renderer.material.SetFloat("_cut", 2f);
-					else if ( GUIMoleculeController.surface_staticcut) 
-						Surface.renderer.material.SetFloat("_cut", 1f);
-					else 
-						Surface.renderer.material.SetFloat("_cut", 0f);
-					
-					 
-//				} // "N" block
-			
 			}
-		// }
-		
-// update the sphere clone =============================================================================================				
-		// GameObject sphereclone=GameObject.Find("transparentsphere(Clone)");
-		// if(sphereclone)
-		// {
-		// 	float localscale=3.0f*GUIMoleculeController.rayon;
-		// 	if(localscale<1)localscale=1;
-		// 	sphereclone.transform.localScale=new Vector3(localscale,localscale,localscale);
-		// }
-		
+			else if ((GUIMoleculeController.buildSurface || GUIMoleculeController.dxRead) && !GUIMoleculeController.buildSurfaceDone) {
+				Surface.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
+				Debug.Log("Default surface texture");
+			}
+			
+			// send all the paramter to the surface shader
+			// Surface.renderer.material.SetFloat("_Shininess", GUIMoleculeController.intensity);
+			// if (Input.GetKey("n")) // uncoment for benoist
+			
+			Surface.renderer.material.SetColor("_Color", GUIMoleculeController.SurfaceGrayColor.color);
+			Surface.renderer.material.SetColor("_ColorIN", GUIMoleculeController.SurfaceInsideColor.color);
+			//Surface.renderer.material.SetColor("_Color", new Color(1f,1f,1f)); // couleur blanche fixé
+			Surface.renderer.material.SetFloat("_depthcut", GUIMoleculeController.depthCut);
+			Surface.renderer.material.SetFloat("_cutX", GUIMoleculeController.cutX);
+			Surface.renderer.material.SetFloat("_cutY", GUIMoleculeController.cutY);
+			Surface.renderer.material.SetFloat("_cutZ", GUIMoleculeController.cutZ);
+			Surface.renderer.material.SetVector("_SurfacePos", Surface.transform.position);
+			
+			if (GUIMoleculeController.surfaceMobileCut && Surface.renderer.material.shader.name == "Mat Cap Cut"){	// set the cutting mode
+				if(Surface.renderer.material.GetFloat("_cut") != 2f)
+					Surface.renderer.material.SetFloat("_cut", 2f);
+			}
+			else if (GUIMoleculeController.surfaceStaticCut && Surface.renderer.material.shader.name == "Mat Cap Cut"){
+				if(Surface.renderer.material.GetFloat("_cut") != 1f)
+					Surface.renderer.material.SetFloat("_cut", 1f);
+			}
+			else if(Surface.renderer.material.shader.name == "Mat Cap Cut"){
+				if(Surface.renderer.material.GetFloat("_cut") != 0f)
+					Surface.renderer.material.SetFloat("_cut", 0f);
+			}
+		}
+		GUIMoleculeController.surfaceTextureDone = true;
+		GUIMoleculeController.buildSurfaceDone = true;
 
 		//FPS Count
 		
@@ -804,18 +619,15 @@ public class Molecule3D:MonoBehaviour
 		++frames;
 
 		// Interval ended - update GUI text and start new interval
-		if( timeleft <= 0.0f )
-		{
+		if( timeleft <= 0.0f ) {
 		// display two fractional digits (f2 format)
 			float fps = accum/frames;//(1 / Time.deltaTime);
 			MoleculeModel.FPS = fps.ToString("f2");
 			//Write FPS data into file
-			if(fpsLogToggle)
-			{
+			if(fpsLogToggle) {
 				fpsCount ++;
 				fpsSum += fps;
-				if(fpsCount > 35)
-				{
+				if(fpsCount > 35) {
 					Debug.Log("Info :; End fps measure");
 					toggleFPSLog();
 					fpsCount = 0;
@@ -829,20 +641,17 @@ public class Molecule3D:MonoBehaviour
 			accum = 0.0f;
 			frames = 0;
 		}
-			
+		
+		//SetVolumetricDensity();
 		// gUIDisplay.gUIMoleculeController.GetPanelPixel();
 	}
 	
-	
-	public void toggleFPSLog()
-	{
-		if(!fpsLogToggle)
-		{
+	public void toggleFPSLog() { // Debugging tool creating .txt files with FPS informations
+/*		if(!fpsLogToggle) {
 			fpsLogToggle = true;
 			Debug.Log("Entering :: Starting fps measure to file");
 		}
-		else
-		{
+		else {
 			fpsLogToggle = false;
 			DateTime currTime = DateTime.Now;
 			string filename = currTime.ToString("HH_mm_ss")+"_umol_fpsdata.txt";
@@ -852,292 +661,249 @@ public class Molecule3D:MonoBehaviour
 			fpsLog.Close();
 			fpsLog.Dispose();
 		}
+*/
 	}	
 	
-	float transition(float val, float newVal, float deltaVal) 
-	{
+	/// <summary>
+	/// Make the transition between metaphors.
+	/// </summary>
+	/// <param name='val'>
+	/// Value.
+	/// </param>
+	/// <param name='newVal'>
+	/// New value.
+	/// </param>
+	/// <param name='deltaVal'>
+	/// Delta value.
+	/// </param>
+	float transition(float val, float newVal, float deltaVal) {
 		if(val <= newVal && deltaVal < 0.0f) return newVal;
 		if(val >= newVal && deltaVal > 0.0f) return newVal;
 		return val + deltaVal;	
 	}
-
-	private void OpenMenuOperate()
-	{
-		if(Input.GetKeyDown(KeyCode.Delete))
-		{
-
-				UIData.openAllMenu=!UIData.openAllMenu;
+	
+	/// <summary>
+	/// Switch back to the particle mode. ('Delete' key)
+	/// </summary>
+	private void OpenMenuOperate() {
+		if(Input.GetKeyDown(KeyCode.Delete)) {
+				UIData.openAllMenu=!UIData.openAllMenu; // ???
 				UIData.resetDisplay=true;
 				UIData.isSphereToCube=true;
 				UIData.isCubeToSphere=false;
 				UIData.atomtype=UIData.AtomType.particleball;
 				UIData.resetBondDisplay=true;
 				UIData.bondtype=UIData.BondType.nobond;
-
-
-		}
-	}
-
-	private void OpenBoundOperate()
-	{
-		if(Input.GetKeyDown(KeyCode.Minus)||Input.GetKeyDown(KeyCode.Equals))
-		{
-
-				Debug.Log("Press Equal key.");
-				UIData.openBound=!UIData.openBound;
-				UIData.resetDisplay=true;
-				UIData.isSphereToCube=true;
-				UIData.isCubeToSphere=false;
-				UIData.atomtype=UIData.AtomType.particleball;
-				UIData.resetBondDisplay=true;
-				UIData.bondtype=UIData.BondType.nobond;
-
-
 		}
 	}
 	
-	private void HiddenOperate()
-	{
-		if(Input.GetKeyDown(KeyCode.Backspace))
-		{
-//			Debug.Log("KeyCode.Backspace press.");
-			if(UIData.hiddenUI==false&&UIData.hiddenUIbutFPS==false&&UIData.hiddenCamera==false)
-			{
+	/// <summary>
+	/// Switch back to particle mode. ('-' or '=' keys)
+	/// </summary>
+	private void OpenBoundOperate() {
+		if(Input.GetKeyDown(KeyCode.Minus)||Input.GetKeyDown(KeyCode.Equals)) {
+
+			/*
+				Debug.Log("Press Equal key.");
+				UIData.openBound=!UIData.openBound; // ???
+				UIData.resetDisplay=true;
+				UIData.isSphereToCube=true;
+				UIData.isCubeToSphere=false;
+				UIData.atomtype=UIData.AtomType.particleball;
+				UIData.resetBondDisplay=true;
+				UIData.bondtype=UIData.BondType.nobond;
+			*/
+		}
+	}
+	
+	/// <summary>
+	/// Hides the GUI and enables a sort of "full-screen" mode, as in GUI-less, not as opposed to windowed.
+	/// Helps quite a bit with performance, or at least with CPU load.
+	/// </summary>
+	private void HiddenOperate() {
+		if(Input.GetKeyDown(KeyCode.Backspace))	{
+			if(!UIData.hiddenUI) { //&& !UIData.hiddenUIbutFPS && !UIData.hiddenCamera) {
 					UIData.hiddenUI=true;
 					Debug.Log("Hide all the UI.");
-			}
-			else if(UIData.hiddenUI==true&&UIData.hiddenUIbutFPS==false&&UIData.hiddenCamera==false)
-			{
+			} 
+			// I really don't know why we'd want to disable the camera.
+/*			else if(UIData.hiddenUI && !UIData.hiddenUIbutFPS && !UIData.hiddenCamera) {
 					UIData.hiddenCamera=true;
 					LocCamera.GetComponent<Camera>().enabled=false;
 					Debug.Log("Hide all the UI and Camera.");
 			}
-			else if(UIData.hiddenUI==true&&UIData.hiddenUIbutFPS==false&&UIData.hiddenCamera==true)
-			{
-					UIData.hiddenCamera=false;
-					LocCamera.GetComponent<Camera>().enabled=true;
+*/
+			// Doesn't seem to work
+/*			else if(UIData.hiddenUI && !UIData.hiddenUIbutFPS) { //&& UIData.hiddenCamera) {
+					//UIData.hiddenCamera=false;
+					//LocCamera.GetComponent<Camera>().enabled=true;
 					UIData.hiddenUI=false;
 					UIData.hiddenUIbutFPS=true;
-					Debug.Log("Hide all the UI unless FPS.");
+					Debug.Log("Hide all the UI except FPS."); 
 			}
-			else if(UIData.hiddenUI==false&&UIData.hiddenUIbutFPS==true&&UIData.hiddenCamera==false)
-			{
-					
+*/
+			else if(UIData.hiddenUI) { //!UIData.hiddenUI && UIData.hiddenUIbutFPS && !UIData.hiddenCamera) {
 					UIData.hiddenUI=false;
-					UIData.hiddenUIbutFPS=false;		
+					//UIData.hiddenUIbutFPS=false;		
 					Debug.Log("Show all the UI and Camera.");
 			}	
-
-
-	
 		}
 	}
-	
-	
 
-	
-	
-// control with the keyboard =============================================================================================		
-// I don't check if the key which are used fir benoist video are here or not.
-	private void KeyOperate()
-		
-	{	
-//		originalRotation = transform.localRotation;
-		//print(LocCamera.transform.position.x);
+	/// <summary>
+	/// For keyboard control.
+	/// </summary>
+	private void KeyOperate() {	
 		Vector3 v=new Vector3();
 		v=LocCamera.transform.localPosition;
 		
-		//right move
-		if(Input.GetKey(KeyCode.D))
-		{
-
+		//Molecule right
+		if(Input.GetKey(KeyCode.D))	{
 			v.x-=0.5f;
 			LocCamera.transform.localPosition=v;
-			if(UIData.switchmode)ToParticle();
+			if(UIData.switchmode)
+				ToParticle();
 		}
-		//clockwise
-		if(Input.GetKey(KeyCode.W))
-		{
-			
+		//Molecule up
+		if(Input.GetKey(KeyCode.W)) {
 			v.y-=0.5f;
 			LocCamera.transform.localPosition=v;
-			if(UIData.switchmode)ToParticle();
+			if(UIData.switchmode)
+				ToParticle();
 		}
-		//down move
-		if(Input.GetKey(KeyCode.S))
-		{
+		//Molecule down
+		if(Input.GetKey(KeyCode.S)) {
 			v.y+=0.5f;
 			LocCamera.transform.localPosition=v;
-			if(UIData.switchmode)ToParticle();
+			if(UIData.switchmode)
+				ToParticle();
 			//print("LocCamera.transform.localPosition.y"+v.y);
 		}
-		//down rotation
-		if(Input.GetKey(KeyCode.A))
-		{
+		//Molecule left
+		if(Input.GetKey(KeyCode.A)) {
 			v.x+=0.5f;
 			LocCamera.transform.localPosition=v;
-			if(UIData.switchmode)ToParticle();
+			if(UIData.switchmode)
+				ToParticle();
 			//print("LocCamera.transform.localPosition.x"+v.x);
 		}
-		//zoom out
-		if(Input.GetKey(KeyCode.N))
-		{
+		//Zoom in
+		if(Input.GetKey(KeyCode.N)) {
 			v.z+=0.5f;
 			LocCamera.transform.localPosition=v;
-			if(UIData.switchmode)ToParticle();
+			if(UIData.switchmode)
+				ToParticle();
 			//print("LocCamera.transform.localPosition.x"+v.x);
 		}
-		//zoom in
-		if(Input.GetKey(KeyCode.B))
-		{
+		//Zoom out
+		if(Input.GetKey(KeyCode.B)) {
 			v.z-=0.5f;
 			LocCamera.transform.localPosition=v;
-			if(UIData.switchmode)ToParticle();
+			if(UIData.switchmode)
+				ToParticle();
 			//print("LocCamera.transform.localPosition.x"+v.x);
 		}
 		
-		//left move
-		if(Input.GetKey(KeyCode.Q))
-		{
-			transform.RotateAround(Deta,axisX,0.6f);	
-			DMatrix.RotationMatrix(axisX,axisY,axisZ,0.6f);
-			if(UIData.switchmode)ToParticle();
+/*		//Moved to maxCamera
+		//Down rotation
+		if(Input.GetKey(KeyCode.Q)) {
+			//LocCamera.transform.RotateAround(Deta,axisX,0.6f);	
+			//DMatrix.RotationMatrix(axisX,axisY,axisZ,0.6f);
+			if(UIData.switchmode)
+				ToParticle();
 		}
-		//up rotation
-		if(Input.GetKey(KeyCode.E))
-		{
-			
-			transform.RotateAround(Deta,axisX,-0.6f);		
-			DMatrix.RotationMatrix(axisX, axisY, axisZ,-0.6f);
-			if(UIData.switchmode)ToParticle();
+		//Up rotation
+		if(Input.GetKey(KeyCode.E)) {
+			//LocCamera.transform.RotateAround(Deta,axisX,-0.6f);		
+			//DMatrix.RotationMatrix(axisX, axisY, axisZ,-0.6f);
+			if(UIData.switchmode)
+				ToParticle();
 		}
-		//up move
-		if(Input.GetKey(KeyCode.Z))
-		{
-			
-			transform.RotateAround(Deta,axisZ,0.6f);
-			DMatrix.RotationMatrix(axisZ,axisY, axisX,0.6f);
-			if(UIData.switchmode)ToParticle();
-			
+		//Right rotation
+		if(Input.GetKey(KeyCode.Z)) {
+			//LocCamera.transform.RotateAround(Deta,axisZ,0.6f);
+			//DMatrix.RotationMatrix(axisZ,axisY, axisX,0.6f);
+			if(UIData.switchmode)
+				ToParticle();
 		}
-		//left rotation
-		if(Input.GetKey(KeyCode.X))
-		{
-			
-			transform.RotateAround(Deta,axisZ,-0.6f);
-			DMatrix.RotationMatrix(axisZ, axisY,axisX,-0.6f);
-			if(UIData.switchmode)ToParticle();
-			
+		//Left rotation
+		if(Input.GetKey(KeyCode.X)) {
+			//LocCamera.transform.RotateAround(Deta,axisZ,-0.6f);
+			//DMatrix.RotationMatrix(axisZ, axisY,axisX,-0.6f);
+			if(UIData.switchmode)
+				ToParticle();
 		}
-
+*/
 		if(Input.GetKeyUp(KeyCode.D))
-		{
-
-			if(UIData.switchmode)ToNotParticle();
-		}
+			if(UIData.switchmode)
+				ToNotParticle();
 
 		if(Input.GetKeyUp(KeyCode.W))
-		{
-			
-			if(UIData.switchmode)ToNotParticle();
-
-		}
+			if(UIData.switchmode)
+				ToNotParticle();
 
 		if(Input.GetKeyUp(KeyCode.S))
-		{
-			if(UIData.switchmode)ToNotParticle();
-
-		}
+			if(UIData.switchmode)
+				ToNotParticle();
 		
 		if(Input.GetKeyUp(KeyCode.A))
-		{
-			if(UIData.switchmode)ToNotParticle();
-
-		}
+			if(UIData.switchmode)
+				ToNotParticle();
 		
 		if(Input.GetKeyUp(KeyCode.N))
-		{
-			if(UIData.switchmode)ToNotParticle();
+			if(UIData.switchmode)
+				ToNotParticle();
 
-		}
 		if(Input.GetKeyUp(KeyCode.B))
-		{
-			if(UIData.switchmode)ToNotParticle();
-
-		}
-		
+			if(UIData.switchmode)
+				ToNotParticle();
+/*		
 		if(Input.GetKeyUp(KeyCode.Q))
-		{
-			if(UIData.switchmode)ToNotParticle();
-
-		}
+			if(UIData.switchmode)
+				ToNotParticle();
 		
 		if(Input.GetKeyUp(KeyCode.E))
-		{
-			if(UIData.switchmode)ToNotParticle();
-
-		}
+			if(UIData.switchmode)
+				ToNotParticle();
 		
 		if(Input.GetKeyUp(KeyCode.Z))
-		{
-			
-			if(UIData.switchmode)ToNotParticle();
-
-			
-		}
+			if(UIData.switchmode)
+				ToNotParticle();
 		
 		if(Input.GetKeyUp(KeyCode.X))
-		{
-			
-			if(UIData.switchmode)ToNotParticle();
-
-			
-		}
-		
+			if(UIData.switchmode)
+				ToNotParticle();
+*/		
 		if(Input.GetKeyUp(KeyCode.RightArrow))
-		{
-			if(UIData.switchmode)ToNotParticle();
-
-		}
-		
+			if(UIData.switchmode)
+				ToNotParticle();
 		
 		if(Input.GetKeyUp(KeyCode.LeftArrow))
-		{
-			if(UIData.switchmode)ToNotParticle();
+			if(UIData.switchmode)
+				ToNotParticle();
 
-		}
-
-        if(Input.GetKey("joystick button 3"))
-        {
+        if(Input.GetKey("joystick button 3")) {
             UIData.resetDisplay=true;
             UIData.isCubeToSphere=false;
             UIData.isSphereToCube=true;
             UIData.atomtype=UIData.AtomType.cube;
-
-
         }
         
-        if(Input.GetKey("joystick button 2"))
-        {
+        if(Input.GetKey("joystick button 2")) {
             UIData.resetDisplay=true;
             UIData.isSphereToCube=false;
             UIData.isCubeToSphere=true;
             UIData.atomtype=UIData.AtomType.sphere;
-
         }
         
-        if(Input.GetKey("joystick button 0"))
-        {
+        if(Input.GetKey("joystick button 0")) {
             UIData.resetDisplay=true;
             UIData.isCubeToSphere=false;
             UIData.isSphereToCube=true;
             UIData.atomtype=UIData.AtomType.hyperball;
-
-
         }
         
-        if(Input.GetKey("joystick button 1"))
-        {
+        if(Input.GetKey("joystick button 1")) {
             UIData.resetDisplay=true;
             UIData.isSphereToCube=true;
             UIData.isCubeToSphere=false;
@@ -1146,137 +912,146 @@ public class Molecule3D:MonoBehaviour
             UIData.bondtype=UIData.BondType.nobond;
         }
 		
+		// Takes a screenshot of the scene
+		if(Input.GetKeyDown(KeyCode.P)) {
+			ScreenShot comp = LocCamera.GetComponent<ScreenShot> ();
+			comp.open = true;
+		}
+		
 		Vector3 vv=new Vector3();
 		vv=LocCamera.transform.localPosition;		
 		
 		if(!GUIMoleculeController.toggle_NA_MAXCAM)
-		{
 			vv.z+=Input.GetAxis("Mouse ScrollWheel")*5;
-//			if(UIData.switchmode)ToParticle();
-		
-		}
-		LocCamera.transform.localPosition=vv;
 
+		LocCamera.transform.localPosition=vv;		
 	}
 	
-// function who set the center of the scene R for Reste and T on an atom
-	private void SetCenterbySpace()
-	{
-		if(Input.GetKeyUp(KeyCode.R))
-		{
+	/// <summary>
+	/// Sets the center of the scene on :
+	/// The original center ('R' key)
+	/// The targeted atom ('T' key)
+	/// </summary>
+	/// 
+	/* replaced by R and C in maxCamera.
+	private void SetCenterbySpace() {
+		if(Input.GetKeyUp(KeyCode.R)) {
 			Debug.Log("Press the R key");
 			SetCenter(0);
-			
 		}
-		if(Input.GetKeyUp(KeyCode.T))
-		{
+		replace by touch C in maxCamera
+	  if(Input.GetKeyUp(KeyCode.T)) {
 			Debug.Log("Press the T key");
 			SetCenter(1);
+		}
+	}*/
+
+// controlled when maxcam is desactivate with the mouse =============================================================================================		
+	/// <summary>
+	/// Camera controls with mouse inputs.
+	/// </summary>
+	private void MouseOperate() {
+		Vector3 v=new Vector3();
+		v=LocCamera.transform.localPosition;
+	
+		if(!GUIMoleculeController.toggle_NA_MAXCAM) {
+//			if (Input.GetMouseButton(1) )
+//				v=LocCamera.transform.localPosition;
+
+			if (Input.GetMouseButton(0)) {
+				if(UIData.switchmode)ToParticle();
+				rotationXX += Input.GetAxis("Mouse X") * sensitivityX;
+				rotationYY += Input.GetAxis("Mouse Y") * sensitivityY;
+				print("Mouse X"+Input.GetAxis("Mouse X"));
+				print("Mouse Y"+Input.GetAxis("Mouse Y"));
+				print("rotationXX"+rotationXX);
+				print("rotationYY"+rotationYY);
+		
+				Quaternion xQuaternion = Quaternion.AngleAxis (rotationXX, Vector3.up);
+				Quaternion yQuaternion = Quaternion.AngleAxis (rotationYY, Vector3.left);
+				transform.localRotation =  xQuaternion * yQuaternion;
+//				transform.localRotation = originalRotation * xQuaternion * yQuaternion;
+				if(UIData.switchmode)ToNotParticle();
+			}
 			
+			if(Input.GetMouseButtonUp(1))
+				if(UIData.switchmode)ToNotParticle();
+			
+			v.z+=Input.GetAxis("Mouse ScrollWheel")*5;
+			LocCamera.transform.localPosition=v;
+			Debug.Log ("get mouse: " +v.z);				
 		}
 	}
 
-// controlled when maxcam is desactivate with the mouse =============================================================================================		
-	private void MouseOperate()
-	{
-			Vector3 v=new Vector3();
-			v=LocCamera.transform.localPosition;
-
-		
-			if(!GUIMoleculeController.toggle_NA_MAXCAM)
-			{
-//				if (Input.GetMouseButton(1) )
-//				{
-//					v=LocCamera.transform.localPosition;
-//				}
-
-				if (Input.GetMouseButton(0))
-				{
-					if(UIData.switchmode)ToParticle();
-					rotationXX += Input.GetAxis("Mouse X") * sensitivityX;
-					rotationYY += Input.GetAxis("Mouse Y") * sensitivityY;
-					print("Mouse X"+Input.GetAxis("Mouse X"));
-					print("Mouse Y"+Input.GetAxis("Mouse Y"));
-					print("rotationXX"+rotationXX);
-					print("rotationYY"+rotationYY);
-			
-					Quaternion xQuaternion = Quaternion.AngleAxis (rotationXX, Vector3.up);
-					Quaternion yQuaternion = Quaternion.AngleAxis (rotationYY, Vector3.left);
-					transform.localRotation =  xQuaternion * yQuaternion;
-//					transform.localRotation = originalRotation * xQuaternion * yQuaternion;
-					if(UIData.switchmode)ToNotParticle();
-				}
-//				if(Input.GetMouseButtonUp(0))
-//				{
-//					if(UIData.switchmode)ToNotParticle();
-//				}
-				if(Input.GetMouseButtonUp(1))
-				{
-//					v=LocCamera.transform.localPosition;
-					if(UIData.switchmode)ToNotParticle();
-				}
-				v.z+=Input.GetAxis("Mouse ScrollWheel")*5;
-				LocCamera.transform.localPosition=v;
-				Debug.Log ("get mouse: " +v.z);
-				
-				
-			}	
-//			if(UIData.switchmode)ToParticle();
-		
-
-		
-	}
-	
-	
-// affect the cam target to modifiate his position
-	private void SetCenter( int mode)
-	{
+	/// <summary>
+	/// Sets the center of the scene on the original center or on an atom.
+	/// </summary>
+	/// <param name='mode'>
+	/// Setting mode (0 for original center, 1 for atom center). Int.
+	/// </param>
+	private void SetCenter( int mode) {
 		GameObject CamTarget = GameObject.Find("Cam Target");
-	//			CamTarget.transform.rotation =  new Quaternion(0f, 0f, 0f, 0f);
 	
-	
-	
-		// chose the main function 0 to restart position or 1 to center around an atom
-		if (mode ==	0){
+		// choose the main function 0 to restart position or 1 to center around an atom
+		if (mode ==	0) {
 			Debug.Log("Entering :: SetCenter for cam target to" + MoleculeModel.cameraLocation.z);
-			//Camera.main.transform.localPosition = new Vector3(0f,0f,Camera.main.transform.localPosition.z);
-			// CamTarget.transform.localPosition = new Vector3(0f,0f,0f);
-			// change the postition of the LoadBox
-			// GameObject scenecontroller= GameObject.Find("LoadBox");
-			if(scenecontroller.GetComponent<maxCamera>().enabled)
-			{
-				// scenecontroller.transform.rotation =  new Quaternion(0f, 0f, 0f, 0f);
-				// scenecontroller.transform.localPosition = new Vector3(0f,0f,-25f);
+			if(scenecontroller.GetComponent<maxCamera>().enabled) {
 				maxCamera comp = scenecontroller.GetComponent<maxCamera>();
 				comp.ToCenter();
-	
 			}
-		}else if (mode ==1){
+			if(UIData.atomtype == UIData.AtomType.hyperball){
+				GameObject hbManagerObj = GameObject.FindGameObjectWithTag("HBallManager");
+				HBallManager hbManager = hbManagerObj.GetComponent<HBallManager>();
+				hbManager.ResetPositions();
+			}
+		} else if (mode ==1) {
 			Debug.Log("target : " +MoleculeModel.target);
 			CamTarget.transform.rotation = transform.rotation;
 			CamTarget.transform.position = MoleculeModel.target;
 		}
-
 	}
 	
-
-// change the representation of the protein in hyperball. almost for the switch mod
+	/// <summary>
+	/// Sets the volumetric density.
+	/// </summary>
+	public void SetVolumetricDensity () {
+		if( (GUIMoleculeController.showVolumetricDensity || GUIMoleculeController.showVolumetricFields) && !UIData.hasMoleculeDisplay) {
+			GameObject volumObj;
+			volumObj = GameObject.FindGameObjectWithTag("Volumetric");
+			Volumetric volumetric;
+			volumetric = volumObj.GetComponent<VolumetricDensity>();
+			if (volumetric)
+				volumetric.Clear();
+			volumetric = volumObj.GetComponent<VolumetricFields>();
+			if (volumetric)
+				volumetric.Clear();
+			GUIMoleculeController.showVolumetricDensity = false;
+			GUIMoleculeController.showVolumetricFields = false;
+		}
+	}
+	
+	
+	/// <summary>
+	/// Switch the protein representation to Hyperball. Used in switch mode (LOD).
+	/// </summary>
 	public void ToNotParticle() {
-		if(UIData.atomtype != UIData.AtomType.particleball && UIData.atomtype != previous_AtomType)
+		if(UIData.atomtype != UIData.AtomType.particleball && UIData.atomtype != previous_AtomType) {
 			previous_AtomType = UIData.atomtype;
-		DisplayMolecule.ToNotParticle(previous_AtomType);
-		// Debug.Log("ToNotParticle()");
-
+			previous_BondType = UIData.bondtype;
+		}
+		DisplayMolecule.ToNotParticle(previous_AtomType, previous_BondType);
 	}
 	
-	// change the representation of the protein in particle
-	// also call in switch mod
+	/// <summary>
+	/// Switch the protein representation to Particle. Used in switch mode (LOD).
+	/// </summary>
 	public void ToParticle() {
-		if(UIData.atomtype != UIData.AtomType.particleball)
+		if(UIData.atomtype != UIData.AtomType.particleball) {
 			previous_AtomType = UIData.atomtype;
+			previous_BondType = UIData.bondtype;
+		}
 		DisplayMolecule.ToParticle();
 		// Debug.Log("ToParticle()");
 	}
-
 }
 

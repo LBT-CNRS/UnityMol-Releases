@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: StickUpdateParticle.cs 223 2013-04-06 22:32:11Z baaden $
+/// $Id: StickUpdateParticle.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -68,64 +68,63 @@ using System.Collections;
 using UI;
 
 public class StickUpdateParticle : MonoBehaviour {
-public static float shrink = 0.01f;
-public static float scale = 1.0f;
-public static float radiusFactor = 1.0f;
-public GameObject atompointer1=null;
-public GameObject atompointer2=null;
-
-
-// Only check for d3d once
-private bool d3d= false;
-void  Start (){
-	d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
-}
-
-void  Update ()
-{
-	renderer.material.SetFloat("_Shrink",shrink);
-	renderer.material.SetFloat("_Scale",scale);
-	if(UIData.EnableUpdate)
-	{	
-		renderer.material.SetVector("_TexPos1", atompointer1.transform.position);
-		renderer.material.SetVector("_TexPos2", atompointer2.transform.position);
-		renderer.material.SetColor("_Color", atompointer1.renderer.material.GetColor("_Color"));
-		renderer.material.SetColor("_Color2", atompointer2.renderer.material.GetColor("_Color"));
+	public static float shrink = 0.01f;
+	public static float scale = 1.0f;
+	public static float radiusFactor = 1.0f;
+	public GameObject atompointer1=null;
+	public GameObject atompointer2=null;
 	
-		if(UIData.isSphereToCube==true)
-		{
-			if(UIData.atomtype==UIData.AtomType.hyperball||UIData.atomtype==UIData.AtomType.raycasting||UIData.atomtype==UIData.AtomType.rcbillboard||UIData.atomtype==UIData.AtomType.hbbillboard)
+	
+	// Only check for d3d once
+	private bool d3d= false;
+	void  Start (){
+		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
+	}
+	
+	void  Update ()
+	{
+		renderer.material.SetFloat("_Shrink",shrink);
+		renderer.material.SetFloat("_Scale",scale);
+		if(UIData.EnableUpdate)
+		{	
+			renderer.material.SetVector("_TexPos1", atompointer1.transform.position);
+			renderer.material.SetVector("_TexPos2", atompointer2.transform.position);
+			renderer.material.SetColor("_Color", atompointer1.renderer.material.GetColor("_Color"));
+			renderer.material.SetColor("_Color2", atompointer2.renderer.material.GetColor("_Color"));
+		
+			if(UIData.isSphereToCube==true)
 			{
-				if(atompointer1.renderer.material.HasProperty("_Rayon"))
-				renderer.material.SetFloat("_Rayon1",atompointer1.renderer.material.GetFloat("_Rayon"));
-				if(atompointer2.renderer.material.HasProperty("_Rayon"))
-				renderer.material.SetFloat("_Rayon2",atompointer2.renderer.material.GetFloat("_Rayon"));
+				if(UIData.atomtype==UIData.AtomType.hyperball||UIData.atomtype==UIData.AtomType.raycasting||UIData.atomtype==UIData.AtomType.rcbillboard||UIData.atomtype==UIData.AtomType.hbbillboard)
+				{
+					if(atompointer1.renderer.material.HasProperty("_Rayon"))
+						renderer.material.SetFloat("_Rayon1",atompointer1.renderer.material.GetFloat("_Rayon"));
+					if(atompointer2.renderer.material.HasProperty("_Rayon"))
+						renderer.material.SetFloat("_Rayon2",atompointer2.renderer.material.GetFloat("_Rayon"));
+				}
+				else if(UIData.atomtype==UIData.AtomType.cube)
+				{
+					renderer.material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
+					renderer.material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
+				}
 			}
-			else if(UIData.atomtype==UIData.AtomType.cube)
+			else
 			{
 				renderer.material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
 				renderer.material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
+					
 			}
-		}
-		else
+		}				
+		Matrix4x4 P = Camera.main.projectionMatrix;
+		if (d3d) 
 		{
-			renderer.material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
-			renderer.material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
-				
+			Debug.Log("d3d");
+			
+	    	// Invert Y for rendering to a render texture
+	    	for ( int i = 0; i < 4; i++) { P[1,i] = -P[1,i]; }
+	    	// Scale and bias from OpenGL -> D3D depth range
+	    	for ( int i = 0; i < 4; i++) { P[2,i] = P[2,i]*0.5f + P[3,i]*0.5f;}
 		}
-//}
-	}				
-	Matrix4x4 P = Camera.main.projectionMatrix;
-	if (d3d) 
-	{
-	Debug.Log("d3d");
-		
-    	// Invert Y for rendering to a render texture
-    	for ( int i = 0; i < 4; i++) { P[1,i] = -P[1,i]; }
-    	// Scale and bias from OpenGL -> D3D depth range
-    	for ( int i = 0; i < 4; i++) { P[2,i] = P[2,i]*0.5f + P[3,i]*0.5f;}
+		Matrix4x4 MVP = P*Camera.main.worldToCameraMatrix*transform.localToWorldMatrix;
+		renderer.material.SetMatrix ("_matMVPI", MVP.inverse);
 	}
-	Matrix4x4 MVP = P*Camera.main.worldToCameraMatrix*transform.localToWorldMatrix;
-	renderer.material.SetMatrix ("_matMVPI", MVP.inverse);
-}
 }

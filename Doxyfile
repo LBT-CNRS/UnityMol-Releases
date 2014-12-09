@@ -47,7 +47,7 @@
  * The fact that you are presently reading this means that you have had 
  * knowledge of the CeCILL-C license and that you accept its terms.
  *
- * $Id: Doxyfile 214 2013-04-06 21:15:15Z baaden $
+ * $Id: Doxyfile 642 2014-08-04 07:30:33Z tubiana $
  *
  * References : 
  * If you use this code, please cite the following reference : 	
@@ -220,7 +220,7 @@ STRIP_FROM_INC_PATH    =
 # (but less readable) file names. This can be useful if your file system 
 # doesn't support long names like on DOS, Mac, or CD-ROM.
 
-SHORT_NAMES            = NO
+SHORT_NAMES            = YES
 
 # If the JAVADOC_AUTOBRIEF tag is set to YES then Doxygen 
 # will interpret the first line (until the first dot) of a JavaDoc-style 

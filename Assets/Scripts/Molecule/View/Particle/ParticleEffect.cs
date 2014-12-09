@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ParticleEffect.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: ParticleEffect.cs 329 2013-08-06 13:47:40Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -78,7 +78,7 @@ public class ParticleEffect : MonoBehaviour
 	private  float radiusFactorold = 1.0f;
 
     public  int atomcount;
-	//ArrayList atomLocationalist;
+//	ArrayList atomLocationalist;
 	public Particle[] p ;
 	
 	public Particle[] pn ;
@@ -118,30 +118,27 @@ public class ParticleEffect : MonoBehaviour
         }
 // 		pn=p;
         emitter.particles = pn;
+		UI.UIData.isParticlesInitialized = true;
     }
     
     void Update() {
+	if ((p != null) && !UI.UIData.isParticlesInitialized && (UI.UIData.atomtype == UI.UIData.AtomType.particleball) )
+		{
+			SpawnEffect();
+		}
+		
         // Spin the entire particle effect.
-        //this.transform.Rotate(this.transform.up * Time.deltaTime * (-turnSpeed), Space.World);        
+//      this.transform.Rotate(this.transform.up * Time.deltaTime * (-turnSpeed), Space.World);        
         if(radiusFactorold!=radiusFactor)
         {	
-//        	radiuschange=false;
-//        	radiuschange=false;
         	if(emitter)
         	{
         		for(int i=0;i<p.Length;i++)
-        		{
         			pn[i].size=p[i].size*radiusFactor*2;
-        		}
         		emitter.particles = pn;
        		}
-
-        	radiusFactorold=radiusFactor;
-        	
+        	radiusFactorold=radiusFactor;	
         }
-                
-        
-        
     }
     
     
@@ -151,8 +148,8 @@ public class ParticleEffect : MonoBehaviour
     // Kill all current spawns of the effect.
     public void killCurrentEffects() {
         
-        // Loop thru the particle emitter children of this object.  Each one is a particle effect system
-        // we want to destroy.
+        // Loop thru the particle emitter children of this object.  
+		// Each one is a particle effect system we want to destroy.
         ParticleEmitter[] emitters = this.transform.GetComponentsInChildren<ParticleEmitter>();
         foreach (ParticleEmitter emitter in emitters) 
         {
@@ -176,7 +173,7 @@ public class ParticleEffect : MonoBehaviour
        this.gameObject.transform.DetachChildren();
 //       GameObject Particleclone=GameObject.Find("particle(Clone)");
 //       GameObject Particleclone=GameObject.Find("particlein1(Clone)");
-//       
+
 //       Destroy(Particleclone);   
 		GameObject[] Particleclone;
 		Particleclone = GameObject.FindGameObjectsWithTag("particlein1");
@@ -190,7 +187,6 @@ public class ParticleEffect : MonoBehaviour
 		{
 			Destroy(Particlemanager[k]);
 		}
-
    
     }
 }

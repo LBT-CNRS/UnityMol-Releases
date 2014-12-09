@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: DMatrix.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: DMatrix.cs 298 2013-06-14 10:10:28Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -68,43 +68,28 @@ namespace DisplayControl
 	using UnityEngine;
 	using System.Collections;
 	
-	public class DMatrix 
-	{
+	public class DMatrix {
 		//float [,]r=new float[4,4];
-		public  DMatrix()
-		{
-			
-		}
+		public  DMatrix() {}
 		
-		public static float[,] Multiply(float [,]r1,float [,]r2)
-		{
+		public static float[,] Multiply(float [,]r1,float [,]r2) {
 			float[,] matrix=new float[4,4];
 			float[,] tR2=Transpose(r2);
 			for(int i=0;i<4;i++)
-			{
 				//matrix[i/4,i%4]=0;
 				for(int j=0;j<4;j++)
-				{
 					for(int k=0;k<4;k++)
-					{
 						matrix[i,j]+=r1[i,k]*tR2[j,k];
-					}
-				}
-			}
 			
 			return matrix;
 		}
 		
-		public static float[,] CreateMatrix( Vector3 v)
-		{
+		public static float[,] CreateMatrix( Vector3 v) {
 			float[,] matrix=new float[4,4];
 			for(int i=0;i<4;i++)
-			{
 				for(int j=0;j<4;j++)
-				{
 					matrix[i,j]=0;
-				}
-			}
+
 			matrix[0,0]=v.x;
 			matrix[0,1]=v.y;
 			matrix[0,2]=v.z;
@@ -112,8 +97,7 @@ namespace DisplayControl
 			return matrix;
 		}
 		
-		public static float[,] initMatrixZ(float a,float b)
-		{
+		public static float[,] initMatrixZ(float a,float b) {
 			float[,] matrix=new float[4,4];
 			matrix[0,0]=b;
 			matrix[0,1]=a;
@@ -124,8 +108,7 @@ namespace DisplayControl
 			return matrix;
 		}
 		
-		public static float[,] initMatrixX(float a,float b)
-		{
+		public static float[,] initMatrixX(float a,float b) {
 			float[,] matrix=new float[4,4];
 			matrix[0,0]=1;
 			matrix[1,1]=a;
@@ -136,8 +119,7 @@ namespace DisplayControl
 			return matrix;
 		}
 		
-		public static void RotationMatrix(Vector3 v, Vector3 v1, Vector3 v2,float angle)//
-		{
+		public static void RotationMatrix(Vector3 v, Vector3 v1, Vector3 v2,float angle) {
 			//float [,]mV=CreateMatrix( v);
 			float [,]mV1=CreateMatrix(v1);
 			float [,]mV2=CreateMatrix( v2);
@@ -164,18 +146,14 @@ namespace DisplayControl
 			v2.x=mV2[0,0];
 			v2.y=mV2[0,1];
 			v2.z=mV2[0,2];
-			
 		}
-		public static float[,] Transpose(float [,] m)
-		{
+		
+		public static float[,] Transpose(float [,] m) {
 			float[,] matrix=new float[4,4];
 			for(int i=0;i<4;i++)
-			{
 				for(int j=0;j<4;j++)
-				{
 					matrix[i,j]=m[j,i];
-				}
-			}
+
 			return matrix;
 		}
 	}

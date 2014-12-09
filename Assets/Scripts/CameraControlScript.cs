@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: CameraControlScript.cs 223 2013-04-06 22:32:11Z baaden $
+/// $Id: CameraControlScript.cs 310 2013-06-21 13:22:32Z erwan $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -99,14 +99,14 @@ public class CameraControlScript : MonoBehaviour {
             if (Input.GetMouseButton(0)){
 				Debug.Log(" "+ Input.mousePosition.x);
 				if (Input.mousePosition.x<Screen.width-500)
-            {
-                MoveForwards(deltaY);
-                ChangeHeading(deltaX);
-            }
-				else 
-			{
-				Rotate(deltaY);
-			}
+	            {
+	                MoveForwards(deltaY);
+	                ChangeHeading(deltaX);
+	            }
+					else 
+				{
+					Rotate(deltaY);
+				}
 			}
             else if (Input.GetMouseButton(1))
             {

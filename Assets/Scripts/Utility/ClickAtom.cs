@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: ClickAtom.cs 225 2013-04-07 14:21:34Z baaden $
+/// $Id: ClickAtom.cs 486 2014-05-05 08:09:21Z sebastien $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -65,39 +65,50 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using UI;
 using Molecule.Model;
 
 public class ClickAtom : MonoBehaviour 
 {
-LineRenderer mLine;
-public GameObject obj;
-
-
-private LineRenderer line;
-public bool clicked;
-//private float coordinate_x=-100;
-//private float coordinate_y=-100;
-//private float coordinate_x2=0;
-//private float coordinate_y2=0;
-
-private float width=0;
-private float height=0;
-private GameObject halo;
-
-private string atominfo="";
+	LineRenderer mLine;
+	public List<GameObject> objList = new List<GameObject>();
+	
+	
+	private LineRenderer line;
+	//public bool clicked;
+	//private float coordinate_x=-100;
+	//private float coordinate_y=-100;
+	//private float coordinate_x2=0;
+	//private float coordinate_y2=0;
+	
+	private float width=0;
+	private float height=0;
+	private List<GameObject> haloList = new List<GameObject>();
+	
+	private List<string> atominfoList = new List<string>();
 
     void  Update ()
     {     	
-	    if (Input.GetButtonDown ("Fire1")) 
+	    if (Input.GetButtonDown ("Fire1") && GUIUtility.hotControl == 0) 
         {
 		    Ray sRay= camera.ScreenPointToRay (Input.mousePosition);
 		    RaycastHit sHit;
 		    long atomnumber=0;
+			GameObject obj;
+			GameObject halo;
+			string atominfo;
+			
             if (Physics.Raycast(sRay, out sHit))
             {
-            	obj = sHit.collider.gameObject;
-            	if(obj.GetComponent<BallUpdate>() == null)
+				Vector3 mousePos = Input.mousePosition;
+				mousePos.y = Screen.height - mousePos.y;
+            	if(GUIMoleculeController.m_colorPicker != null && GUIMoleculeController.m_colorPicker.enabled 
+					&& Rectangles.colorPickerRect.Contains (mousePos))
+					return;
+				
+				obj = sHit.collider.gameObject;
+            	if(obj.GetComponent<BallUpdate>() == null || objList.IndexOf(obj) >= 0)
             		return;
 
 		    	atominfo="";
@@ -106,29 +117,28 @@ private string atominfo="";
             	
             	vl=obj.renderer.transform.localPosition;
             	
-                Destroy(halo);
+                //Destroy(halo);
             	halo=Instantiate(Resources.Load("transparentsphere"),vl,new Quaternion(0f,0f,0f,0f)) as GameObject;
                 float rad = obj.GetComponent<BallUpdate>().GetRealRadius();  
                 halo.transform.localScale = new Vector3(rad+1,rad+1,rad+1);
+                halo.transform.parent = obj.transform;
 				
                 atomnumber = obj.GetComponent<BallUpdate>().number;		
 	
-
-            	ArrayList alist=MoleculeModel.atomsLocationlist;
+            	List<float[]> alist=MoleculeModel.atomsLocationlist;
 		
-					
-				float [] a=alist[(int)atomnumber] as float[];
+				float[] a=alist[(int)atomnumber];
 					
 				if(UI.GUIDisplay.file_extension=="xgmml")
 				{
 					
-					atominfo+="ID :  "+(MoleculeModel.CSidList[(int)atomnumber] as int[])[0];
-					atominfo+="  ||  Label :  "+ (MoleculeModel.CSLabelList[(int)atomnumber] as string[])[0];
-					atominfo+="  ||  X :  "+(a[0]-MoleculeModel.Offset.x)+" , Y :  "+(a[1]-MoleculeModel.Offset.y)+" , Z :  "+(a[2]-MoleculeModel.Offset.z);
-					atominfo+="  ||  Radius :  "+((MoleculeModel.CSRadiusList[(int)atomnumber]) as float[])[0];
+					atominfo+="ID :  "+(MoleculeModel.CSidList[(int)atomnumber])[0];
+					atominfo+="  ||  Label :  "+ (MoleculeModel.CSLabelList[(int)atomnumber])[0];
+					atominfo+="  ||  X :  "+ (a[0]-MoleculeModel.Offset.x)+" , Y :  "+(a[1]-MoleculeModel.Offset.y)+" , Z :  " + (a[2]-MoleculeModel.Offset.z);
+					atominfo+="  ||  Radius :  "+ ((MoleculeModel.CSRadiusList[(int)atomnumber]))[0];
 					if(MoleculeModel.CSSGDList.Count>1)
 					{
-						atominfo+="  ||  SGD symbol :  "+((MoleculeModel.CSSGDList[(int)atomnumber]) as string[])[0];
+						atominfo+="  ||  SGD symbol :  "+((MoleculeModel.CSSGDList[(int)atomnumber]))[0];
 						width=750;
 					}
 					else
@@ -141,11 +151,14 @@ private string atominfo="";
 				}
 				else
 				{
-					atominfo+="X :  "+(a[0]-MoleculeModel.Offset.x)+" , Y :  "+(a[1]-MoleculeModel.Offset.y)+" , Z :  "+(a[2]-MoleculeModel.Offset.z);
-					atominfo+="  ||  Type :  "+(MoleculeModel.atomsTypelist[(int)atomnumber] as AtomModel).type;;
-					atominfo+="  ||  RES :  "+MoleculeModel.atomsResnamelist[(int)atomnumber];
+					atominfo+="X :  "+(-(a[0]-MoleculeModel.Offset.x))+" , Y :  "+(a[1]-MoleculeModel.Offset.y)+" , Z :  "+(a[2]-MoleculeModel.Offset.z);
+					atominfo+=" ||  Type :  " + (MoleculeModel.atomsTypelist[(int)atomnumber]).type;
+					atominfo+="("+ MoleculeModel.atomsNamelist[(int)atomnumber]+")";
+					atominfo+=" nb "+ MoleculeModel.atomsNumberList[(int)atomnumber];
+					atominfo+=" ||  RES "+MoleculeModel.residueIds[(int)atomnumber]+":  " + MoleculeModel.atomsResnamelist[(int)atomnumber];
+					atominfo+=" ||  Chain : " + (MoleculeModel.atomsChainList[(int)atomnumber]); 
 					
-					width=400;
+					width=500;
 					height=25;
 //					Debug.Log(atominfo);
 					MoleculeModel.target = new Vector3(a[0],a[1],a[2]);
@@ -155,34 +168,60 @@ private string atominfo="";
 //				coordinate_y= Screen.height-Input.mousePosition.y + 20;
 //                coordinate_x2= Input.mousePosition.x ;
 //				coordinate_y2= Screen.height-Input.mousePosition.y ;
-
-                clicked = true;
 				
-            }
+				objList.Add(obj);
+				haloList.Add(halo);
+				atominfoList.Add(atominfo);
 
+                //clicked = true;
+            }
 	    }
 
 
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1) && GUIUtility.hotControl == 0)
         {
-            Destroy(halo);
-            clicked = false;
+            Ray sRay= camera.ScreenPointToRay (Input.mousePosition);
+		    RaycastHit sHit;
+			GameObject obj;
+			
+            if (Physics.Raycast(sRay, out sHit))
+            {
+				obj = sHit.collider.gameObject;
+				if(obj.name != "transparentsphere(Clone)")
+            		return;
+				int spot = haloList.IndexOf(obj);
+				Destroy(haloList[spot]);
+				objList.RemoveAt(spot);
+				haloList.RemoveAt(spot);
+				atominfoList.RemoveAt(spot);
+            	//clicked = false;
+			}
         }
     }
 
     void OnGUI()
     {
-        if(clicked)
+        if(/*clicked &&*/ atominfoList.Count > 0)
         {
-        	Vector3 pos = Camera.main.WorldToScreenPoint(obj.transform.position);
-            GUI.Box(new Rect (pos.x + 5, Screen.height - pos.y + 20, width, height),atominfo);
+			for(int i=0; i < atominfoList.Count; i++){
+        		Vector3 pos = Camera.main.WorldToScreenPoint(objList[i].transform.position);
+				GUI.Box(new Rect (pos.x + 5, Screen.height - pos.y + 20, width, height),atominfoList[i]);}
         }
 
     }
     
     void OnDisable()
     {
-    	clicked = false;	
-  		Destroy(halo);	
+    	//clicked = false;
+		ClearSelection();
     }
+	
+	public void ClearSelection()
+	{
+		foreach(GameObject halo in haloList)
+  			Destroy(halo);
+		objList.Clear();
+		haloList.Clear();
+		atominfoList.Clear();
+	}
 }

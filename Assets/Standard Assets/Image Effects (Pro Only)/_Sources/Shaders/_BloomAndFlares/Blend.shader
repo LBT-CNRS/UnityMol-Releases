@@ -30,7 +30,7 @@ Shader "Hidden/Blend" {
 		o.uv[0] =  v.texcoord.xy;
 		o.uv[1] =  v.texcoord.xy;
 		
-		#if SHADER_API_D3D9 || SHADER_API_XBOX360 || SHADER_API_D3D11
+		#if UNITY_UV_STARTS_AT_TOP
 		if (_ColorBuffer_TexelSize.y < 0) 
 			o.uv[1].y = 1-o.uv[1].y;
 		#endif	

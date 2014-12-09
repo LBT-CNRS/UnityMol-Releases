@@ -47,7 +47,7 @@
 /// The fact that you are presently reading this means that you have had 
 /// knowledge of the CeCILL-C license and that you accept its terms.
 ///
-/// $Id: MainMenu.cs 213 2013-04-06 21:13:42Z baaden $
+/// $Id: MainMenu.cs 378 2013-09-10 17:18:27Z kouyoumdjian $
 ///
 /// References : 
 /// If you use this code, please cite the following reference : 	
@@ -95,9 +95,8 @@ public class MainMenu : MonoBehaviour {
 		 * <A HREF="http://docs.unity3d.com/Documentation/ScriptReference/Screen.html">Screen</A><BR>
 		 * <A HREF="http://docs.unity3d.com/Documentation/ScriptReference/Color.html">Color</A>
 		 */
-	void Start () 
-	{
-		Camera.mainCamera.backgroundColor = new Color (0.0f, 0.0f, 0.0f);
+	void Start () {
+		Camera.main.backgroundColor = new Color (0.0f, 0.0f, 0.0f);
 		rect_mainmenu = new Rect(Screen.width/2 - 150, Screen.height/2 - 50, 300,200);
 		pdbID = "";
 	}
@@ -108,8 +107,7 @@ public class MainMenu : MonoBehaviour {
 		 * <A HREF="http://docs.unity3d.com/Documentation/ScriptReference/MonoBehaviour.OnGUI.html">OnGUI</A><BR>
 		 * <A HREF="http://docs.unity3d.com/Documentation/ScriptReference/Application.html">Application</A>
 		 */
-	void OnGUI()
-	{
+	void OnGUI() {
 		GUILayout.BeginArea(rect_mainmenu);
 
 		GUILayout.BeginHorizontal();
@@ -125,18 +123,13 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.EndHorizontal();
 		
 		if(GUILayout.Button("1KX2"))
-		{
 			Application.LoadLevel("1KX2");
-		}
 
 		if(GUILayout.Button("Fieldlines"))
-		{
 			Application.LoadLevel("Fieldlines");
-		}
+
 		if(GUILayout.Button("Proteins Network"))
-		{
 			Application.LoadLevel("Network");
-		}
 
 		GUILayout.BeginHorizontal();
 		GUILayout.FlexibleSpace();
@@ -148,17 +141,15 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.FlexibleSpace();
 		pdbID = GUILayout.TextField(pdbID,4,GUILayout.Width(50));
 		if(GUILayout.Button("Fetch"))
-		{
 			Application.LoadLevel("FromPDB");
-		}
+
 		GUILayout.FlexibleSpace();
 		GUILayout.EndHorizontal();
 
 		#if !UNITY_WEBPLAYER
 		if(GUILayout.Button("UnityMol Full"))
-		{
 			Application.LoadLevel("Molecule");
-		}
+
 		#endif
 		GUILayout.EndArea();
 	}
