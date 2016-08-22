@@ -76,7 +76,7 @@ namespace UI {
 
 	public class GUIMoleculeController {
 
-		private static string umolversion = "v0.9.2 (R676)";
+		private static string umolversion = "v0.9.3 (R676)";
 		
 //		public static int texSet_max=30; /*!< Maximum number of full texture pages */
 //		public static int besttexSet_min=-5; /*!< Maximum number of condensed texture pages (negative value!) */
