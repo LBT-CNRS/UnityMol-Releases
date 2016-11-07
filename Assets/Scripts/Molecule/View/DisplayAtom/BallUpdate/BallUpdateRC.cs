@@ -75,27 +75,27 @@ public class BallUpdateRC : BallUpdate {
 
 
 	void  Start (){
-		atomcolor=renderer.material.GetColor("_Color");
+		atomcolor=GetComponent<Renderer>().material.GetColor("_Color");
 	}
 
 	void  Update ()
 	{
 		if(UIData.atomtype != UIData.AtomType.raycasting)
 		{
-			renderer.enabled = false;
+			GetComponent<Renderer>().enabled = false;
 			return;
 		}
 
-		if(!rigidbody)
+		if(!GetComponent<Rigidbody>())
 		{
 			if(oldRadiusFactor!=radiusFactor)
 			{
-				renderer.material.SetFloat("_Rayon",rayon*radiusFactor);
+				GetComponent<Renderer>().material.SetFloat("_Rayon",rayon*radiusFactor);
 				oldRadiusFactor=radiusFactor;
 			}
 			if(oldatomcolor!=atomcolor)
 			{
-				renderer.material.SetColor("_Color", atomcolor);
+				GetComponent<Renderer>().material.SetColor("_Color", atomcolor);
 				oldatomcolor=atomcolor;
 			}
 		}

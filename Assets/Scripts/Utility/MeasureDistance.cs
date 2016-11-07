@@ -111,7 +111,7 @@ private GameObject halo2;
     {     	
 	    if (Input.GetButtonDown ("Fire1")) 
         {
-		    Ray sRay= camera.ScreenPointToRay (Input.mousePosition);
+		    Ray sRay= GetComponent<Camera>().ScreenPointToRay (Input.mousePosition);
 		    RaycastHit sHit;
             if (Physics.Raycast(sRay, out sHit))
             {

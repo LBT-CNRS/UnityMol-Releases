@@ -125,7 +125,7 @@ namespace Molecule.View.DisplayBond
 			lineRenderer.material = new Material (Shader.Find("Particles/Alpha Blended"));
 			
 			if(Line.GetComponent<LineUpdate>()==null)
-				Line.AddComponent("LineUpdate");
+				Line.AddComponent<LineUpdate>();
 			LineUpdate comp = Line.GetComponent<LineUpdate>();
 //			comp.atompointer1=(GameObject)MoleculeModel.atoms[atomsIds[0]];
 //			comp.atompointer2=(GameObject)MoleculeModel.atoms[atomsIds[1]];

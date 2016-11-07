@@ -151,7 +151,7 @@ public class MeshMerger : MonoBehaviour
       triCount += mf.mesh.triangles.Length; 
       uvCount += mf.mesh.uv.Length;
       if(material == null)
-        material = mf.gameObject.renderer.material;       
+        material = mf.gameObject.GetComponent<Renderer>().material;       
     }
     
     // allocate arrays
@@ -218,7 +218,7 @@ public class MeshMerger : MonoBehaviour
   
     smr.sharedMesh = me;
     smr.bones = aBones;
-    renderer.material = material;
+    GetComponent<Renderer>().material = material;
 
   }
 }

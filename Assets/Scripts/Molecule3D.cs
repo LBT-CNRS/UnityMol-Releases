@@ -559,27 +559,27 @@ public class Molecule3D:MonoBehaviour {
 			if ((GUIMoleculeController.surfaceTexture || GUIMoleculeController.externalSurfaceTexture) && !GUIMoleculeController.surfaceTextureDone) {
 				if(GUIMoleculeController.externalSurfaceTexture){
 					if(!UIData.grayscalemode)
-						Surface.renderer.material.SetTexture("_MatCap",GUIMoleculeController.extSurf);
+						Surface.GetComponent<Renderer>().material.SetTexture("_MatCap",GUIMoleculeController.extSurf);
 					else{
 						GameObject hbManagerObj = GameObject.FindGameObjectWithTag("HBallManager");
 						HBallManager hbManager = hbManagerObj.GetComponent<HBallManager>();
-						Surface.renderer.material.SetTexture("_MatCap",hbManager.ToGray(GUIMoleculeController.extSurf));
+						Surface.GetComponent<Renderer>().material.SetTexture("_MatCap",hbManager.ToGray(GUIMoleculeController.extSurf));
 					}
 					Debug.Log("File choose surface texture");
 				}
 				else{
 					if(!UIData.grayscalemode)
-						Surface.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load(GUIMoleculeController.surfaceTextureName)); // do not do that every frame!
+						Surface.GetComponent<Renderer>().material.SetTexture("_MatCap",(Texture)Resources.Load(GUIMoleculeController.surfaceTextureName)); // do not do that every frame!
 					else{
 						GameObject hbManagerObj = GameObject.FindGameObjectWithTag("HBallManager");
 						HBallManager hbManager = hbManagerObj.GetComponent<HBallManager>();
-						Surface.renderer.material.SetTexture("_MatCap",hbManager.ToGray((Texture)Resources.Load(GUIMoleculeController.surfaceTextureName)));
+						Surface.GetComponent<Renderer>().material.SetTexture("_MatCap",hbManager.ToGray((Texture)Resources.Load(GUIMoleculeController.surfaceTextureName)));
 					}
 					Debug.Log("Quick choose surface texture");
 				}
 			}
 			else if ((GUIMoleculeController.buildSurface || GUIMoleculeController.dxRead) && !GUIMoleculeController.buildSurfaceDone) {
-				Surface.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
+				Surface.GetComponent<Renderer>().material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
 				Debug.Log("Default surface texture");
 			}
 			
@@ -587,26 +587,26 @@ public class Molecule3D:MonoBehaviour {
 			// Surface.renderer.material.SetFloat("_Shininess", GUIMoleculeController.intensity);
 			// if (Input.GetKey("n")) // uncoment for benoist
 			
-			Surface.renderer.material.SetColor("_Color", GUIMoleculeController.SurfaceGrayColor.color);
-			Surface.renderer.material.SetColor("_ColorIN", GUIMoleculeController.SurfaceInsideColor.color);
+			Surface.GetComponent<Renderer>().material.SetColor("_Color", GUIMoleculeController.SurfaceGrayColor.color);
+			Surface.GetComponent<Renderer>().material.SetColor("_ColorIN", GUIMoleculeController.SurfaceInsideColor.color);
 			//Surface.renderer.material.SetColor("_Color", new Color(1f,1f,1f)); // couleur blanche fixé
-			Surface.renderer.material.SetFloat("_depthcut", GUIMoleculeController.depthCut);
-			Surface.renderer.material.SetFloat("_cutX", GUIMoleculeController.cutX);
-			Surface.renderer.material.SetFloat("_cutY", GUIMoleculeController.cutY);
-			Surface.renderer.material.SetFloat("_cutZ", GUIMoleculeController.cutZ);
-			Surface.renderer.material.SetVector("_SurfacePos", Surface.transform.position);
+			Surface.GetComponent<Renderer>().material.SetFloat("_depthcut", GUIMoleculeController.depthCut);
+			Surface.GetComponent<Renderer>().material.SetFloat("_cutX", GUIMoleculeController.cutX);
+			Surface.GetComponent<Renderer>().material.SetFloat("_cutY", GUIMoleculeController.cutY);
+			Surface.GetComponent<Renderer>().material.SetFloat("_cutZ", GUIMoleculeController.cutZ);
+			Surface.GetComponent<Renderer>().material.SetVector("_SurfacePos", Surface.transform.position);
 			
-			if (GUIMoleculeController.surfaceMobileCut && Surface.renderer.material.shader.name == "Mat Cap Cut"){	// set the cutting mode
-				if(Surface.renderer.material.GetFloat("_cut") != 2f)
-					Surface.renderer.material.SetFloat("_cut", 2f);
+			if (GUIMoleculeController.surfaceMobileCut && Surface.GetComponent<Renderer>().material.shader.name == "Mat Cap Cut"){	// set the cutting mode
+				if(Surface.GetComponent<Renderer>().material.GetFloat("_cut") != 2f)
+					Surface.GetComponent<Renderer>().material.SetFloat("_cut", 2f);
 			}
-			else if (GUIMoleculeController.surfaceStaticCut && Surface.renderer.material.shader.name == "Mat Cap Cut"){
-				if(Surface.renderer.material.GetFloat("_cut") != 1f)
-					Surface.renderer.material.SetFloat("_cut", 1f);
+			else if (GUIMoleculeController.surfaceStaticCut && Surface.GetComponent<Renderer>().material.shader.name == "Mat Cap Cut"){
+				if(Surface.GetComponent<Renderer>().material.GetFloat("_cut") != 1f)
+					Surface.GetComponent<Renderer>().material.SetFloat("_cut", 1f);
 			}
-			else if(Surface.renderer.material.shader.name == "Mat Cap Cut"){
-				if(Surface.renderer.material.GetFloat("_cut") != 0f)
-					Surface.renderer.material.SetFloat("_cut", 0f);
+			else if(Surface.GetComponent<Renderer>().material.shader.name == "Mat Cap Cut"){
+				if(Surface.GetComponent<Renderer>().material.GetFloat("_cut") != 0f)
+					Surface.GetComponent<Renderer>().material.SetFloat("_cut", 0f);
 			}
 		}
 		GUIMoleculeController.surfaceTextureDone = true;

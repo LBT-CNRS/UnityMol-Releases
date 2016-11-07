@@ -249,7 +249,7 @@ public class AFMLikeExp : MonoBehaviour
 					{
 						for (int i = 0; i < arrowList.Count; i++)
 						{
-							arrowList[i].transform.GetChild(0).gameObject.renderer.enabled = true;
+							arrowList[i].transform.GetChild(0).gameObject.GetComponent<Renderer>().enabled = true;
 						}
 						forceApplied = true;
 					}
@@ -271,7 +271,7 @@ public class AFMLikeExp : MonoBehaviour
 			{
 				for (int i = 0; i < arrowList.Count; i++)
 				{
-					arrowList[i].transform.GetChild(0).gameObject.renderer.enabled = false;
+					arrowList[i].transform.GetChild(0).gameObject.GetComponent<Renderer>().enabled = false;
 					arrowList[i].transform.localScale = new Vector3(0.4f, 3.5f, 0.4f);
 				}
 				
@@ -350,16 +350,16 @@ public class AFMLikeExp : MonoBehaviour
 				currentHalo = haloList[atomList.IndexOf(currentAtom)];
 				Color c = Color.blue;
 				c.a = HALO_SELECTED_ALPHA;
-				currentHalo.renderer.material.color = c;
+				currentHalo.GetComponent<Renderer>().material.color = c;
 			}
 			else {
 				currentHalo = CreateHaloWithParent(currentAtom);
 				Color c = Color.white;
 				c.a = HALO_UNSELECTED_ALPHA;
-				currentHalo.renderer.material.color = c;
+				currentHalo.GetComponent<Renderer>().material.color = c;
 			}
 			
-			gameObject.renderer.material.color = Color.red;
+			gameObject.GetComponent<Renderer>().material.color = Color.red;
 		}
 	}
 	
@@ -373,7 +373,7 @@ public class AFMLikeExp : MonoBehaviour
 			if (isAtomSelected(currentAtom)) {
 				Color c = Color.yellow;
 				c.a = HALO_SELECTED_ALPHA;
-				currentHalo.renderer.material.color = c;
+				currentHalo.GetComponent<Renderer>().material.color = c;
 			}
 			else {
 				GameObject.DestroyImmediate (currentHalo);
@@ -382,7 +382,7 @@ public class AFMLikeExp : MonoBehaviour
 			currentHalo = null;
 			selectCurrentAtom = false;
 			
-			gameObject.renderer.material.color = Color.white;
+			gameObject.GetComponent<Renderer>().material.color = Color.white;
 		}
 	}
 	
@@ -398,7 +398,7 @@ public class AFMLikeExp : MonoBehaviour
 			if (isAtomSelected(currentAtom)) {
 				Color c = Color.white;
 				c.a = HALO_UNSELECTED_ALPHA;
-				currentHalo.renderer.material.color = c;
+				currentHalo.GetComponent<Renderer>().material.color = c;
 				atomList.Remove (currentAtom);
 				haloList.Remove (currentHalo);
 				atomNumberList.Remove ((int)currentAtom.GetComponent<BallUpdate>().number);
@@ -419,7 +419,7 @@ public class AFMLikeExp : MonoBehaviour
 				arrow.transform.localScale = new Vector3(0.4f, 3.5f, 0.4f);
 				arrow.transform.parent = arrowParent.transform;
 				arrow.transform.Translate(arrow.transform.up * 2.0f);
-				arrow.renderer.enabled = false;
+				arrow.GetComponent<Renderer>().enabled = false;
 				
 				arrowParent.transform.position = currentAtom.transform.position;				
 				arrowParent.transform.parent = currentAtom.transform;
@@ -427,7 +427,7 @@ public class AFMLikeExp : MonoBehaviour
 				
 				Color c = Color.blue;
 				c.a = HALO_SELECTED_ALPHA;
-				currentHalo.renderer.material.color = c;
+				currentHalo.GetComponent<Renderer>().material.color = c;
 			}
 		}
 	}

@@ -123,7 +123,7 @@ namespace Molecule.View.DisplayBond
 
 
 			if(Line.GetComponent<TubeUpdate>()==null)
-				Line.AddComponent("TubeUpdate");
+				Line.AddComponent<TubeUpdate>();
 
 			TubeUpdate comp = Line.GetComponent<TubeUpdate>();
 			comp.SetAtoms((GameObject)MoleculeModel.atoms[atomsIds[0]], (GameObject)MoleculeModel.atoms[atomsIds[1]]);

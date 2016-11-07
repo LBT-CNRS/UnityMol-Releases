@@ -21,9 +21,9 @@ public class HStickManager : GenericManager {
 		enabled = true;
 		//for (int i=0; i< sticks.Length; i++) {
 		for (int i=0; i< sticks.Length; i++){
-			sticks[i].renderer.enabled = true;
-			sticks[i].renderer.castShadows = false;
-			sticks[i].renderer.receiveShadows = false;
+			sticks[i].GetComponent<Renderer>().enabled = true;
+			sticks[i].GetComponent<Renderer>().castShadows = false;
+			sticks[i].GetComponent<Renderer>().receiveShadows = false;
 		}
 	}
 	
@@ -48,7 +48,7 @@ public class HStickManager : GenericManager {
 		
 		//for (int i=0; i< sticks.Length; i++)
 		for (int i=0; i< sticks.Length; i++)
-			sticks[i].renderer.material.SetFloat("_Attenuation", attenuation);
+			sticks[i].GetComponent<Renderer>().material.SetFloat("_Attenuation", attenuation);
 	}
 	
 	
@@ -57,8 +57,8 @@ public class HStickManager : GenericManager {
 			sticks = GameObject.FindObjectsOfType(typeof(StickUpdate)) as StickUpdate[];
 
 			for (int i=0; i< sticks.Length; i++) {
-				sticks[i].renderer.material.SetColor("_Color", sticks[i].atompointer1.renderer.material.GetColor("_Color"));
-				sticks[i].renderer.material.SetColor("_Color2", sticks[i].atompointer2.renderer.material.GetColor("_Color"));
+				sticks[i].GetComponent<Renderer>().material.SetColor("_Color", sticks[i].atompointer1.GetComponent<Renderer>().material.GetColor("_Color"));
+				sticks[i].GetComponent<Renderer>().material.SetColor("_Color2", sticks[i].atompointer2.GetComponent<Renderer>().material.GetColor("_Color"));
 			}
 			
 			BallUpdate.bondsReadyToBeReset = false;
@@ -70,14 +70,14 @@ public class HStickManager : GenericManager {
 			sticks = GameObject.FindObjectsOfType(typeof(StickUpdate)) as StickUpdate[];
 			if(UIData.atomtype == UIData.AtomType.hyperball){
 				for (int i=0; i< sticks.Length; i++) {
-					sticks[i].renderer.material.SetTexture("_MatCap", sticks[i].atompointer1.renderer.material.GetTexture("_MatCap"));
-					sticks[i].renderer.material.SetTexture("_MatCap2", sticks[i].atompointer2.renderer.material.GetTexture("_MatCap"));
+					sticks[i].GetComponent<Renderer>().material.SetTexture("_MatCap", sticks[i].atompointer1.GetComponent<Renderer>().material.GetTexture("_MatCap"));
+					sticks[i].GetComponent<Renderer>().material.SetTexture("_MatCap2", sticks[i].atompointer2.GetComponent<Renderer>().material.GetTexture("_MatCap"));
 				}
 			}
 			else{
 			for (int i=0; i< sticks.Length; i++) {
-					sticks[i].renderer.material.SetTexture("_MatCap", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
-					sticks[i].renderer.material.SetTexture("_MatCap2", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
+					sticks[i].GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
+					sticks[i].GetComponent<Renderer>().material.SetTexture("_MatCap2", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
 				}	
 			}
 			BallUpdate.bondsReadyToBeReset = false;
@@ -93,9 +93,9 @@ public class HStickManager : GenericManager {
 		sticks = GameObject.FindObjectsOfType(typeof(StickUpdate)) as StickUpdate[];
 		for (int i=0; i< sticks.Length; i++) {
 			atomOne = sticks[i].atompointer1.transform.position; // transform.position is costly; this way, we do it twice instead of thrice
-			sticks[i].renderer.material.SetVector("_TexPos1", atomOne);
+			sticks[i].GetComponent<Renderer>().material.SetVector("_TexPos1", atomOne);
 			sticks[i].transform.position = atomOne;
-			sticks[i].renderer.material.SetVector("_TexPos2", sticks[i].atompointer2.transform.position);
+			sticks[i].GetComponent<Renderer>().material.SetVector("_TexPos2", sticks[i].atompointer2.transform.position);
 		}
 	}
 	
@@ -112,24 +112,24 @@ public class HStickManager : GenericManager {
 			for (int i=0; i< sticks.Length; i++) {
 				//if it's not a network
 				if(!xgmml){
-					sticks[i].renderer.material.SetFloat("_Rayon1", sticks[i].atompointer1.renderer.material.GetFloat("_Rayon"));
-					sticks[i].renderer.material.SetFloat("_Rayon2", sticks[i].atompointer2.renderer.material.GetFloat("_Rayon"));
+					sticks[i].GetComponent<Renderer>().material.SetFloat("_Rayon1", sticks[i].atompointer1.GetComponent<Renderer>().material.GetFloat("_Rayon"));
+					sticks[i].GetComponent<Renderer>().material.SetFloat("_Rayon2", sticks[i].atompointer2.GetComponent<Renderer>().material.GetFloat("_Rayon"));
 				//if it's a network, we had to reduce de size of stick (otherwise it looks like a licornice representation)
 				}else{
 				//	Debug.Log(sticks[i].atompointer1.renderer.material.GetFloat("_Rayon")/2);
-					sticks[i].renderer.material.SetFloat("_Rayon1", sticks[i].atompointer1.renderer.material.GetFloat("_Rayon")/2);
-					sticks[i].renderer.material.SetFloat("_Rayon2", sticks[i].atompointer2.renderer.material.GetFloat("_Rayon")/2);
+					sticks[i].GetComponent<Renderer>().material.SetFloat("_Rayon1", sticks[i].atompointer1.GetComponent<Renderer>().material.GetFloat("_Rayon")/2);
+					sticks[i].GetComponent<Renderer>().material.SetFloat("_Rayon2", sticks[i].atompointer2.GetComponent<Renderer>().material.GetFloat("_Rayon")/2);
 				}
 				// Might not be necessary anymore.
-				sticks[i].oldrayon1 = sticks[i].atompointer1.renderer.material.GetFloat("_Rayon");
-				sticks[i].oldrayon2 = sticks[i].atompointer2.renderer.material.GetFloat("_Rayon");
+				sticks[i].oldrayon1 = sticks[i].atompointer1.GetComponent<Renderer>().material.GetFloat("_Rayon");
+				sticks[i].oldrayon2 = sticks[i].atompointer2.GetComponent<Renderer>().material.GetFloat("_Rayon");
 			}
 		}
 		else {
 			//sticks = GameObject.FindObjectsOfType(typeof(StickUpdate)) as StickUpdate[];
 			for (int i=0; i< sticks.Length; i++) {
-				sticks[i].renderer.material.SetFloat("_Rayon1", sticks[i].atompointer1.transform.lossyScale.x/2);
-				sticks[i].renderer.material.SetFloat("_Rayon2", sticks[i].atompointer2.transform.lossyScale.x/2);
+				sticks[i].GetComponent<Renderer>().material.SetFloat("_Rayon1", sticks[i].atompointer1.transform.lossyScale.x/2);
+				sticks[i].GetComponent<Renderer>().material.SetFloat("_Rayon2", sticks[i].atompointer2.transform.lossyScale.x/2);
 				
 				sticks[i].oldrayon1 = sticks[i].atompointer1.transform.lossyScale.x/2;
 				sticks[i].oldrayon2 = sticks[i].atompointer2.transform.lossyScale.x/2;
@@ -139,7 +139,7 @@ public class HStickManager : GenericManager {
 	
 	public override void EnableRenderers() {
 		for (int i=0; i< sticks.Length; i++)
-			sticks[i].renderer.enabled = true;
+			sticks[i].GetComponent<Renderer>().enabled = true;
 		enabled = true;
 	}
 	
@@ -147,13 +147,13 @@ public class HStickManager : GenericManager {
 		sticks = GameObject.FindObjectsOfType(typeof(StickUpdate)) as StickUpdate[];
 		Debug.Log("StickManager: DisableRenderers()");
 		for (int i=0; i< sticks.Length; i++)
-			sticks[i].renderer.enabled = false;
+			sticks[i].GetComponent<Renderer>().enabled = false;
 		enabled = false;
 	}
 	
 	private void ResetBrightness() {
 		for(int i=0; i<sticks.Length; i++)
-			sticks[i].renderer.material.SetFloat("_Brightness", HBallManager.brightness);
+			sticks[i].GetComponent<Renderer>().material.SetFloat("_Brightness", HBallManager.brightness);
 		
 		resetBrightness = false;
 	}
@@ -188,12 +188,12 @@ public class HStickManager : GenericManager {
 		
 		if(BallUpdate.resetRadii || (StickUpdate.shrink != StickUpdate.oldshrink)) {
 			for (int i=0; i< sticks.Length; i++)
-				sticks[i].renderer.material.SetFloat("_Shrink", StickUpdate.shrink);
+				sticks[i].GetComponent<Renderer>().material.SetFloat("_Shrink", StickUpdate.shrink);
 			StickUpdate.oldshrink = StickUpdate.shrink;
 		}
 		if(BallUpdate.resetRadii || (StickUpdate.scale != StickUpdate.oldscale)) {
 			for (int i=0; i< sticks.Length; i++)
-				sticks[i].renderer.material.SetFloat("_Scale",StickUpdate.scale);
+				sticks[i].GetComponent<Renderer>().material.SetFloat("_Scale",StickUpdate.scale);
 			StickUpdate.oldscale = StickUpdate.scale;
 		}
 

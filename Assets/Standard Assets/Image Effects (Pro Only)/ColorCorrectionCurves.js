@@ -127,7 +127,7 @@ class ColorCorrectionCurves extends PostEffectsBase
 		}
 		
 		if (useDepthCorrection)
-			camera.depthTextureMode |= DepthTextureMode.Depth;			
+			GetComponent.<Camera>().depthTextureMode |= DepthTextureMode.Depth;			
 		
 		var renderTarget2Use : RenderTexture = destination;
 		

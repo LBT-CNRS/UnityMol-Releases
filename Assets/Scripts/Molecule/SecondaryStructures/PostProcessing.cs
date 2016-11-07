@@ -165,7 +165,7 @@ public class PostProcessing {
 			ribbObj.AddComponent<MeshFilter>();
 			ribbObj.AddComponent<MeshRenderer>();
 			ribbObj.GetComponent<MeshFilter>().mesh = mesh;
-			ribbObj.renderer.material = new Material(Shader.Find("Custom/Ribbons"));
+			ribbObj.GetComponent<Renderer>().material = new Material(Shader.Find("Custom/Ribbons"));
 			ribbObj.transform.position = CENTER;
 			ribbObj.transform.localPosition = CENTER;
 		}

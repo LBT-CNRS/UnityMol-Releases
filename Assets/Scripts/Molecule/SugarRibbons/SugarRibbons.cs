@@ -714,13 +714,13 @@ using Molecule.Model;
 		string chain = resChainList[res];
 		if (sugartype==1){
 			if (UI.GUIDisplay.colorByResiduesDict.ContainsKey(resname))
-				oxysphere.renderer.material.color = UI.GUIDisplay.colorByResiduesDict[resname];
+				oxysphere.GetComponent<Renderer>().material.color = UI.GUIDisplay.colorByResiduesDict[resname];
 			else
-				oxysphere.renderer.material.color = new Color(0.7f,0.7f,0.7f,0.5f);
+				oxysphere.GetComponent<Renderer>().material.color = new Color(0.7f,0.7f,0.7f,0.5f);
 		}else if (sugartype==2){
-			oxysphere.renderer.material.color = UI.GUIDisplay.ChainColorDict[chain];
+			oxysphere.GetComponent<Renderer>().material.color = UI.GUIDisplay.ChainColorDict[chain];
 		}else{
-			oxysphere.renderer.material.color = Color.red;
+			oxysphere.GetComponent<Renderer>().material.color = Color.red;
 		}
 		oxysphere.transform.localScale = new Vector3(OXYSPHERESIZE, OXYSPHERESIZE, OXYSPHERESIZE);
 
@@ -755,7 +755,7 @@ using Molecule.Model;
 		SRobj.AddComponent<MeshFilter>();
 		SRobj.AddComponent<MeshRenderer>();
 		SRobj.GetComponent<MeshFilter> ().mesh = mesh;
-		SRobj.renderer.material = new Material (Shader.Find ("Custom/Ribbons"));
+		SRobj.GetComponent<Renderer>().material = new Material (Shader.Find ("Custom/Ribbons"));
 
 	} 
 
@@ -988,7 +988,7 @@ using Molecule.Model;
 		
 		go.AddComponent<Animation>();
 		go.transform.position = point;
-		go.renderer.material.color = color;
+		go.GetComponent<Renderer>().material.color = color;
 		go.transform.localScale = new Vector3(size, size, size);	
 	}
 

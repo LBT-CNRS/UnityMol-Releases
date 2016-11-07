@@ -713,7 +713,7 @@ namespace UI{
 				GameObject[] OxySpheres = GameObject.FindGameObjectsWithTag("OxySphere");
 				if (OxySpheres.Length>0){
 					foreach(GameObject OxySphere in OxySpheres)
-						OxySphere.renderer.material.color = OxySphereColor.color;
+						OxySphere.GetComponent<Renderer>().material.color = OxySphereColor.color;
 				}else{
 					SR.ShowOxySphere();
 					toggle_OXYGEN=true;
@@ -878,7 +878,7 @@ namespace UI{
 			for (i=0; i<HBallManager.hballs.Length; i++){
 				int atom_number =(int) HBallManager.hballs[i].GetComponent<BallUpdate>().number;
 				if (MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number])){
-					HBallManager.hballs[i].renderer.enabled=show;
+					HBallManager.hballs[i].GetComponent<Renderer>().enabled=show;
 				}
 				if (i<HStickManager.sticks.Length){ 
 					int atom_number1=(int)HStickManager.sticks[i].atompointer1.GetComponent<BallUpdate>().number;
@@ -886,7 +886,7 @@ namespace UI{
 
 					if ((MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number1]))||
 					    (MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number2])))
-						HStickManager.sticks[i].renderer.enabled=show;
+						HStickManager.sticks[i].GetComponent<Renderer>().enabled=show;
 				}
 			}
 			//If we didn't finish to check the bond list (more bond than atoms)
@@ -896,7 +896,7 @@ namespace UI{
 				int atom_number2=(int)HStickManager.sticks[i].atompointer2.GetComponent<BallUpdate>().number;
 				if ((MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number1]))||
 				    (MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number2])))
-					HStickManager.sticks[i].renderer.enabled=show;
+					HStickManager.sticks[i].GetComponent<Renderer>().enabled=show;
 				i++;
 			}
 		}
@@ -907,7 +907,7 @@ namespace UI{
 			for (i=0; i<HBallManager.hballs.Length; i++){
 				int atom_number =(int) HBallManager.hballs[i].GetComponent<BallUpdate>().number;
 				if (!MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number])){
-					HBallManager.hballs[i].renderer.enabled=show;
+					HBallManager.hballs[i].GetComponent<Renderer>().enabled=show;
 				}
 				if (i<HStickManager.sticks.Length){ 
 					int atom_number1=(int)HStickManager.sticks[i].atompointer1.GetComponent<BallUpdate>().number;
@@ -915,7 +915,7 @@ namespace UI{
 					
 					if ((!MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number1]))||
 					    (!MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number2])))
-						HStickManager.sticks[i].renderer.enabled=show;
+						HStickManager.sticks[i].GetComponent<Renderer>().enabled=show;
 				}
 			}
 			//If we didn't finish to check the bond list (more bond than atoms)
@@ -925,7 +925,7 @@ namespace UI{
 				int atom_number2=(int)HStickManager.sticks[i].atompointer2.GetComponent<BallUpdate>().number;
 				if ((!MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number1]))||
 				    (!MoleculeModel.sugarResname.Contains(MoleculeModel.atomsResnamelist[atom_number2])))
-					HStickManager.sticks[i].renderer.enabled=show;
+					HStickManager.sticks[i].GetComponent<Renderer>().enabled=show;
 				i++;
 			}
 		}
@@ -934,14 +934,14 @@ namespace UI{
 			int i=0;
 			for (i=0; i<HBallManager.hballs.Length; i++){
 				if (HBallManager.hballs[i].tag=="H"){
-					HBallManager.hballs[i].renderer.enabled=show;
+					HBallManager.hballs[i].GetComponent<Renderer>().enabled=show;
 				}
 				// We want to check atoms and bond in one loop. 
 				//so we check if we not over the size of the bond list
 				if (i<HStickManager.sticks.Length){ 
 					if ((HStickManager.sticks[i].atompointer2.tag == "H") ||
 					    (HStickManager.sticks[i].atompointer1.tag == "H"))
-						HStickManager.sticks[i].renderer.enabled=show;
+						HStickManager.sticks[i].GetComponent<Renderer>().enabled=show;
 				}
 			}
 			//If we didn't finish to check the bond list (more bond than atoms)
@@ -949,7 +949,7 @@ namespace UI{
 			while(i<HStickManager.sticks.Length){
 				if ((HStickManager.sticks[i].atompointer2.tag == "H") ||
 				    (HStickManager.sticks[i].atompointer1.tag == "H"))
-					HStickManager.sticks[i].renderer.enabled=show;
+					HStickManager.sticks[i].GetComponent<Renderer>().enabled=show;
 				i++;
 			}
 		}
@@ -1221,12 +1221,12 @@ namespace UI{
 					showElectroIsoNegative = false;
 					GameObject[] IsoSurfaces = GameObject.FindGameObjectsWithTag(tag);
 					foreach(GameObject iso in IsoSurfaces)
-						iso.renderer.enabled = false;
+						iso.GetComponent<Renderer>().enabled = false;
 				} else {
 					showElectroIsoNegative = true;
 					GameObject[] IsoSurfaces = GameObject.FindGameObjectsWithTag(tag);
 					foreach(GameObject iso in IsoSurfaces)
-						iso.renderer.enabled = true;
+						iso.GetComponent<Renderer>().enabled = true;
 				}				
 			
 			}
@@ -1244,12 +1244,12 @@ namespace UI{
 					showElectroIsoPositive = false;
 					GameObject[] IsoSurfaces = GameObject.FindGameObjectsWithTag(tag);
 					foreach(GameObject iso in IsoSurfaces)
-						iso.renderer.enabled = false;
+						iso.GetComponent<Renderer>().enabled = false;
 				} else {
 					showElectroIsoPositive = true;
 					GameObject[] IsoSurfaces = GameObject.FindGameObjectsWithTag(tag);
 					foreach(GameObject iso in IsoSurfaces)
-						iso.renderer.enabled = true;
+						iso.GetComponent<Renderer>().enabled = true;
 				}
 			}
 			GUILayout.EndHorizontal();
@@ -1822,14 +1822,14 @@ namespace UI{
 					foreach (GameObject Surface in SurfaceManager) {
 //						Surface.SetActiveRecursively (false);
 //						Surface.SetActive (false);
-						Surface.renderer.enabled = false;
+						Surface.GetComponent<Renderer>().enabled = false;
 					}
 				} else {
 					showSurface = true;
 					GameObject[] SurfaceManager = GameObject.FindGameObjectsWithTag ("SurfaceManager");
 					foreach (GameObject Surface in SurfaceManager) {
 //						Surface.SetActiveRecursively (false);
-						Surface.renderer.enabled = true;
+						Surface.GetComponent<Renderer>().enabled = true;
 					}
 				}
 			}	
@@ -1878,9 +1878,9 @@ namespace UI{
 				GameObject[] surfaceObjs = GameObject.FindGameObjectsWithTag("SurfaceManager");
 //				Debug.Log(surfaceObjs.Length);
 				foreach(GameObject surfaceObj in surfaceObjs) {
-					if(surfaceObj.renderer.material.shader == Shader.Find("Vertex Colored")){
-						surfaceObj.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-						surfaceObj.renderer.material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
+					if(surfaceObj.GetComponent<Renderer>().material.shader == Shader.Find("Vertex Colored")){
+						surfaceObj.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+						surfaceObj.GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
 					}
 					else{
 //						surfaceObj.renderer.material = new Material(Shader.Find("Vertex Colored"));
@@ -1903,9 +1903,9 @@ namespace UI{
 					GameObject[] surfaceObjs = GameObject.FindGameObjectsWithTag("SurfaceManager");
 					//				Debug.Log(surfaceObjs.Length);
 					foreach(GameObject surfaceObj in surfaceObjs) {
-						if(surfaceObj.renderer.material.shader == Shader.Find("Vertex Colored")){
-							surfaceObj.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-							surfaceObj.renderer.material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
+						if(surfaceObj.GetComponent<Renderer>().material.shader == Shader.Find("Vertex Colored")){
+							surfaceObj.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+							surfaceObj.GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
 						}
 						else{
 							//surfaceObj.renderer.material = new Material(Shader.Find("Vertex Colored"));
@@ -1933,9 +1933,9 @@ namespace UI{
 					GameObject[] surfaceObjs = GameObject.FindGameObjectsWithTag("SurfaceManager");
 					//				Debug.Log(surfaceObjs.Length);
 					foreach(GameObject surfaceObj in surfaceObjs) {
-						if(surfaceObj.renderer.material.shader == Shader.Find("Vertex Colored")){
-							surfaceObj.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-							surfaceObj.renderer.material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
+						if(surfaceObj.GetComponent<Renderer>().material.shader == Shader.Find("Vertex Colored")){
+							surfaceObj.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+							surfaceObj.GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
 						}
 						else{
 							//surfaceObj.renderer.material = new Material(Shader.Find("Vertex Colored"));
@@ -1960,9 +1960,9 @@ namespace UI{
 					GameObject[] surfaceObjs = GameObject.FindGameObjectsWithTag("SurfaceManager");
 					//				Debug.Log(surfaceObjs.Length);
 					foreach(GameObject surfaceObj in surfaceObjs) {
-						if(surfaceObj.renderer.material.shader == Shader.Find("Vertex Colored")){
-							surfaceObj.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-							surfaceObj.renderer.material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
+						if(surfaceObj.GetComponent<Renderer>().material.shader == Shader.Find("Vertex Colored")){
+							surfaceObj.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+							surfaceObj.GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
 						}
 						else{
 							//surfaceObj.renderer.material = new Material(Shader.Find("Vertex Colored"));
@@ -2048,9 +2048,9 @@ namespace UI{
 					SurfaceManager surfaceManager = surfaceManagerObj.GetComponent<SurfaceManager>();
 					GameObject[] surfaceObjs = GameObject.FindGameObjectsWithTag("SurfaceManager");
 					foreach(GameObject surfaceObj in surfaceObjs) {
-						if(surfaceObj.renderer.material.shader == Shader.Find("Vertex Colored")){
-							surfaceObj.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-							surfaceObj.renderer.material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
+						if(surfaceObj.GetComponent<Renderer>().material.shader == Shader.Find("Vertex Colored")){
+							surfaceObj.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+							surfaceObj.GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
 						}
 						else{
 							//surfaceObj.renderer.material = new Material(Shader.Find("Vertex Colored"));
@@ -2073,9 +2073,9 @@ namespace UI{
 					SurfaceManager surfaceManager = surfaceManagerObj.GetComponent<SurfaceManager>();
 					GameObject[] surfaceObjs = GameObject.FindGameObjectsWithTag("SurfaceManager");
 					foreach(GameObject surfaceObj in surfaceObjs) {
-						if(surfaceObj.renderer.material.shader == Shader.Find("Vertex Colored")){
-							surfaceObj.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-							surfaceObj.renderer.material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
+						if(surfaceObj.GetComponent<Renderer>().material.shader == Shader.Find("Vertex Colored")){
+							surfaceObj.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+							surfaceObj.GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
 						}
 						else{
 							//surfaceObj.renderer.material = new Material(Shader.Find("Vertex Colored"));
@@ -2098,9 +2098,9 @@ namespace UI{
 					SurfaceManager surfaceManager = surfaceManagerObj.GetComponent<SurfaceManager>();
 					GameObject[] surfaceObjs = GameObject.FindGameObjectsWithTag("SurfaceManager");
 					foreach(GameObject surfaceObj in surfaceObjs) {
-						if(surfaceObj.renderer.material.shader == Shader.Find("Vertex Colored")){
-							surfaceObj.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-							surfaceObj.renderer.material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
+						if(surfaceObj.GetComponent<Renderer>().material.shader == Shader.Find("Vertex Colored")){
+							surfaceObj.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+							surfaceObj.GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
 						}
 						else{
 							//surfaceObj.renderer.material = new Material(Shader.Find("Vertex Colored"));
@@ -2123,9 +2123,9 @@ namespace UI{
 						SurfaceManager surfaceManager = surfaceManagerObj.GetComponent<SurfaceManager>();
 						GameObject[] surfaceObjs = GameObject.FindGameObjectsWithTag("SurfaceManager");
 						foreach(GameObject surfaceObj in surfaceObjs) {
-							if(surfaceObj.renderer.material.shader == Shader.Find("Vertex Colored")){
-								surfaceObj.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-								surfaceObj.renderer.material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
+							if(surfaceObj.GetComponent<Renderer>().material.shader == Shader.Find("Vertex Colored")){
+								surfaceObj.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+								surfaceObj.GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load ("lit_spheres/divers/daphz1"));
 							}
 							else{
 								//surfaceObj.renderer.material = new Material(Shader.Find("Vertex Colored"));
@@ -2300,7 +2300,7 @@ namespace UI{
 			if (!toggle_VE2_NOISE && Camera.main.GetComponent<NoiseEffect> ().enabled)
 				Camera.main.GetComponent<NoiseEffect> ().enabled = false;
 			else if (toggle_VE2_NOISE && !Camera.main.GetComponent<NoiseEffect> ().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("NoiseEffect");
+				GameObject.FindWithTag ("MainCamera").AddComponent <NoiseEffect>();
 				Camera.main.GetComponent<NoiseEffect> ().enabled = true;
 				Camera.main.GetComponent<NoiseEffect> ().shaderRGB = Shader.Find ("Hidden/Noise Shader RGB");
 				Camera.main.GetComponent<NoiseEffect> ().shaderYUV = Shader.Find ("Hidden/Noise Shader YUV");
@@ -2327,7 +2327,7 @@ namespace UI{
 				Camera.main.GetComponent<DepthOfFieldScatter>().enabled = false;
 				Camera.main.GetComponent<SelectAtomFocus>().enabled = false;
 			} else if (toggle_VE_DOF && !Camera.main.GetComponent<DepthOfFieldScatter>().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("DepthOfFieldScatter");
+				GameObject.FindWithTag ("MainCamera").AddComponent <DepthOfFieldScatter>();
 				Camera.main.GetComponent<DepthOfFieldScatter>().dofHdrShader = Shader.Find("Hidden/Dof/DepthOfFieldHdr");
 				Camera.main.GetComponent<DepthOfFieldScatter>().focalSize = 0;
 				Camera.main.GetComponent<DepthOfFieldScatter>().enabled = true ;
@@ -2343,7 +2343,7 @@ namespace UI{
 			if (!toggle_VE_CREASE && Camera.main.GetComponent<Crease>().enabled)
 				Camera.main.GetComponent<Crease> ().enabled = false;
 			else if (toggle_VE_CREASE && !Camera.main.GetComponent<Crease> ().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("Crease");
+				GameObject.FindWithTag ("MainCamera").AddComponent <Crease>();
 				Camera.main.GetComponent<Crease> ().creaseApplyShader = Shader.Find("Hidden/CreaseApply");
 				Camera.main.GetComponent<Crease> ().intensity = 20;
 				Camera.main.GetComponent<Crease> ().enabled = true ;
@@ -2356,7 +2356,7 @@ namespace UI{
 			if (!toggle_VE2_EDGE && Camera.main.GetComponent<EdgeDetectEffect> ().enabled)
 				Camera.main.GetComponent<EdgeDetectEffect> ().enabled = false;
 			else if (toggle_VE2_EDGE && !Camera.main.GetComponent<EdgeDetectEffect> ().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("EdgeDetectEffect");
+				GameObject.FindWithTag ("MainCamera").AddComponent <EdgeDetectEffect>();
 				Camera.main.GetComponent<EdgeDetectEffect> ().shader = Shader.Find ("Hidden/Edge Detect X");
 				Camera.main.GetComponent<EdgeDetectEffect> ().enabled = true;
 			}
@@ -2368,7 +2368,7 @@ namespace UI{
 			if (!toggle_VE2_VORTX && Camera.main.GetComponent<VortexEffect> ().enabled)
 				Camera.main.GetComponent<VortexEffect> ().enabled = false;
 			else if (toggle_VE2_VORTX && !Camera.main.GetComponent<VortexEffect> ().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("VortexEffect");
+				GameObject.FindWithTag ("MainCamera").AddComponent <VortexEffect>();
 				Camera.main.GetComponent<VortexEffect> ().shader = Shader.Find ("Hidden/Twist Effect");
 				Camera.main.GetComponent<VortexEffect> ().enabled = true;
 			}
@@ -2380,7 +2380,7 @@ namespace UI{
 			if (!toggle_VE2_GRAYS && Camera.main.GetComponent<GrayscaleEffect> ().enabled)
 				Camera.main.GetComponent<GrayscaleEffect> ().enabled = false;
 			else if (toggle_VE2_GRAYS && !Camera.main.GetComponent<GrayscaleEffect> ().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("GrayscaleEffect");
+				GameObject.FindWithTag ("MainCamera").AddComponent <GrayscaleEffect>();
 				Camera.main.GetComponent<GrayscaleEffect> ().enabled = true;
 				Camera.main.GetComponent<GrayscaleEffect> ().shader = Shader.Find ("Hidden/Grayscale Effect");
 				Camera.main.GetComponent<GrayscaleEffect> ().textureRamp = Resources.Load (ve2_grays_ramps [ve2_grays_rampc]) as Texture2D;
@@ -2404,7 +2404,7 @@ namespace UI{
 			if (!toggle_VE2_TWIRL && Camera.main.GetComponent<TwirlEffect> ().enabled)
 				Camera.main.GetComponent<TwirlEffect> ().enabled = false;
 			else if (toggle_VE2_TWIRL && !Camera.main.GetComponent<TwirlEffect> ().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("TwirlEffect");
+				GameObject.FindWithTag ("MainCamera").AddComponent <TwirlEffect>();
 				Camera.main.GetComponent<TwirlEffect> ().shader = Shader.Find ("Hidden/Twirt Effect Shader");
 				Camera.main.GetComponent<TwirlEffect> ().enabled = true;
 			}
@@ -2440,7 +2440,7 @@ namespace UI{
 			if (!toggle_VE2_SEPIA && Camera.main.GetComponent<SepiaToneEffect> ().enabled)
 				Camera.main.GetComponent<SepiaToneEffect> ().enabled = false;
 			else if (toggle_VE2_SEPIA && !Camera.main.GetComponent<SepiaToneEffect> ().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("SepiaToneEffect");
+				GameObject.FindWithTag ("MainCamera").AddComponent <SepiaToneEffect>();
 				Camera.main.GetComponent<SepiaToneEffect> ().shader = Shader.Find ("Hidden/Sepiatone Effect");
 				Camera.main.GetComponent<SepiaToneEffect> ().enabled = true;
 			}
@@ -2452,7 +2452,7 @@ namespace UI{
 			if (!toggle_VE2_GLOW && Camera.main.GetComponent<GlowEffect> ().enabled)
 				Camera.main.GetComponent<GlowEffect> ().enabled = false;
 			else if (toggle_VE2_GLOW && !Camera.main.GetComponent<GlowEffect> ().enabled) { 
-				GameObject.FindWithTag ("MainCamera").AddComponent ("GlowEffect");
+				GameObject.FindWithTag ("MainCamera").AddComponent <GlowEffect>();
 				Camera.main.GetComponent<GlowEffect> ().compositeShader = Shader.Find ("Hidden/GlowCompose");
 				Camera.main.GetComponent<GlowEffect> ().blurShader = Shader.Find ("Hidden/GlowConeTap");
 				Camera.main.GetComponent<GlowEffect> ().downsampleShader = Shader.Find ("Hidden/Glow Downsample");

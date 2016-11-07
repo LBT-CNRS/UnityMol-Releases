@@ -56,7 +56,7 @@ class SunShafts extends PostEffectsBase
 				
 		// we actually need to check this every frame
 		if(useDepthTexture)
-			camera.depthTextureMode |= DepthTextureMode.Depth;	
+			GetComponent.<Camera>().depthTextureMode |= DepthTextureMode.Depth;	
 		
         var divider : float = 4.0;
         if (resolution == SunShaftsResolution.Normal)
@@ -66,7 +66,7 @@ class SunShafts extends PostEffectsBase
             
 		var v : Vector3 = Vector3.one * 0.5;
 		if (sunTransform)
-			v = camera.WorldToViewportPoint (sunTransform.position);
+			v = GetComponent.<Camera>().WorldToViewportPoint (sunTransform.position);
 		else 
 			v = Vector3(0.5, 0.5, 0.0);        
 			
@@ -83,7 +83,7 @@ class SunShafts extends PostEffectsBase
 		if (!useDepthTexture) {		
 			var tmpBuffer : RenderTexture = RenderTexture.GetTemporary (source.width, source.height, 0);					
 			RenderTexture.active = tmpBuffer;
-			GL.ClearWithSkybox (false, camera);
+			GL.ClearWithSkybox (false, GetComponent.<Camera>());
 			
 			sunShaftsMaterial.SetTexture ("_Skybox", tmpBuffer);
 			Graphics.Blit (source, lrDepthBuffer, sunShaftsMaterial, 3);		

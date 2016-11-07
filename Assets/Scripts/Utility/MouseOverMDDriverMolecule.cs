@@ -21,7 +21,7 @@ public class MouseOverMDDriverMolecule : MonoBehaviour {
 			arrow.transform.parent = arrowParent.transform;
 			arrow.transform.localScale = new Vector3(0.4f, 3.5f, 0.4f);
 			arrow.transform.Translate(arrow.transform.up * 2.0f);
-			arrow.renderer.enabled = true;
+			arrow.GetComponent<Renderer>().enabled = true;
 
 			arrowParent.transform.position = transform.position;				
 			arrowParent.transform.parent = transform;

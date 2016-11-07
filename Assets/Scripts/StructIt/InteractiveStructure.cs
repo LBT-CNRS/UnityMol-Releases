@@ -82,7 +82,7 @@ public class InteractiveStructure : MonoBehaviour {
 	void LateUpdate () {
 		
 		if(Input.GetMouseButton(1)){
-			Ray sRay= camera.ScreenPointToRay (Input.mousePosition);
+			Ray sRay= GetComponent<Camera>().ScreenPointToRay (Input.mousePosition);
 		    RaycastHit sHit;
             if (!Physics.Raycast(sRay, out sHit)){
             
@@ -100,16 +100,16 @@ public class InteractiveStructure : MonoBehaviour {
 				Atom.transform.position = pos;
 				Material newMat = new Material(Shader.Find("FvNano/Single Cube Sphere Raycasting new"));
 				newMat.SetColor("_Color",new Vector4(1.0f,0.0f,0.0f,1.0f));
-				Atom.renderer.material = newMat;
-				Atom.AddComponent("BallUpdateHB");
+				Atom.GetComponent<Renderer>().material = newMat;
+				Atom.AddComponent<BallUpdateHB>();
 				BallUpdateHB comp = Atom.GetComponent<BallUpdateHB>();
 				comp.rayon=1.0f;
 				
 			
 				Atom.AddComponent<Rigidbody>();
-		   	    Atom.rigidbody.useGravity = false;
-		   	    Atom.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-		   	    Atom.rigidbody.drag = 0.6f;
+		   	    Atom.GetComponent<Rigidbody>().useGravity = false;
+		   	    Atom.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
+		   	    Atom.GetComponent<Rigidbody>().drag = 0.6f;
 		   	    Atom.AddComponent<SpringJoint>();
 		   	    Atom.AddComponent<MouseOverMolecule>();
 		
@@ -117,8 +117,8 @@ public class InteractiveStructure : MonoBehaviour {
 					GameObject bond = GameObject.CreatePrimitive(PrimitiveType.Cube);
 					Material bondMat = new Material(Shader.Find("FvNano/Hyperbole Stick new"));
 					bondMat.SetFloat("_Shrink",0.03f);
-					bond.renderer.material = bondMat;
-					bond.AddComponent("StickUpdate");
+					bond.GetComponent<Renderer>().material = bondMat;
+					bond.AddComponent<StickUpdate>();
 					StickUpdate bondComp = bond.GetComponent<StickUpdate>();
 					bondComp.atompointer1 = last;
 					bondComp.atompointer2 = Atom;   	    

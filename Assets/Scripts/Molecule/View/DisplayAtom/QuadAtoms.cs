@@ -117,7 +117,7 @@ public class QuadAtoms : MonoBehaviour {
 		GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 		sphere.transform.Translate(new Vector3(x,y,z));
 		sphere.transform.parent = this.transform;
-		sphere.renderer.material.color = col;
+		sphere.GetComponent<Renderer>().material.color = col;
 		spheres[i] = sphere;
 	}
 	

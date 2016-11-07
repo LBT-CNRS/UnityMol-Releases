@@ -46,9 +46,9 @@ class EdgeDetectEffectNormals extends PostEffectsBase {
 
 	function SetCameraFlag () {
 		if (mode>1)
-			camera.depthTextureMode |= DepthTextureMode.Depth;		
+			GetComponent.<Camera>().depthTextureMode |= DepthTextureMode.Depth;		
 		else
-			camera.depthTextureMode |= DepthTextureMode.DepthNormals;		
+			GetComponent.<Camera>().depthTextureMode |= DepthTextureMode.DepthNormals;		
 	}
 
 	function OnEnable() {

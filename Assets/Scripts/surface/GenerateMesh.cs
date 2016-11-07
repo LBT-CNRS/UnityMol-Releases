@@ -310,14 +310,14 @@ public class GenerateMesh {
 			//surface.renderer.material = new Material(Shader.Find("Diffuse"));
 			
 			if(ELECTRO)
-				surface.renderer.material = new Material(Shader.Find("Diffuse"));
+				surface.GetComponent<Renderer>().material = new Material(Shader.Find("Diffuse"));
 			/*else if(UI.UIData.toggleBfac){
 				surface.renderer.material = new Material(Shader.Find("Transparent/OIT_BLUE"));} */
 			else {
-				surface.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-				surface.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
+				surface.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+				surface.GetComponent<Renderer>().material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
 			}
-			Debug.Log(surface.renderer.material.shader.name);
+			Debug.Log(surface.GetComponent<Renderer>().material.shader.name);
 		}
 	}
 	
@@ -426,8 +426,8 @@ public class GenerateMesh {
 		//GOSurface.renderer.material = SurfaceShader;
 	
 		
-		GOSurface.renderer.material = new Material(Shader.Find("Mat Cap Cut"));
-		GOSurface.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
+		GOSurface.GetComponent<Renderer>().material = new Material(Shader.Find("Mat Cap Cut"));
+		GOSurface.GetComponent<Renderer>().material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
 		
 		
 		//GOSurface.renderer.material = new Material(Shader.Find("Diffuse"));

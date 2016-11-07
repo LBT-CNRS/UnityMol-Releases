@@ -123,7 +123,7 @@ public class BallUpdateHB : BallUpdate {
 		BallUpdateHB[] hyperBalls = Object.FindObjectsOfType(typeof(BallUpdateHB)) as BallUpdateHB[];
 		foreach(BallUpdateHB hb in hyperBalls)
 		{
-			hb.renderer.material.SetColor("_Color", hb.atomcolor);
+			hb.GetComponent<Renderer>().material.SetColor("_Color", hb.atomcolor);
 		}
 		resetColors = false;
 	}
@@ -161,10 +161,10 @@ public class BallUpdateHB : BallUpdate {
 		
 	void  Start (){
 //		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
-		atomcolor=renderer.material.GetColor("_Color");
+		atomcolor=GetComponent<Renderer>().material.GetColor("_Color");
 //		atomcolor = new Color(0.5f,0.5f,0.5f);
-		renderer.material.SetFloat("_Cut", 0f);
-		renderer.material.SetTexture("_MatCap", text2D);
+		GetComponent<Renderer>().material.SetFloat("_Cut", 0f);
+		GetComponent<Renderer>().material.SetTexture("_MatCap", text2D);
 	}
 
 	public override void SetRayonFactor(float rf)
@@ -173,7 +173,7 @@ public class BallUpdateHB : BallUpdate {
 		{
 			rayon /= oldrayonFactor;
 			rayon *= rf;
-			renderer.material.SetFloat("_Rayon",rayon*radiusFactor);
+			GetComponent<Renderer>().material.SetFloat("_Rayon",rayon*radiusFactor);
 			oldrayonFactor=rf;
 		}
 	}

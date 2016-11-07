@@ -159,10 +159,10 @@ namespace Molecule.View.DisplayBond {
 					case RuntimePlatform.WindowsPlayer:
 					case RuntimePlatform.WindowsWebPlayer:
 					case RuntimePlatform.WindowsEditor:
-				Stick.renderer.material.shader=Shader.Find("FvNano/Stick HyperBalls 2 OpenGL");
+				Stick.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Stick HyperBalls 2 OpenGL");
 						break;
 					default :
-						Stick.renderer.material.shader=Shader.Find("FvNano/Stick HyperBalls 2 OpenGL");
+						Stick.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Stick HyperBalls 2 OpenGL");
 						break;				
 				}
 				StickUpdate comp = Stick.AddComponent<StickUpdate>();
@@ -181,9 +181,9 @@ namespace Molecule.View.DisplayBond {
 				}
 			
 				comp.enabled = true;										
-				Stick.renderer.material.SetFloat("_Shrink", StickUpdate.shrink);
+				Stick.GetComponent<Renderer>().material.SetFloat("_Shrink", StickUpdate.shrink);
 				Stick.tag="Club";
-				Stick.collider.enabled = false;
+				Stick.GetComponent<Collider>().enabled = false;
 				Stick.transform.position = comp.atompointer1.transform.position;
 				Stick.transform.parent = BondCubeParent.transform;
 		}
@@ -202,7 +202,7 @@ namespace Molecule.View.DisplayBond {
 */
 			int[] atomsIds = bondEPList[i] as int[];
 			GameObject o=GameObject.CreatePrimitive(PrimitiveType.Cube);
-			o.renderer.material=(Material)Resources.Load("Materials/CubeBoneMaterial");
+			o.GetComponent<Renderer>().material=(Material)Resources.Load("Materials/CubeBoneMaterial");
 			BondCubeUpdate comp = o.AddComponent<BondCubeUpdate>();
 			//comp.atompointer1=(GameObject)MoleculeModel.atoms[atomsIds[0]];
 			//comp.atompointer2=(GameObject)MoleculeModel.atoms[atomsIds[1]];
@@ -236,27 +236,27 @@ namespace Molecule.View.DisplayBond {
 			int[] atomsIds = bondEPList[i] as int[];	
 					
 			Stick.transform.Rotate(new Vector3(0,-180,0));
-			Stick.AddComponent("CameraFacingBillboard");
-			Stick.GetComponent<CameraFacingBillboard>().cameraToLookAt = GameObject.Find("Camera").camera;
+			Stick.AddComponent<CameraFacingBillboard>();
+			Stick.GetComponent<CameraFacingBillboard>().cameraToLookAt = GameObject.Find("Camera").GetComponent<Camera>();
 			RuntimePlatform platform = Application.platform;
 			switch(platform) {
 				case RuntimePlatform.WindowsPlayer:
 				case RuntimePlatform.WindowsWebPlayer:
 				case RuntimePlatform.WindowsEditor:
-				Stick.renderer.material.shader=Shader.Find("FvNano/Stick HyperBalls 2 OpenGL");
+				Stick.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Stick HyperBalls 2 OpenGL");
 					break;
 				default :
-					Stick.renderer.material.shader=Shader.Find("FvNano/Stick HyperBalls 2 OpenGL");
+					Stick.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Stick HyperBalls 2 OpenGL");
 					break;				
 			}
-			Stick.AddComponent("StickUpdate");
+			Stick.AddComponent<StickUpdate>();
 			
 			StickUpdate comp = Stick.GetComponent<StickUpdate>();
 			comp.atompointer1=(GameObject)MoleculeModel.atoms[atomsIds[0]];
 			comp.atompointer2=(GameObject)MoleculeModel.atoms[atomsIds[1]];
 			
 			comp.enabled = true;										
-			Stick.renderer.material.SetFloat("_Shrink", 0.01f);
+			Stick.GetComponent<Renderer>().material.SetFloat("_Shrink", 0.01f);
 			Stick.tag="Club";
 			Stick.transform.parent = BondCubeParent.transform;
 		}

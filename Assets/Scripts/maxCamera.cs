@@ -755,7 +755,7 @@ public class maxCamera : MonoBehaviour
 				Debug.LogWarning("CREATE TARGET OBJECT");
 				ghost_target_real = (GameObject) GameObject.Instantiate(ghost_target, optim_target, Quaternion.identity);
 				ghost_target_real.name = "Target";
-				ghost_target_real.renderer.material.color = Color.magenta;
+				ghost_target_real.GetComponent<Renderer>().material.color = Color.magenta;
 				ghost_target_real.transform.localScale = new Vector3(4.0f, 4.0f, 4.0f);
 				ghost_target_real.SetActive(true);
 				ghost_target_instantiate = true;

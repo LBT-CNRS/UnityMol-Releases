@@ -15,11 +15,11 @@ public class DirLightManager : MonoBehaviour {
 		if(	(UIData.atomtype == UIData.AtomType.particleball) || ((UIData.atomtype == UIData.AtomType.hyperball) || (UIData.atomtype == UIData.AtomType.noatom) 
 			&& (UIData.bondtype == UIData.BondType.nobond) || (UIData.bondtype == UIData.BondType.line) || (UIData.bondtype == UIData.BondType.hyperstick)) )
 		{
-			obj.light.shadows = LightShadows.None;
+			obj.GetComponent<Light>().shadows = LightShadows.None;
 		}
 		else
 		{
-			obj.light.shadows = LightShadows.Soft;			
+			obj.GetComponent<Light>().shadows = LightShadows.Soft;			
 		}
 	}
 }

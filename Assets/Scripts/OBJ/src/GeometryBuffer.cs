@@ -281,7 +281,7 @@ public class GeometryBuffer {
 			if(od.groups.Count == 1) {
 				GroupData gd = od.groups[0];
 				Debug.Log("Mesh material used :: "+gd.materialName);
-				gs[i].renderer.material = mats[gd.materialName];
+				gs[i].GetComponent<Renderer>().material = mats[gd.materialName];
 				
 //				int[] triangles = new int[gd.faces.Count];
 //				for(int j = 0; j < triangles.Length; j++) triangles[j] = j;

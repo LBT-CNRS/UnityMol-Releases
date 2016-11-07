@@ -77,6 +77,6 @@ public class BallUpdateCube	 : BallUpdate {
 	
 	void  Start (){
 //		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
-		atomcolor=renderer.material.GetColor("_Color");
+		atomcolor=GetComponent<Renderer>().material.GetColor("_Color");
 	}
 }

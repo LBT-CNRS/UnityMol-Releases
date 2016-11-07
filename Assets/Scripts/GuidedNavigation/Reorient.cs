@@ -156,7 +156,7 @@ namespace Reorient
 			symAxe.transform.position = new Vector3 (0, 1, 0);
 			symAxe.transform.localScale = new Vector3 (1, (MoleculeModel.MaxValue.y - MoleculeModel.MinValue.y), 1);
 			symAxe.tag = "Origin";
-			symAxe.renderer.material.color = Color.red;
+			symAxe.GetComponent<Renderer>().material.color = Color.red;
 		}
 
 	}	

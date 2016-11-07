@@ -38,8 +38,8 @@ public class SphereManager : GenericManager {
 	public override void EnableRenderers() {
 		balls = GameObject.FindObjectsOfType(typeof(BallUpdateSphere)) as BallUpdateSphere[];
 		foreach(BallUpdateSphere sp in balls){
-			sp.renderer.enabled = true;
-			sp.collider.enabled = true;
+			sp.GetComponent<Renderer>().enabled = true;
+			sp.GetComponent<Collider>().enabled = true;
 		}
 		enabled = true;
 	}
@@ -47,9 +47,9 @@ public class SphereManager : GenericManager {
 	public override void DisableRenderers() {
 		balls = GameObject.FindObjectsOfType(typeof(BallUpdateSphere)) as BallUpdateSphere[];
 		foreach(BallUpdateSphere sp in balls){
-			sp.renderer.enabled = false;
+			sp.GetComponent<Renderer>().enabled = false;
 			if(UIData.atomtype != UIData.AtomType.particleball) // Particles don't have their own collider so we must keep it
-				sp.collider.enabled = false; // Disable the collider at the same time to avoid ghost-clicking
+				sp.GetComponent<Collider>().enabled = false; // Disable the collider at the same time to avoid ghost-clicking
 		}
 		enabled = false;
 	}
@@ -61,7 +61,7 @@ public class SphereManager : GenericManager {
 		if(UIData.atomtype == UIData.AtomType.sphere){
 	//		balls = GameObject.FindObjectsOfType(typeof(BallUpdateSphere)) as BallUpdateSphere[];
 			foreach(BallUpdateSphere sp in balls) {
-				sp.renderer.material.SetColor("_Color", Molecule.Model.MoleculeModel.atomsColorList[(int)sp.number]);
+				sp.GetComponent<Renderer>().material.SetColor("_Color", Molecule.Model.MoleculeModel.atomsColorList[(int)sp.number]);
 	//			sp.oldatomcolor = sp.atomcolor;
 			}
 			BallUpdate.resetColors = false;
@@ -369,7 +369,7 @@ public class SphereManager : GenericManager {
 	public Color GetColor(Vector3 pos){
 		foreach(BallUpdateSphere sp in balls)
 			if(sp.transform.position == pos)
-				return sp.renderer.material.GetColor("_Color");
+				return sp.GetComponent<Renderer>().material.GetColor("_Color");
 		return Color.white;
 	}
 	

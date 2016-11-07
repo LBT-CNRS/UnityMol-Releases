@@ -83,34 +83,34 @@ public class StickUpdateParticle : MonoBehaviour {
 	
 	void  Update ()
 	{
-		renderer.material.SetFloat("_Shrink",shrink);
-		renderer.material.SetFloat("_Scale",scale);
+		GetComponent<Renderer>().material.SetFloat("_Shrink",shrink);
+		GetComponent<Renderer>().material.SetFloat("_Scale",scale);
 		if(UIData.EnableUpdate)
 		{	
-			renderer.material.SetVector("_TexPos1", atompointer1.transform.position);
-			renderer.material.SetVector("_TexPos2", atompointer2.transform.position);
-			renderer.material.SetColor("_Color", atompointer1.renderer.material.GetColor("_Color"));
-			renderer.material.SetColor("_Color2", atompointer2.renderer.material.GetColor("_Color"));
+			GetComponent<Renderer>().material.SetVector("_TexPos1", atompointer1.transform.position);
+			GetComponent<Renderer>().material.SetVector("_TexPos2", atompointer2.transform.position);
+			GetComponent<Renderer>().material.SetColor("_Color", atompointer1.GetComponent<Renderer>().material.GetColor("_Color"));
+			GetComponent<Renderer>().material.SetColor("_Color2", atompointer2.GetComponent<Renderer>().material.GetColor("_Color"));
 		
 			if(UIData.isSphereToCube==true)
 			{
 				if(UIData.atomtype==UIData.AtomType.hyperball||UIData.atomtype==UIData.AtomType.raycasting||UIData.atomtype==UIData.AtomType.rcbillboard||UIData.atomtype==UIData.AtomType.hbbillboard)
 				{
-					if(atompointer1.renderer.material.HasProperty("_Rayon"))
-						renderer.material.SetFloat("_Rayon1",atompointer1.renderer.material.GetFloat("_Rayon"));
-					if(atompointer2.renderer.material.HasProperty("_Rayon"))
-						renderer.material.SetFloat("_Rayon2",atompointer2.renderer.material.GetFloat("_Rayon"));
+					if(atompointer1.GetComponent<Renderer>().material.HasProperty("_Rayon"))
+						GetComponent<Renderer>().material.SetFloat("_Rayon1",atompointer1.GetComponent<Renderer>().material.GetFloat("_Rayon"));
+					if(atompointer2.GetComponent<Renderer>().material.HasProperty("_Rayon"))
+						GetComponent<Renderer>().material.SetFloat("_Rayon2",atompointer2.GetComponent<Renderer>().material.GetFloat("_Rayon"));
 				}
 				else if(UIData.atomtype==UIData.AtomType.cube)
 				{
-					renderer.material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
-					renderer.material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
+					GetComponent<Renderer>().material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
+					GetComponent<Renderer>().material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
 				}
 			}
 			else
 			{
-				renderer.material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
-				renderer.material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
+				GetComponent<Renderer>().material.SetFloat("_Rayon1",atompointer1.transform.lossyScale.x/2);
+				GetComponent<Renderer>().material.SetFloat("_Rayon2",atompointer2.transform.lossyScale.x/2);
 					
 			}
 		}				
@@ -125,6 +125,6 @@ public class StickUpdateParticle : MonoBehaviour {
 	    	for ( int i = 0; i < 4; i++) { P[2,i] = P[2,i]*0.5f + P[3,i]*0.5f;}
 		}
 		Matrix4x4 MVP = P*Camera.main.worldToCameraMatrix*transform.localToWorldMatrix;
-		renderer.material.SetMatrix ("_matMVPI", MVP.inverse);
+		GetComponent<Renderer>().material.SetMatrix ("_matMVPI", MVP.inverse);
 	}
 }

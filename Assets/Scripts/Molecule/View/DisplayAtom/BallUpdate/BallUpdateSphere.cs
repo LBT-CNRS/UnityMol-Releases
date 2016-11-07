@@ -85,7 +85,7 @@ public class BallUpdateSphere : BallUpdate {
 		tmp.a = 0.5f;
 		renderer.material.color = tmp;
 */
-		atomcolor=renderer.material.GetColor("_Color");
+		atomcolor=GetComponent<Renderer>().material.GetColor("_Color");
 	}
 	
 /*

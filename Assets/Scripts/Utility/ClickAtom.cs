@@ -92,7 +92,7 @@ public class ClickAtom : MonoBehaviour
     {     	
 	    if (Input.GetButtonDown ("Fire1") && GUIUtility.hotControl == 0) 
         {
-		    Ray sRay= camera.ScreenPointToRay (Input.mousePosition);
+		    Ray sRay= GetComponent<Camera>().ScreenPointToRay (Input.mousePosition);
 		    RaycastHit sHit;
 		    long atomnumber=0;
 			GameObject obj;
@@ -115,7 +115,7 @@ public class ClickAtom : MonoBehaviour
               
             	Vector3 vl=new Vector3();
             	
-            	vl=obj.renderer.transform.localPosition;
+            	vl=obj.GetComponent<Renderer>().transform.localPosition;
             	
                 //Destroy(halo);
             	halo=Instantiate(Resources.Load("transparentsphere"),vl,new Quaternion(0f,0f,0f,0f)) as GameObject;
@@ -180,7 +180,7 @@ public class ClickAtom : MonoBehaviour
 
         if (Input.GetMouseButtonDown(1) && GUIUtility.hotControl == 0)
         {
-            Ray sRay= camera.ScreenPointToRay (Input.mousePosition);
+            Ray sRay= GetComponent<Camera>().ScreenPointToRay (Input.mousePosition);
 		    RaycastHit sHit;
 			GameObject obj;
 			

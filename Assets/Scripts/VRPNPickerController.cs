@@ -118,10 +118,10 @@ public class VRPNPickerController : VRPNRemote {
 		Destroy(cube.GetComponent<BoxCollider>());
 		
 		Shader s = Shader.Find("Transparent/Diffuse");
-		cube.renderer.material.shader = s;
+		cube.GetComponent<Renderer>().material.shader = s;
 		Color c = Color.white;
 		c.a = 0.1f;
-		cube.renderer.material.color = c;
+		cube.GetComponent<Renderer>().material.color = c;
 		
 		computeWorkspaceCube();
 	}

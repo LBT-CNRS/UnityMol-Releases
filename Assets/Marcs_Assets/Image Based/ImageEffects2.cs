@@ -1,14 +1,14 @@
 using UnityEngine;
 
 /// Blending modes use by the ImageEffects2.Blit functions.
-public enum BlendMode {
+/*public enum BlendMode {
 	Copy,			
 	Multiply, 
 	MultiplyDouble, 
 	Add, 
 	AddSmoooth, 
 	Blend
-}
+}*/
 
 /// A Utility class for performing various image based rendering tasks.
 [AddComponentMenu("")]

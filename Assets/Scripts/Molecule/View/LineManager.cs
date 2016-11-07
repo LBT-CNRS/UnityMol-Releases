@@ -36,7 +36,7 @@ public class LineManager : GenericManager {
 		if(UIData.bondtype == UIData.BondType.line){
 			foreach(LineUpdate lu in lines)	{
 				lineRenderer = lu.GetComponent<LineRenderer>();
-				lineRenderer.SetColors(lu.atompointer1.renderer.material.GetColor("_Color"), lu.atompointer2.renderer.material.GetColor("_Color"));   
+				lineRenderer.SetColors(lu.atompointer1.GetComponent<Renderer>().material.GetColor("_Color"), lu.atompointer2.GetComponent<Renderer>().material.GetColor("_Color"));   
 //				lu.oldatomcolor1 = lu.atompointer1.renderer.material.GetColor("_Color");
 			}
 			BallUpdate.bondsReadyToBeReset = false;
@@ -54,13 +54,13 @@ public class LineManager : GenericManager {
 	
 	public override void EnableRenderers() {
 		foreach(LineUpdate lu in lines)
-			lu.renderer.enabled = true;
+			lu.GetComponent<Renderer>().enabled = true;
 		enabled = true;
 	}
 	
 	public override void DisableRenderers() {
 		foreach(LineUpdate lu in lines)
-			lu.renderer.enabled = false;
+			lu.GetComponent<Renderer>().enabled = false;
 		enabled = false;
 	}
 	

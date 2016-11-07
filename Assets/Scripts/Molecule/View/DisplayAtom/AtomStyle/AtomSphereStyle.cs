@@ -146,7 +146,7 @@ namespace Molecule.View.DisplayAtom
 				comp1.number=i;
 				comp1.enabled = true;
 				comp1.atomcolor = aModel.baseColor; // Why is this suddenly necessary???
-				o.transform.renderer.material.SetColor("_Color", aModel.baseColor);
+				o.transform.GetComponent<Renderer>().material.SetColor("_Color", aModel.baseColor);
 //				Debug.Log(o.transform.renderer.material.GetColor("_Color").ToString());
 				comp1.SetRayonFactor(aModel.scale/100);
 				o.tag=aModel.type;

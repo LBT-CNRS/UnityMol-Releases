@@ -101,9 +101,9 @@ public class HBallManager : GenericManager {
 		BallUpdate.resetColors = true;
 		BallUpdate.resetRadii = true;
 		for (int i=0; i<hballs.Length; i++) {
-			hballs[i].renderer.enabled = true;
-			hballs[i].renderer.castShadows = false;
-			hballs[i].renderer.receiveShadows = false;
+			hballs[i].GetComponent<Renderer>().enabled = true;
+			hballs[i].GetComponent<Renderer>().castShadows = false;
+			hballs[i].GetComponent<Renderer>().receiveShadows = false;
 //			hballs[i].renderer.material.shader = Shader.Find("Diffuse");
 		}
 		hballsGameObjects = new GameObject[MoleculeModel.atoms.Count];
@@ -171,7 +171,7 @@ public class HBallManager : GenericManager {
 		attenuation = enabling? 1f : 0f;
 		
 		for (int i=0; i<hballs.Length; i++)
-			hballs[i].renderer.material.SetFloat("_Attenuation", attenuation);
+			hballs[i].GetComponent<Renderer>().material.SetFloat("_Attenuation", attenuation);
 	}
 	
 	
@@ -267,7 +267,7 @@ public class HBallManager : GenericManager {
 		Debug.Log("SetTexture HBall");
 		for (int i = 0; i < MoleculeModel.ellipsoids.Count; i++)
 		{
-			MoleculeModel.ellipsoids[i].renderer.material.SetTexture("_MatCap", texture);
+			MoleculeModel.ellipsoids[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);
 		}
 		if(!atom.Contains ("All")){
 			if(residue == "All"){
@@ -277,11 +277,11 @@ public class HBallManager : GenericManager {
 					if(GUIDisplay.quickSelection){
 						for (int i=0; i<hballs.Length; i++)
 							if(atom.Contains(hballs[i].tag))
-								hballs[i].renderer.material.SetTexture("_MatCap", texture);
+								hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);
 					}else{
 						for (int i=0; i<hballs.Length; i++)
 							if(atom.Contains(Molecule.Model.MoleculeModel.atomsNamelist[(int)hballs[i].number]))
-								hballs[i].renderer.material.SetTexture("_MatCap", texture);
+								hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);
 					}
 				}
 				else{
@@ -291,13 +291,13 @@ public class HBallManager : GenericManager {
 						for (int i=0; i<hballs.Length; i++){
 							if(atom.Contains(hballs[i].tag)
 								&& Molecule.Model.MoleculeModel.atomsChainList[(int)hballs[i].number] == chain)
-									hballs[i].renderer.material.SetTexture("_MatCap", texture);		
+									hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);		
 						}
 					}else{
 						for (int i=0; i<hballs.Length; i++){
 							if(atom.Contains(Molecule.Model.MoleculeModel.atomsNamelist[(int)hballs[i].number])
 								&& Molecule.Model.MoleculeModel.atomsChainList[(int)hballs[i].number] == chain)
-									hballs[i].renderer.material.SetTexture("_MatCap", texture);		
+									hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);		
 						}
 					}
 				}
@@ -310,13 +310,13 @@ public class HBallManager : GenericManager {
 						for (int i=0; i<hballs.Length; i++){
 							if(atom.Contains(hballs[i].tag)
 								&& Molecule.Model.MoleculeModel.atomsResnamelist[(int)hballs[i].number] == residue)
-									hballs[i].renderer.material.SetTexture("_MatCap", texture);
+									hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);
 						}
 					}else{
 						for (int i=0; i<hballs.Length; i++){
 						if(atom.Contains(Molecule.Model.MoleculeModel.atomsNamelist[(int)hballs[i].number])
 							&& Molecule.Model.MoleculeModel.atomsResnamelist[(int)hballs[i].number] == residue)
-								hballs[i].renderer.material.SetTexture("_MatCap", texture);
+								hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);
 					}
 					}
 				}
@@ -328,14 +328,14 @@ public class HBallManager : GenericManager {
 							if(atom.Contains(hballs[i].tag)
 								&& Molecule.Model.MoleculeModel.atomsResnamelist[(int)hballs[i].number] == residue
 								&& Molecule.Model.MoleculeModel.atomsChainList[(int)hballs[i].number] == chain)
-									hballs[i].renderer.material.SetTexture("_MatCap", texture);		
+									hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);		
 						}
 					}else{
 						for (int i=0; i<hballs.Length; i++){
 						if(atom.Contains(hballs[i].tag)
 							&& Molecule.Model.MoleculeModel.atomsResnamelist[(int)hballs[i].number] == residue
 							&& Molecule.Model.MoleculeModel.atomsChainList[(int)hballs[i].number] == chain)
-								hballs[i].renderer.material.SetTexture("_MatCap", texture);		
+								hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);		
 					}
 					}
 				}
@@ -347,14 +347,14 @@ public class HBallManager : GenericManager {
 		// ---------- ALL
 //					Debug.Log("ALL");
 					for (int i=0; i<hballs.Length; i++)
-						hballs[i].renderer.material.SetTexture("_MatCap", texture);
+						hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);
 				}
 				else{
 		// ---------- CHAIN
 //					Debug.Log("CHAIN");
 					for (int i=0; i<hballs.Length; i++){
 						if(Molecule.Model.MoleculeModel.atomsChainList[(int)hballs[i].number] == chain)
-							hballs[i].renderer.material.SetTexture("_MatCap", texture);		
+							hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);		
 					}
 				}
 			}
@@ -364,7 +364,7 @@ public class HBallManager : GenericManager {
 //					Debug.Log("RESIDUE");
 					for (int i=0; i<hballs.Length; i++){
 						if(Molecule.Model.MoleculeModel.atomsResnamelist[(int)hballs[i].number] == residue)
-							hballs[i].renderer.material.SetTexture("_MatCap", texture);
+							hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);
 					}
 				}
 				else{
@@ -373,7 +373,7 @@ public class HBallManager : GenericManager {
 					for (int i=0; i<hballs.Length; i++){
 						if(Molecule.Model.MoleculeModel.atomsResnamelist[(int)hballs[i].number] == residue
 							&& Molecule.Model.MoleculeModel.atomsChainList[(int)hballs[i].number] == chain)
-								hballs[i].renderer.material.SetTexture("_MatCap", texture);		
+								hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);		
 					}
 				}
 			}
@@ -416,7 +416,7 @@ public class HBallManager : GenericManager {
 		
 		for (int i=0; i<hballs.Length; i++)
 			if(hballs[i].GetComponent<BallUpdate>().number == atomNum)
-				hballs[i].renderer.material.SetTexture("_MatCap", texture);
+				hballs[i].GetComponent<Renderer>().material.SetTexture("_MatCap", texture);
 		BallUpdate.bondsReadyToBeReset = true;
 	}
 	
@@ -446,9 +446,9 @@ public class HBallManager : GenericManager {
 			for (int i=0; i<hballs.Length; i++)
 				//C.R
 				if(UIData.secondarystruct){
-					hballs[i].renderer.material.SetColor("_Color", hballs[i].atomcolor);}
+					hballs[i].GetComponent<Renderer>().material.SetColor("_Color", hballs[i].atomcolor);}
 				else
-					hballs[i].renderer.material.SetColor("_Color", Molecule.Model.MoleculeModel.atomsColorList[(int)hballs[i].number]);
+					hballs[i].GetComponent<Renderer>().material.SetColor("_Color", Molecule.Model.MoleculeModel.atomsColorList[(int)hballs[i].number]);
 			BallUpdate.resetColors = false;
 			BallUpdate.bondsReadyToBeReset = true;
 		}
@@ -754,7 +754,7 @@ public class HBallManager : GenericManager {
 	public Color GetColor(Vector3 pos){
 		for (int i=0; i<hballs.Length; i++)
 			if(hballs[i].transform.position == pos)
-				return hballs[i].renderer.material.GetColor("_Color");
+				return hballs[i].GetComponent<Renderer>().material.GetColor("_Color");
 		return Color.white;
 	}
 	
@@ -832,23 +832,23 @@ public class HBallManager : GenericManager {
 				if (UIData.secondarystruct){
 					if(GUIMoleculeController.structType == "B Factor"){
 						if (hballs[i].rayon == 3.7f){
-							hballs[i].renderer.material.SetFloat("_Rayon", hballs[i].rayon 
+							hballs[i].GetComponent<Renderer>().material.SetFloat("_Rayon", hballs[i].rayon 
 							                              * (GUIMoleculeController.highBFradius)
 							                              * (GUIMoleculeController.globalRadius)
 							                              * (Molecule.Model.MoleculeModel.atomsLocalScaleList[(int)hballs[i].number]/100));}
 						else{
-							hballs[i].renderer.material.SetFloat("_Rayon", hballs[i].rayon 
+							hballs[i].GetComponent<Renderer>().material.SetFloat("_Rayon", hballs[i].rayon 
 							                              * (GUIMoleculeController.globalRadius)
 							                              * (Molecule.Model.MoleculeModel.atomsLocalScaleList[(int)hballs[i].number]/100));
 						}
 					}
 					else
-					hballs[i].renderer.material.SetFloat("_Rayon", hballs[i].rayon 
+					hballs[i].GetComponent<Renderer>().material.SetFloat("_Rayon", hballs[i].rayon 
 					                              * (GUIMoleculeController.globalRadius)
 					                              * (Molecule.Model.MoleculeModel.atomsLocalScaleList[(int)hballs[i].number]/100));
 				}
 				else{
-				hballs[i].renderer.material.SetFloat("_Rayon", Molecule.Model.MoleculeModel.atomsTypelist[(int)hballs[i].number].radius 
+				hballs[i].GetComponent<Renderer>().material.SetFloat("_Rayon", Molecule.Model.MoleculeModel.atomsTypelist[(int)hballs[i].number].radius 
 												  * (GUIMoleculeController.globalRadius)
 					                              * (Molecule.Model.MoleculeModel.atomsLocalScaleList[(int)hballs[i].number]/100));
 				}
@@ -920,7 +920,7 @@ public class HBallManager : GenericManager {
 			
 			if(UIData.toggleGray) {
 				Color c = Color.Lerp(Color.white, Color.black, v);
-				hballs[i].renderer.material.SetColor("_Color", c); // ugly
+				hballs[i].GetComponent<Renderer>().material.SetColor("_Color", c); // ugly
 			}
 		}
 	}
@@ -934,9 +934,9 @@ public class HBallManager : GenericManager {
 		hballs = GameObject.FindObjectsOfType(typeof(BallUpdateHB)) as BallUpdateHB[];
 		for (int i=0; i<hballs.Length; i++){
 			//if(hb)
-			hballs[i].renderer.enabled = false;
+			hballs[i].GetComponent<Renderer>().enabled = false;
 			if(UIData.atomtype != UIData.AtomType.particleball) // Particles don't have their own collider so we must keep it
-				hballs[i].collider.enabled = false; // Disable the collider at the same time to avoid ghost-clicking with atom selection
+				hballs[i].GetComponent<Collider>().enabled = false; // Disable the collider at the same time to avoid ghost-clicking with atom selection
 		}
 //		DeactivateBases();
 		DeactivateEllipsoids();
@@ -955,8 +955,8 @@ public class HBallManager : GenericManager {
 		
 		for (int i=0; i<hballs.Length; i++){
 			//if(hb)
-			hballs[i].renderer.enabled = true;
-			hballs[i].collider.enabled = true;
+			hballs[i].GetComponent<Renderer>().enabled = true;
+			hballs[i].GetComponent<Collider>().enabled = true;
 		}
 		
 		Debug.Log("HBallManager: Enabling renderer");
@@ -965,7 +965,7 @@ public class HBallManager : GenericManager {
 	
 	private void ResetBrightness() {
 		for(int i=0; i<hballs.Length; i++)
-			hballs[i].renderer.material.SetFloat("_Brightness", brightness);
+			hballs[i].GetComponent<Renderer>().material.SetFloat("_Brightness", brightness);
 		
 		HStickManager.resetBrightness = true;
 		resetBrightness = false;
@@ -1248,32 +1248,32 @@ public class HBallManager : GenericManager {
 			Atom = GameObject.CreatePrimitive(PrimitiveType.Cube);
 			
 			//			Atom.renderer.material.shader = Shader.Find("Custom/EllipsoidBase");
-			Atom.renderer.material.shader = Shader.Find("FvNano/Ball HyperBalls OpenGL");
+			Atom.GetComponent<Renderer>().material.shader = Shader.Find("FvNano/Ball HyperBalls OpenGL");
 			
-			Atom.AddComponent("EllipsoidUpdateHB");
+			Atom.AddComponent<EllipsoidUpdateHB>();
 			BallUpdate comp = Atom.GetComponent<BallUpdate>();
 			
 			currentResidueName = MoleculeModel.atomsResnamelist[(int)entry.Value[0]];
 			
 			if (currentResidueName == "C") {
-				Atom.renderer.material.SetColor("_Color", Color.yellow);
+				Atom.GetComponent<Renderer>().material.SetColor("_Color", Color.yellow);
 			}
 			else if (currentResidueName == "G") {
-				Atom.renderer.material.SetColor("_Color", Color.green);
+				Atom.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
 			}
 			else if (currentResidueName == "A") {
-				Atom.renderer.material.SetColor("_Color", Color.red);
+				Atom.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
 			}
 			else if (currentResidueName == "U") {
-				Atom.renderer.material.SetColor("_Color", new Color(0.7f, 0.7f, 0.98f));
+				Atom.GetComponent<Renderer>().material.SetColor("_Color", new Color(0.7f, 0.7f, 0.98f));
 			}
 			
 			comp.rayon = 1.0f;
 			comp.SetRayonFactor(1.0f);
-			Atom.renderer.material.SetFloat("_Rayon", 1.0f);
-			Atom.renderer.material.SetVector("_Equation", new Vector4(0.2f, 0.8f, 0.1f, 1.0f));
+			Atom.GetComponent<Renderer>().material.SetFloat("_Rayon", 1.0f);
+			Atom.GetComponent<Renderer>().material.SetVector("_Equation", new Vector4(0.2f, 0.8f, 0.1f, 1.0f));
 			
-			Atom.renderer.transform.localScale = new Vector3(3.0f, 1.5f, 4.0f);
+			Atom.GetComponent<Renderer>().transform.localScale = new Vector3(3.0f, 1.5f, 4.0f);
 			
 //			Atom.AddComponent<Projector>();
 			comp.enabled = true;
@@ -1304,7 +1304,7 @@ public class HBallManager : GenericManager {
 			{
 				if (allowedAtomsForPosition.Contains(MoleculeModel.atomsNamelist[entry.Value[i]])) {
 					GameObject go = hballsGameObjects[entry.Value[i]] as GameObject;
-					go.renderer.enabled = true;
+					go.GetComponent<Renderer>().enabled = true;
 				}
 			}
 		}
@@ -1312,7 +1312,7 @@ public class HBallManager : GenericManager {
 		for (int i = 0; i < MoleculeModel.bondsForReplacedAtoms.Count; i++)
 		{
 			//				MoleculeModel.bondsForReplacedAtoms[i].SetActive(true);
-			MoleculeModel.bondsForReplacedAtoms[i].renderer.enabled = true;
+			MoleculeModel.bondsForReplacedAtoms[i].GetComponent<Renderer>().enabled = true;
 		}
 	}
 	
@@ -1331,7 +1331,7 @@ public class HBallManager : GenericManager {
 			{
 				if (allowedAtomsForPosition.Contains(MoleculeModel.atomsNamelist[entry.Value[i]])) {
 					GameObject go = hballsGameObjects[entry.Value[i]] as GameObject;
-					go.renderer.enabled = false;
+					go.GetComponent<Renderer>().enabled = false;
 				}
 			}
 		}
@@ -1341,7 +1341,7 @@ public class HBallManager : GenericManager {
 //			MoleculeModel.bondsForReplacedAtoms[i].SetActive(false);
 			if (MoleculeModel.bondsForReplacedAtoms[i])
 			{
-				MoleculeModel.bondsForReplacedAtoms[i].renderer.enabled = false;
+				MoleculeModel.bondsForReplacedAtoms[i].GetComponent<Renderer>().enabled = false;
 			}
 		}
 	}
@@ -1352,7 +1352,7 @@ public class HBallManager : GenericManager {
 			return;
 		for (int i = 0; i < ellipsoids.Length; i++)
 		{
-			ellipsoids[i].renderer.enabled = true;
+			ellipsoids[i].GetComponent<Renderer>().enabled = true;
 		}
 	}
 	
@@ -1362,7 +1362,7 @@ public class HBallManager : GenericManager {
 			return;
 		for (int i = 0; i < ellipsoids.Length; i++)
 		{
-			ellipsoids[i].renderer.enabled = false;
+			ellipsoids[i].GetComponent<Renderer>().enabled = false;
 		}
 	}
 	

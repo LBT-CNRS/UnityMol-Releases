@@ -92,7 +92,7 @@ public class ShurikenParticleManager : GenericManager {
 		pSystem.SetParticles(particles, pNumber);
 		
 		//CheckParticles();
-		pSystem.renderer.enabled = true;
+		pSystem.GetComponent<Renderer>().enabled = true;
 		enabled = true;
 		Debug.Log("Shuriken Initialized");
 	}
@@ -128,7 +128,7 @@ public class ShurikenParticleManager : GenericManager {
 			Debug.Log(p.position.ToString());
 			Debug.Log(p.color.ToString());
 		}
-		Debug.Log(pSystem.renderer.enabled.ToString());
+		Debug.Log(pSystem.GetComponent<Renderer>().enabled.ToString());
 	}
 	
 /*	private void ForDebugging() {
@@ -168,7 +168,7 @@ public class ShurikenParticleManager : GenericManager {
 	/// Enables this script and the renderer of its particle system.
 	/// </summary>
 	public override void EnableRenderers() {
-		pSystem.renderer.enabled = true;
+		pSystem.GetComponent<Renderer>().enabled = true;
 		enabled = true;
 	}
 	
@@ -176,7 +176,7 @@ public class ShurikenParticleManager : GenericManager {
 	/// Disables this script and the renderer of its particle system.
 	/// </summary>
 	public override void DisableRenderers() {
-		pSystem.renderer.enabled = false;
+		pSystem.GetComponent<Renderer>().enabled = false;
 		enabled = false;
 	}
 	

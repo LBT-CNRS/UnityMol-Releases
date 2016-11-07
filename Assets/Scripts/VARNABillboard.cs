@@ -65,7 +65,7 @@ public class VARNABillboard : MonoBehaviour {
 	IEnumerator loadFile() {
 		ResourceRequest request = Resources.LoadAsync("test");
 		yield return request;
-		gameObject.renderer.material.mainTexture = request.asset as Texture2D;
+		gameObject.GetComponent<Renderer>().material.mainTexture = request.asset as Texture2D;
 		UnityEngine.Debug.Log ("::::: Loaded");
 	}
 }
