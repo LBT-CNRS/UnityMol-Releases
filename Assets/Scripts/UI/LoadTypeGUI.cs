@@ -2670,10 +2670,12 @@ namespace UI{
 			//TODO : LOD mode buggy with other representation than Hyperball
 
 			GUI.enabled = true;
-			if (!toggle_NA_MEASURE && Camera.main.GetComponent<MeasureDistance> ())
-				Camera.main.GetComponent<MeasureDistance> ().enabled = false;
-			else if (toggle_NA_MEASURE && Camera.main.GetComponent<MeasureDistance> ())
-				Camera.main.GetComponent<MeasureDistance> ().enabled = true;
+			if (Camera.main != null) {
+				if (!toggle_NA_MEASURE && Camera.main.GetComponent<MeasureDistance> ())
+					Camera.main.GetComponent<MeasureDistance> ().enabled = false;
+				else if (toggle_NA_MEASURE && Camera.main.GetComponent<MeasureDistance> ())
+					Camera.main.GetComponent<MeasureDistance> ().enabled = true;
+			} 
 //			GUILayout.EndHorizontal();
 			
 
@@ -3656,12 +3658,12 @@ namespace UI{
 			GUILayout.BeginHorizontal();
 			toggle_NA_CAMLOCK = GUILayout.Toggle (toggle_NA_CAMLOCK, new GUIContent ("Lock camera", "Enable/Disable camera movements"));
 			GUILayout.EndHorizontal();
-			
-			if (!toggle_NA_CLICK && Camera.main.GetComponent<ClickAtom> ())
-				Camera.main.GetComponent<ClickAtom> ().enabled = false;
-			else if (toggle_NA_CLICK && Camera.main.GetComponent<ClickAtom> ())
-				Camera.main.GetComponent<ClickAtom> ().enabled = true;
-			
+			if (Camera.main != null) {
+				if (!toggle_NA_CLICK && Camera.main.GetComponent<ClickAtom> ())
+					Camera.main.GetComponent<ClickAtom> ().enabled = false;
+				else if (toggle_NA_CLICK && Camera.main.GetComponent<ClickAtom> ())
+					Camera.main.GetComponent<ClickAtom> ().enabled = true;
+			}
 			
 			int sliderWidth = (int) (Rectangles.atomMenuWidth * 0.5f);
 			int labelWidth = (int) (Rectangles.atomButtonWidth * 0.4f);

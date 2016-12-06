@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/1KX2.unity
+- path: Assets/MoleculeVR.unity
   isLoaded: 1
   isActive: 1

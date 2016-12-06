@@ -182,7 +182,7 @@ public class Molecule3D:MonoBehaviour {
 		DebugStreamer.message = "Hello world!";
 		LocCamera=GameObject.Find("Camera");
 		DebugStreamer.message = "Find Camera";
-		LocCamera.GetComponent<Skybox>().enabled=false;
+		//LocCamera.GetComponent<Skybox>().enabled=false;
 
 		scenecontroller = GameObject.Find("LoadBox");
 		scenecontroller.AddComponent<ReadDX>();
@@ -339,10 +339,10 @@ public class Molecule3D:MonoBehaviour {
 			StartCoroutine(loadLoadFile());
 		}
 		
-		if(UIData.backGroundIs)
+		/*if(UIData.backGroundIs)
 			LocCamera.GetComponent<Skybox>().enabled=true;
 		else
-			LocCamera.GetComponent<Skybox>().enabled=false;
+			LocCamera.GetComponent<Skybox>().enabled=false;*/
 
 		UIData.EnableUpdate=true;
 		

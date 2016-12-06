@@ -87,6 +87,9 @@ public class PreloadFromPDB : MonoBehaviour {
 	IEnumerator InitScene(RequestPDB requestPDB)
 	{
 		string pdbID = MainMenu.pdbID;
+		if (pdbID == null) {
+			pdbID = "1KX2";
+		}
 		//StartCoroutine(requestPDB.LoadPDBWWW(UIData.server_url+"Scenes/1KX2/1KX2.pdb"));
 		WWWForm form = new WWWForm();
 		form.AddField("pdbID",pdbID);

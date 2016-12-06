@@ -18,3 +18,4 @@
 /Users/jcarcamo/git/UnityMol-Releases/Temp/bin/Debug/Assembly-CSharp.dll
 /Users/jcarcamo/git/UnityMol-Releases/obj/Debug/Assembly-CSharp.dll
 /Users/jcarcamo/git/UnityMol-Releases/obj/Debug/Assembly-CSharp.dll.mdb
+/Users/jcarcamo/git/UnityMol-Releases/Temp/bin/Debug/Google.ProtocolBuffers.dll

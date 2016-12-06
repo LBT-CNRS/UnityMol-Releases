@@ -15,3 +15,4 @@
 /Users/jcarcamo/git/UnityMol-Releases/Temp/bin/Debug/Unity.CecilTools.dll
 /Users/jcarcamo/git/UnityMol-Releases/Temp/bin/Debug/Mono.Cecil.Pdb.dll
 /Users/jcarcamo/git/UnityMol-Releases/Temp/bin/Debug/Mono.Cecil.Mdb.dll
+/Users/jcarcamo/git/UnityMol-Releases/Temp/bin/Debug/Google.ProtocolBuffers.dll
