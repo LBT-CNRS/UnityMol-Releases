@@ -12,7 +12,7 @@ public class CubeBondManager : GenericManager {
 		BallUpdate.bondsReadyToBeReset = true;
 		enabled = true;
 		foreach(BondCubeUpdate bu in bonds)
-			bu.collider.enabled = false;
+			bu.GetComponent<Collider>().enabled = false;
 	}
 	
 	public override void DestroyAll() {
@@ -43,7 +43,7 @@ public class CubeBondManager : GenericManager {
 	
 	private void AdjustScales() {
 		foreach(BondCubeUpdate bcu in bonds)
-			bcu.renderer.material.SetFloat("_Scale", BondCubeUpdate.scale);
+			bcu.GetComponent<Renderer>().material.SetFloat("_Scale", BondCubeUpdate.scale);
 		BondCubeUpdate.oldscale = BondCubeUpdate.scale;
 	}
 	
@@ -63,8 +63,8 @@ public class CubeBondManager : GenericManager {
 				Vector3 pos;
 				Vector3 pos1 = bcu.atompointer1.transform.position;
 				Vector3 pos2 = bcu.atompointer2.transform.position;
-				Color32 color1 = bcu.atompointer1.renderer.material.GetColor("_Color");
-				Color32 color2 = bcu.atompointer2.renderer.material.GetColor("_Color");
+				Color32 color1 = bcu.atompointer1.GetComponent<Renderer>().material.GetColor("_Color");
+				Color32 color2 = bcu.atompointer2.GetComponent<Renderer>().material.GetColor("_Color");
 				for(int i=0; i<vertices.Length; i++) {
 					pos = localToWorld.MultiplyPoint3x4(vertices[i]);
 					dist1 = Vector3.Distance(pos1, pos);
@@ -84,14 +84,14 @@ public class CubeBondManager : GenericManager {
 	
 	public override void EnableRenderers() {
 		foreach(BondCubeUpdate bcu in bonds)
-			bcu.renderer.enabled = true;
+			bcu.GetComponent<Renderer>().enabled = true;
 		enabled = true;
 	}
 	
 	public override void DisableRenderers() {
 		Debug.Log("CubeBondManager: DisableRenderers()");
 		foreach(BondCubeUpdate bcu in bonds)
-			bcu.renderer.enabled = false;
+			bcu.GetComponent<Renderer>().enabled = false;
 		enabled = false;
 	}
 	
@@ -131,9 +131,9 @@ public class CubeBondManager : GenericManager {
 		bonds = GameObject.FindObjectsOfType(typeof(BondCubeUpdate)) as BondCubeUpdate[];
 		for (int i=0; i< bonds.Length; i++) {
 			atomOne = bonds[i].atompointer1.transform.position; // transform.position is costly; this way, we do it twice instead of thrice
-			bonds[i].renderer.material.SetVector("_Pos1", atomOne);
+			bonds[i].GetComponent<Renderer>().material.SetVector("_Pos1", atomOne);
 			bonds[i].transform.position = atomOne;
-			bonds[i].renderer.material.SetVector("_Pos2", bonds[i].atompointer2.transform.position);
+			bonds[i].GetComponent<Renderer>().material.SetVector("_Pos2", bonds[i].atompointer2.transform.position);
 		}
 	}
 	

@@ -108,10 +108,10 @@ void  LateUpdate ()
 {
     if (vertices==null || vertices.Length <= 1)
      {
-        renderer.enabled=false;
+        GetComponent<Renderer>().enabled=false;
         return;
     }
-    renderer.enabled=true;
+    GetComponent<Renderer>().enabled=true;
     
     //rebuild the mesh?
     bool  re=false;

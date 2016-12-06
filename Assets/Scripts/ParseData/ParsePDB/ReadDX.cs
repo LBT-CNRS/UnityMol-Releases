@@ -469,15 +469,15 @@ public class ReadDX : MonoBehaviour {
 				// TransparentZ is a custom shader that uses transparent objects, but with per-triangle transparency sorting,
 				// versus Unity's default per-object transparency sorting. This is necessary because of our intersecting,
 				// non-convex transparent objects.
-				iso.renderer.material.shader = Shader.Find("Transparent/Zsorted");
+				iso.GetComponent<Renderer>().material.shader = Shader.Find("Transparent/Zsorted");
 				color.a = 0.5f;
 			}
 			else {
-				iso.renderer.material.shader = Shader.Find("Diffuse");
+				iso.GetComponent<Renderer>().material.shader = Shader.Find("Diffuse");
 				//iso.renderer.material.shader =	Shader.Find("Mat Cap Cut");
 				//iso.renderer.material.SetTexture("_MatCap",(Texture)Resources.Load("lit_spheres/divers/daphz1"));
 			}
-			iso.renderer.material.SetColor("_Color", color);
+			iso.GetComponent<Renderer>().material.SetColor("_Color", color);
 		}
 //		MCInstance.MCRecMain(NX, NY, NZ, 0.5f, points, 0f);
 

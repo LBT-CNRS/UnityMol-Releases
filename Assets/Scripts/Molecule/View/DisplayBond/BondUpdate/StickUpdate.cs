@@ -106,8 +106,8 @@ public class StickUpdate : MonoBehaviour {
 	public static void ResetColors() {
 		StickUpdate[] stickUpdates = Object.FindObjectsOfType(typeof(StickUpdate)) as StickUpdate[];
 		foreach(StickUpdate stu in stickUpdates) {
-			stu.renderer.material.SetColor("_Color", stu.atompointer1.renderer.material.GetColor("_Color"));
-			stu.renderer.material.SetColor("_Color2", stu.atompointer2.renderer.material.GetColor("_Color"));
+			stu.GetComponent<Renderer>().material.SetColor("_Color", stu.atompointer1.GetComponent<Renderer>().material.GetColor("_Color"));
+			stu.GetComponent<Renderer>().material.SetColor("_Color2", stu.atompointer2.GetComponent<Renderer>().material.GetColor("_Color"));
 		}
 		resetColors = false;
 	}
@@ -116,20 +116,20 @@ public class StickUpdate : MonoBehaviour {
 //	private bool d3d= false;
 	void  Start (){
 //		d3d = SystemInfo.graphicsDeviceVersion.IndexOf("Direct3D") > -1;
-		renderer.material.SetColor("_Color", atompointer1.renderer.material.GetColor("_Color"));
-		renderer.material.SetColor("_Color2", atompointer2.renderer.material.GetColor("_Color"));
+		GetComponent<Renderer>().material.SetColor("_Color", atompointer1.GetComponent<Renderer>().material.GetColor("_Color"));
+		GetComponent<Renderer>().material.SetColor("_Color2", atompointer2.GetComponent<Renderer>().material.GetColor("_Color"));
 		
-		renderer.material.SetVector("_TexPos1", atompointer1.transform.position);
+		GetComponent<Renderer>().material.SetVector("_TexPos1", atompointer1.transform.position);
 		transform.position = atompointer1.transform.position;
-		renderer.material.SetVector("_TexPos2", atompointer2.transform.position);
+		GetComponent<Renderer>().material.SetVector("_TexPos2", atompointer2.transform.position);
 //		renderer.material.SetTexture("_MatCap",BallUpdateHB.text2D);
 		if(UIData.atomtype == UIData.AtomType.hyperball) {
-			renderer.material.SetTexture("_MatCap", atompointer1.renderer.material.GetTexture("_MatCap"));
-			renderer.material.SetTexture("_MatCap2", atompointer2.renderer.material.GetTexture("_MatCap"));
+			GetComponent<Renderer>().material.SetTexture("_MatCap", atompointer1.GetComponent<Renderer>().material.GetTexture("_MatCap"));
+			GetComponent<Renderer>().material.SetTexture("_MatCap2", atompointer2.GetComponent<Renderer>().material.GetTexture("_MatCap"));
 		}
 		else {
-			renderer.material.SetTexture("_MatCap", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
-			renderer.material.SetTexture("_MatCap2", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
+			GetComponent<Renderer>().material.SetTexture("_MatCap", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
+			GetComponent<Renderer>().material.SetTexture("_MatCap2", (Texture)Resources.Load("lit_spheres/divers/daphz05"));
 		}
 	}
 	

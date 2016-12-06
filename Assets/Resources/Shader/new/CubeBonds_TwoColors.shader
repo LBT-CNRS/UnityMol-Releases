@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+
 /// @file CubeBonds_TwoColors.shader
 /// @brief Details to be specified
 /// @author FvNano/LBT team
@@ -88,7 +90,7 @@ Shader "Custom/CubeBonds_TwoColors" {
 		};
 
 		void vert (inout appdata_full v, out Input o) {
-			float3 pos = mul(v.vertex,_World2Object);
+			float3 pos = mul(v.vertex,unity_WorldToObject);
 			
 			o.col = _Color1.rgb;
 			

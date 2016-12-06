@@ -100,18 +100,18 @@ public class BondCubeUpdate : MonoBehaviour {
 		transform.LookAt(atompointer2.transform.position);
 	
 		Vector3 pos1 = atompointer1.transform.position;
-		renderer.material.SetVector("_Pos1", pos1);
+		GetComponent<Renderer>().material.SetVector("_Pos1", pos1);
 		
 		Vector3 pos2 = atompointer2.transform.position;
-		renderer.material.SetVector("_Pos2", pos2);
+		GetComponent<Renderer>().material.SetVector("_Pos2", pos2);
 		
-		Color32 color1 = atompointer1.renderer.material.GetColor("_Color");
+		Color32 color1 = atompointer1.GetComponent<Renderer>().material.GetColor("_Color");
 		//Debug.Log(color1.ToString());
-		renderer.material.SetColor("_Color1", atompointer1.renderer.material.GetColor("_Color"));
+		GetComponent<Renderer>().material.SetColor("_Color1", atompointer1.GetComponent<Renderer>().material.GetColor("_Color"));
 		
-		Color32 color2 = atompointer2.renderer.material.GetColor("_Color");
+		Color32 color2 = atompointer2.GetComponent<Renderer>().material.GetColor("_Color");
 		//Debug.Log(color2.ToString());
-		renderer.material.SetColor("_Color2", atompointer2.renderer.material.GetColor("_Color"));
+		GetComponent<Renderer>().material.SetColor("_Color2", atompointer2.GetComponent<Renderer>().material.GetColor("_Color"));
 		
 		Mesh mesh = GetComponent<MeshFilter>().mesh;
 		Vector3[] vertices = mesh.vertices;
@@ -132,7 +132,7 @@ public class BondCubeUpdate : MonoBehaviour {
 		
 		mesh.colors32 = colors;
 		GetComponent<MeshFilter>().mesh = mesh;
-		renderer.material.shader = Shader.Find("Custom/Ribbons");
+		GetComponent<Renderer>().material.shader = Shader.Find("Custom/Ribbons");
 		
 	}
 

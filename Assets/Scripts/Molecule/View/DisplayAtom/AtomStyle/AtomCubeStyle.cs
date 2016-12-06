@@ -416,20 +416,20 @@ namespace Molecule.View.DisplayAtom {
 					case RuntimePlatform.WindowsPlayer:
 					case RuntimePlatform.WindowsWebPlayer:
 					case RuntimePlatform.WindowsEditor:
-					Atom.renderer.material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
+					Atom.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
 						break;
 					default :
-						Atom.renderer.material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
+						Atom.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
 //						Atom.renderer.material.shader=Shader.Find("Custom/BallImprovedZ");
 						break;				
 				}
 
-				Atom.AddComponent("BallUpdateHB");
+				Atom.AddComponent<BallUpdateHB>();
 				if(UI.GUIDisplay.file_extension=="xgmml")
 					Atom.GetComponent<BallUpdateHB>().z=(float)(fLocation[2]);
 			}
 			else {
-				Atom.AddComponent("BallUpdateCube");
+				Atom.AddComponent<BallUpdateCube>();
 				BallUpdateCube comp1 = Atom.GetComponent<BallUpdateCube>();
 				comp1.SetRayonFactor(atomModel.scale/100);
 			}
@@ -448,7 +448,7 @@ namespace Molecule.View.DisplayAtom {
 				comp.atomcolor = HexToColor((MoleculeModel.CSColorList[iAtom] as string[])[0]);
 			}
 
-			Atom.renderer.material.SetColor("_Color", comp.atomcolor);
+			Atom.GetComponent<Renderer>().material.SetColor("_Color", comp.atomcolor);
 
 //			Projector proj = Atom.AddComponent<Projector>();
 			Atom.AddComponent<Projector>();
@@ -457,9 +457,9 @@ namespace Molecule.View.DisplayAtom {
 			Atom.tag = atomModel.type;
 
 			if(atomtype==UIData.AtomType.particleball)
-				Atom.renderer.enabled = false;
+				Atom.GetComponent<Renderer>().enabled = false;
 			
-			BoxCollider collider = Atom.collider as BoxCollider;
+			BoxCollider collider = Atom.GetComponent<Collider>() as BoxCollider;
 			float newSize = comp.rayon * 60 / 100;
 			collider.size = new Vector3(newSize,newSize,newSize);
 		}
@@ -587,7 +587,7 @@ namespace Molecule.View.DisplayAtom {
 			Vector3 location=new Vector3(fLocation[0],fLocation[1],fLocation[2]);
 
 			Atom.transform.Translate(location);
-			Atom.renderer.material.SetColor("_Color",c);
+			Atom.GetComponent<Renderer>().material.SetColor("_Color",c);
 //			Atom.transform.parent = AtomCubeParent.transform;
 //			Debug.Log(Atom.collider.ToString());
 
@@ -600,14 +600,14 @@ namespace Molecule.View.DisplayAtom {
 					case RuntimePlatform.WindowsPlayer:
 					case RuntimePlatform.WindowsWebPlayer:
 					case RuntimePlatform.WindowsEditor:
-					Atom.renderer.material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
+					Atom.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
 						break;
 					default :
-						Atom.renderer.material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
+						Atom.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
 						break;				
 				}
 			
-				Atom.AddComponent("BallUpdateHB");
+				Atom.AddComponent<BallUpdateHB>();
 				BallUpdateHB comp = Atom.GetComponent<BallUpdateHB>();
 				script = comp;
 				comp.rayon=(float)(v[0]);
@@ -636,7 +636,7 @@ namespace Molecule.View.DisplayAtom {
 				}
 			}
 			else {
-				Atom.AddComponent("BallUpdateCube");
+				Atom.AddComponent<BallUpdateCube>();
 				BallUpdateCube comp1 = Atom.GetComponent<BallUpdateCube>();
 				script = comp1;
 //				comp1.rayon = Atom.transform.localScale.x*2;
@@ -673,9 +673,9 @@ namespace Molecule.View.DisplayAtom {
 				default:Atom.tag="X";break;
 			}
 			if(atomtype==UIData.AtomType.particleball)
-				Atom.renderer.enabled = false;
+				Atom.GetComponent<Renderer>().enabled = false;
 			
-			BoxCollider collider = Atom.collider as BoxCollider;
+			BoxCollider collider = Atom.GetComponent<Collider>() as BoxCollider;
 			float newSize = script.rayon * 60 / 100;
 			collider.size = new Vector3(newSize,newSize,newSize);
 		}
@@ -686,10 +686,10 @@ namespace Molecule.View.DisplayAtom {
 			float[]  fLocation=atomLocationalist[start] as float[];
 			Vector3 location=new Vector3(fLocation[0],fLocation[1],fLocation[2]);
 			Atom.transform.Translate(location);
-			Atom.renderer.material.SetColor("_Color",c);
+			Atom.GetComponent<Renderer>().material.SetColor("_Color",c);
 			MoleculeModel.atoms.Add(Atom);		
-			Atom.renderer.material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
-			Atom.AddComponent("BallUpdateRC");
+			Atom.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
+			Atom.AddComponent<BallUpdateRC>();
 			BallUpdateRC comp = Atom.GetComponent<BallUpdateRC>();
 			comp.rayon=(float)(v[0]);
 			comp.atomcolor=c;
@@ -717,12 +717,12 @@ namespace Molecule.View.DisplayAtom {
 			Vector3 location=new Vector3(fLocation[0],fLocation[1],fLocation[2]);
 		
 			Atom.transform.Translate(location);
-			Atom.renderer.material.SetColor("_Color",c);
+			Atom.GetComponent<Renderer>().material.SetColor("_Color",c);
 			MoleculeModel.atoms.Add(Atom);		
-			Atom.AddComponent("CameraFacingBillboard");
-			Atom.GetComponent<CameraFacingBillboard>().cameraToLookAt = GameObject.Find("Camera").camera;
-			Atom.transform.renderer.material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
-			Atom.AddComponent("BallUpdateRC");
+			Atom.AddComponent<CameraFacingBillboard>();
+			Atom.GetComponent<CameraFacingBillboard>().cameraToLookAt = GameObject.Find("Camera").GetComponent<Camera>();
+			Atom.transform.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
+			Atom.AddComponent<BallUpdateRC>();
 			BallUpdateRC comp = Atom.GetComponent<BallUpdateRC>();
 			comp.rayon=(float)(v[0]);
 			comp.atomcolor=c;
@@ -750,12 +750,12 @@ namespace Molecule.View.DisplayAtom {
 			Vector3 location=new Vector3(fLocation[0],fLocation[1],fLocation[2]);
 				
 			Atom.transform.Translate(location);
-			Atom.renderer.material.SetColor("_Color",c);
+			Atom.GetComponent<Renderer>().material.SetColor("_Color",c);
 			MoleculeModel.atoms.Add(Atom);		
-			Atom.AddComponent("CameraFacingBillboard");
-			Atom.GetComponent<CameraFacingBillboard>().cameraToLookAt = GameObject.Find("Camera").camera;
-			Atom.transform.renderer.material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
-			Atom.AddComponent("BallUpdateHB");
+			Atom.AddComponent<CameraFacingBillboard>();
+			Atom.GetComponent<CameraFacingBillboard>().cameraToLookAt = GameObject.Find("Camera").GetComponent<Camera>();
+			Atom.transform.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
+			Atom.AddComponent<BallUpdateHB>();
 			BallUpdateHB comp = Atom.GetComponent<BallUpdateHB>();
 			comp.rayon=(float)(v[0]);
 			comp.atomcolor=c;
@@ -787,7 +787,7 @@ namespace Molecule.View.DisplayAtom {
 			SpriteManager.GetComponent <MeshRenderer>().enabled=true;
 
 			if(SpriteManager.GetComponent <LinkedSpriteManager>()==null) {
-				SpriteManager.AddComponent("LinkedSpriteManager");
+				SpriteManager.AddComponent<LinkedSpriteManager>();
 				linkedSpriteManager= (LinkedSpriteManager)Component.FindObjectOfType(typeof(LinkedSpriteManager));			
 				Material mat = Resources.Load("Materials/hyperballshader", typeof(Material)) as Material;				
 				linkedSpriteManager.material=mat;
@@ -805,7 +805,7 @@ namespace Molecule.View.DisplayAtom {
 			o=MonoBehaviour.Instantiate(Resources.Load("HBspriteplane"),location,new Quaternion(0f,0f,0f,0f));		
 			Atom=(GameObject)o;
 			MoleculeModel.atoms.Add(Atom);		
-			Atom.renderer.material.SetColor("_Color",c);
+			Atom.GetComponent<Renderer>().material.SetColor("_Color",c);
 			BallUpdateHB comp = Atom.GetComponent<BallUpdateHB>();
 			comp.rayon=(float)(v[0]);
 			comp.atomcolor=c;
@@ -838,11 +838,11 @@ namespace Molecule.View.DisplayAtom {
 			newMat.SetFloat("_Rayon",(float)(v[0])*0.1f);
 			newMat.SetColor("_Color",c);
 			
-			ArrayList materialArray= new ArrayList(Atom.transform.renderer.materials);
+			ArrayList materialArray= new ArrayList(Atom.transform.GetComponent<Renderer>().materials);
 			materialArray.Add(newMat);
 			Material[] array = new Material[materialArray.Count];
 			materialArray.CopyTo( array );
-			Atom.transform.renderer.materials = array;	
+			Atom.transform.GetComponent<Renderer>().materials = array;	
 			switch(type) {
 				case 0:Atom.tag="C";break;
 				case 1:Atom.tag="N";break;
@@ -873,12 +873,12 @@ namespace Molecule.View.DisplayAtom {
 			float[]  fLocation=atomLocationalist[start] as float[];
 			Vector3 location=new Vector3(fLocation[0],fLocation[1],fLocation[2]);
 			Atom.transform.Translate(location);
-			Atom.renderer.material.SetColor("_Color",c);
+			Atom.GetComponent<Renderer>().material.SetColor("_Color",c);
 			MoleculeModel.atoms.Add(Atom);		
-			Atom.AddComponent("CameraFacingBillboard");
-			Atom.GetComponent<CameraFacingBillboard>().cameraToLookAt = GameObject.Find("Camera").camera;
-			Atom.transform.renderer.material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
-			Atom.AddComponent("BallUpdateHB");
+			Atom.AddComponent<CameraFacingBillboard>();
+			Atom.GetComponent<CameraFacingBillboard>().cameraToLookAt = GameObject.Find("Camera").GetComponent<Camera>();
+			Atom.transform.GetComponent<Renderer>().material.shader=Shader.Find("FvNano/Ball HyperBalls OpenGL");
+			Atom.AddComponent<BallUpdateHB>();
 			BallUpdateHB comp = Atom.GetComponent<BallUpdateHB>();
 			comp.rayon=(float)(v[0]);
 			comp.atomcolor=c;

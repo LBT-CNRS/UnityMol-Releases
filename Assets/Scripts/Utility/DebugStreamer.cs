@@ -98,11 +98,11 @@ private string[] pattern = new string[] {"-", "\\", "|", "/"};
 	void Awake ()
 	{
 		guiObj = new GameObject("Debug Streamer");
-		guiObj.AddComponent("GUIText");
+		guiObj.AddComponent<GUIText>();
 		guiObj.transform.position = Vector3.zero;
 		guiObj.transform.localScale = new Vector3(0, 0, 1);
 		guiObj.name = "Debug Streamer";
-		guiTxt = guiObj.guiText;
+		guiTxt = guiObj.GetComponent<GUIText>();
 		_anchorAt = anchorAt;
 		_message = message;
 		SetPosition();

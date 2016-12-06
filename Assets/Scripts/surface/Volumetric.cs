@@ -104,7 +104,7 @@ public abstract class Volumetric : MonoBehaviour {
 	{
 		points = null;
 		pNumber = 0;
-		renderer.enabled = false;
+		GetComponent<Renderer>().enabled = false;
 		dynPoints.Clear();
 		Destroy(this);
 	}
@@ -147,6 +147,6 @@ public abstract class Volumetric : MonoBehaviour {
 		BuildParticleArray();
 
 		pSystem.SetParticles(points, pNumber);
-		renderer.enabled = true;
+		GetComponent<Renderer>().enabled = true;
 	}
 }

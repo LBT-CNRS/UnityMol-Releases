@@ -222,11 +222,11 @@ public class RingBlending
 		papobj.AddComponent<MeshFilter>();
 		papobj.AddComponent<MeshRenderer>();
 		papobj.GetComponent<MeshFilter>().mesh = mesh;
-		papobj.renderer.material = new Material(Shader.Find("Transparent/Diffuse"));
+		papobj.GetComponent<Renderer>().material = new Material(Shader.Find("Transparent/Diffuse"));
 		if (UI.GUIDisplay.colorByResiduesDict.ContainsKey(res))
-			papobj.renderer.material.color=UI.GUIDisplay.colorByResiduesDict[res];
+			papobj.GetComponent<Renderer>().material.color=UI.GUIDisplay.colorByResiduesDict[res];
 		else
-			papobj.renderer.material.color=new Color(0.7f,0.7f,0.7f,0.5f);
+			papobj.GetComponent<Renderer>().material.color=new Color(0.7f,0.7f,0.7f,0.5f);
 
 	}  //end of createPCObj
 
@@ -237,7 +237,7 @@ public class RingBlending
 		Vector3 point = new Vector3(atomsLocationlist [pos] [0],atomsLocationlist [pos] [1],atomsLocationlist [pos] [2]);
 		//		oxysphere.AddComponent<Animation>();
 		oxysphere.transform.position = point;
-		oxysphere.renderer.material.color = Color.red;
+		oxysphere.GetComponent<Renderer>().material.color = Color.red;
 		oxysphere.transform.localScale = new Vector3(1, 1, 1);
 		
 	}

@@ -191,7 +191,7 @@ public class SurfaceManager : MonoBehaviour {
 			Init();
 		
 		for(int i=0; i<surfaceObjs.Length; i++)
-			surfaceObjs[i].renderer.material.SetFloat("_Brightness", brightness);
+			surfaceObjs[i].GetComponent<Renderer>().material.SetFloat("_Brightness", brightness);
 		
 		resetBrightness = false;
 	}
@@ -201,7 +201,7 @@ public class SurfaceManager : MonoBehaviour {
 			Init ();
 		
 		for(int i=0; i<surfaceObjs.Length; i++)
-			surfaceObjs[i].renderer.material.SetFloat("_ColorWeight", colorWeight);
+			surfaceObjs[i].GetComponent<Renderer>().material.SetFloat("_ColorWeight", colorWeight);
 		
 		resetColorWeight = false;
 	}

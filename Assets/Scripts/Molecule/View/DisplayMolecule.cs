@@ -205,7 +205,7 @@ namespace Molecule.View {
 				GameObject npmObject = GameObject.FindGameObjectWithTag("ShurikenParticleManager");
 				ShurikenParticleManager shManager = npmObject.GetComponent<ShurikenParticleManager>();
 				shManager.enabled = true;
-				shManager.pSystem.renderer.enabled = true;
+				shManager.pSystem.GetComponent<Renderer>().enabled = true;
 
 				Debug.Log("ToParticle()" );
 			}
@@ -215,7 +215,7 @@ namespace Molecule.View {
 			if(previousType != UIData.AtomType.noatom && UIData.atomtype != previousType) {
 				GameObject shObject = GameObject.FindGameObjectWithTag("ShurikenParticleManager");
 				ShurikenParticleManager shManager = shObject.GetComponent<ShurikenParticleManager>();
-				shManager.pSystem.renderer.enabled = false;
+				shManager.pSystem.GetComponent<Renderer>().enabled = false;
 				shManager.enabled = false;
 				
 				UIData.atomtype = previousType;
@@ -690,8 +690,8 @@ namespace Molecule.View {
 					foreach(GameObject box in MoleculeModel.atomsByChar[key]) {
 						if(box&&box.GetComponent <Rigidbody>()==null) {
 							box.AddComponent<Rigidbody>();
-	    	   				box.rigidbody.useGravity = false;
-	    	   				box.rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+	    	   				box.GetComponent<Rigidbody>().useGravity = false;
+	    	   				box.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
 	    	   				box.GetComponent<Rigidbody>().drag = 0.6f;
 						}
 						if(box&&box.GetComponent <SpringJoint>()==null) {

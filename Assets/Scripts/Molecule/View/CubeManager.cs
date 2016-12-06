@@ -39,7 +39,7 @@ public class CubeManager : GenericManager {
 		if(UIData.atomtype == UIData.AtomType.cube){
 //		cubes = GameObject.FindObjectsOfType(typeof(BallUpdateCube)) as BallUpdateCube[];
 		foreach(BallUpdateCube bc in cubes)
-			bc.renderer.material.SetColor("_Color", Molecule.Model.MoleculeModel.atomsColorList[(int)bc.number]);
+			bc.GetComponent<Renderer>().material.SetColor("_Color", Molecule.Model.MoleculeModel.atomsColorList[(int)bc.number]);
 		
 		BallUpdate.resetColors = false;
 		BallUpdate.bondsReadyToBeReset = true;
@@ -349,7 +349,7 @@ public class CubeManager : GenericManager {
 	public Color GetColor(Vector3 pos){
 		foreach(BallUpdateCube cb in cubes)
 			if(cb.transform.position == pos)
-				return cb.renderer.material.GetColor("_Color");
+				return cb.GetComponent<Renderer>().material.GetColor("_Color");
 		return Color.white;
 	}
 	
@@ -369,9 +369,9 @@ public class CubeManager : GenericManager {
 	public override void DisableRenderers() {
 		cubes = GameObject.FindObjectsOfType(typeof(BallUpdateCube)) as BallUpdateCube[];
 		foreach(BallUpdateCube bc in cubes){
-			bc.renderer.enabled = false;
+			bc.GetComponent<Renderer>().enabled = false;
 			if(UIData.atomtype != UIData.AtomType.particleball) // Particles don't have their own collider so we must keep it
-				bc.collider.enabled = false; // Disable the collider at the same time to avoid ghost-clicking with atom selection
+				bc.GetComponent<Collider>().enabled = false; // Disable the collider at the same time to avoid ghost-clicking with atom selection
 		}
 		enabled = false;
 	}
@@ -379,8 +379,8 @@ public class CubeManager : GenericManager {
 	public override void EnableRenderers() {
 		cubes = GameObject.FindObjectsOfType(typeof(BallUpdateCube)) as BallUpdateCube[];
 		foreach(BallUpdateCube bc in cubes){
-			bc.renderer.enabled = true;
-			bc.collider.enabled = true;
+			bc.GetComponent<Renderer>().enabled = true;
+			bc.GetComponent<Collider>().enabled = true;
 		}
 		enabled = true;
 	}

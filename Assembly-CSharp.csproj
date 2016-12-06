@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <RootNamespace></RootNamespace>
+    <ProjectGuid>{4BD0FAAE-9251-AF4F-06DE-AE18F606EBD5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <AssemblyName>Assembly-CSharp</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <BaseDirectory>Assets</BaseDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Temp\bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;UNITY_5_3_OR_NEWER;UNITY_5_4_OR_NEWER;UNITY_5_4_0;UNITY_5_4;UNITY_5;UNITY_64;ENABLE_NEW_BUGREPORTER;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_EDITOR_RETINA;ENABLE_RETINA_GUISTYLES;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SPRITERENDERER_FLIPPING;ENABLE_SPRITES;ENABLE_SPRITE_POLYGON;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_COLLAB;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_EDITOR_METRICS_CACHING;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;INCLUDE_PUBNUB;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;ENABLE_EDITOR_TESTS_RUNNER;UNITY_STANDALONE_OSX;UNITY_STANDALONE;ENABLE_SUBSTANCE;ENABLE_GAMECENTER;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_UNITYWEBREQUEST;ENABLE_CLUSTERINPUT;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;DEVELOPMENT_BUILD;ENABLE_PROFILER;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_OSX;UNITY_TEAM_LICENSE;CROSS_PLATFORM_INPUT</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0169</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Temp\bin\Release\</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0169</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.XML" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="UnityEngine">
+      <HintPath>/Applications/Unity/Unity.app/Contents/Managed/UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor">
+      <HintPath>/Applications/Unity/Unity.app/Contents/Managed/UnityEditor.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+     <Compile Include="Assets\GoogleVR\DemoScenes\ControllerDemo\ControllerDebugInfo.cs" />
+     <Compile Include="Assets\GoogleVR\DemoScenes\ControllerDemo\ControllerDemoManager.cs" />
+     <Compile Include="Assets\GoogleVR\DemoScenes\HeadsetDemo\Teleport.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\GvrHead.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\GvrCameraUtils.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\GvrEye.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\GvrPostRender.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\GvrPreRender.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\GvrProfile.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\StereoController.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\StereoRenderEffect.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\VRDevices\AndroidDevice.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\VRDevices\BaseAndroidDevice.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\VRDevices\BaseVRDevice.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\VRDevices\EditorDevice.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\VRDevices\GvrDevice.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\VRDevices\UnityVRDevice.cs" />
+     <Compile Include="Assets\GoogleVR\Legacy\Scripts\Internal\VRDevices\iOSDevice.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Audio\GvrAudio.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Audio\GvrAudioListener.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Audio\GvrAudioRoom.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Audio\GvrAudioSoundfield.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Audio\GvrAudioSource.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\GvrController.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\ControllerProviderFactory.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\ControllerProviders\AndroidNativeControllerProvider.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\ControllerProviders\DummyControllerProvider.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\ControllerProviders\EmulatorControllerProvider.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\ControllerState.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\Emulator\EmulatorClientSocket.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\Emulator\EmulatorConfig.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\Emulator\EmulatorDataTypes.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\Emulator\EmulatorManager.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\Emulator\PhoneEvent.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Controller\Internal\IControllerProvider.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\GazeInputModule.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\GvrSettings.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\GvrViewer.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Pose3D.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\UI\GvrGaze.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\UI\GvrReticle.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\UI\IGvrGazePointer.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\UI\IGvrGazeResponder.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Utilities\GvrFPS.cs" />
+     <Compile Include="Assets\GoogleVR\Scripts\Utilities\GvrIntent.cs" />
+     <Compile Include="Assets\Marcs_Assets\Image Based\DreamEffect.cs" />
+     <Compile Include="Assets\Marcs_Assets\Image Based\ImageEffectBase.cs" />
+     <Compile Include="Assets\Marcs_Assets\Image Based\ImageEffectBase2.cs" />
+     <Compile Include="Assets\Marcs_Assets\Image Based\ImageEffects.cs" />
+     <Compile Include="Assets\Marcs_Assets\Image Based\ImageEffects2.cs" />
+     <Compile Include="Assets\Marcs_Assets\Water\Sources\Water.cs" />
+     <Compile Include="Assets\Plotter\PlotManager.cs" />
+     <Compile Include="Assets\Plotter\Test\TestPlotter.cs" />
+     <Compile Include="Assets\Scripts\AFMLikeExp.cs" />
+     <Compile Include="Assets\Scripts\CameraControlScript.cs" />
+     <Compile Include="Assets\Scripts\ColorPicker.cs" />
+     <Compile Include="Assets\Scripts\Config\CommandID.cs" />
+     <Compile Include="Assets\Scripts\Config\FunctionConfig.cs" />
+     <Compile Include="Assets\Scripts\Convert\TypeConvert.cs" />
+     <Compile Include="Assets\Scripts\CustomProfiler.cs" />
+     <Compile Include="Assets\Scripts\DisplayControl\DMatrix.cs" />
+     <Compile Include="Assets\Scripts\GuidedNavigation\FortuneVoronoi\AssemblyInfo.cs" />
+     <Compile Include="Assets\Scripts\GuidedNavigation\FortuneVoronoi\FortuneVoronoi.cs" />
+     <Compile Include="Assets\Scripts\GuidedNavigation\FortuneVoronoi\HashSet.cs" />
+     <Compile Include="Assets\Scripts\GuidedNavigation\FortuneVoronoi\PriorityQueue.cs" />
+     <Compile Include="Assets\Scripts\GuidedNavigation\FortuneVoronoi\ToolBox.cs" />
+     <Compile Include="Assets\Scripts\GuidedNavigation\FortuneVoronoi\Vector.cs" />
+     <Compile Include="Assets\Scripts\GuidedNavigation\OptimalView.cs" />
+     <Compile Include="Assets\Scripts\GuidedNavigation\Reorient.cs" />
+     <Compile Include="Assets\Scripts\ListExtensions.cs" />
+     <Compile Include="Assets\Scripts\MDDriver.cs" />
+     <Compile Include="Assets\Scripts\MaxCamrot.cs" />
+     <Compile Include="Assets\Scripts\Molecule\Control\ControlMolecule.cs" />
+     <Compile Include="Assets\Scripts\Molecule\Model\AtomModel.cs" />
+     <Compile Include="Assets\Scripts\Molecule\Model\BondModel.cs" />
+     <Compile Include="Assets\Scripts\Molecule\Model\MoleculeModel.cs" />
+     <Compile Include="Assets\Scripts\Molecule\Model\ParameterModel.cs" />
+     <Compile Include="Assets\Scripts\Molecule\RingBlending\GraphGenerator.cs" />
+     <Compile Include="Assets\Scripts\Molecule\RingBlending\GraphVertex.cs" />
+     <Compile Include="Assets\Scripts\Molecule\RingBlending\RingBlending.cs" />
+     <Compile Include="Assets\Scripts\Molecule\SecondaryStructures\BSpline.cs" />
+     <Compile Include="Assets\Scripts\Molecule\SecondaryStructures\PostProcessing.cs" />
+     <Compile Include="Assets\Scripts\Molecule\SecondaryStructures\Ribbons.cs" />
+     <Compile Include="Assets\Scripts\Molecule\SugarRibbons\SugarRibbons.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\AmbientOcclusion.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\Billboard\CameraFacingBillboard.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\Billboard\Clip4Billboard.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\Billboard\Clip4HyperStick.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\Billboard\Clip4RayCasting.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\CubeBondManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\CubeManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DepthCueing.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DirLightManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\AtomStyle\AtomCubeStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\AtomStyle\AtomSphereStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\AtomStyle\FieldLineStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\AtomStyle\IAtomStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\AtomStyle\StructComparer.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\BallUpdate\BallUpdate.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\BallUpdate\BallUpdateCube.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\BallUpdate\BallUpdateHB.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\BallUpdate\BallUpdateRC.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\BallUpdate\BallUpdateSphere.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\BallUpdate\EllipsoidUpdateHB.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\QuadAtoms.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\Sprite\LinkedSpriteManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\Sprite\PVSprite.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\Sprite\Sprite.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayAtom\Sprite\SpriteManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondStyle\BondCubeStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondStyle\BondLineStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondStyle\BondParticleStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondStyle\BondTubeStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondStyle\IBondStyle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondUpdate\BondCubeUpdate.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondUpdate\LineUpdate.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondUpdate\StickUpdate.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondUpdate\StickUpdateParticle.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\BondUpdate\TubeUpdate.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\TubeRenderer\TubeRenderer.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayBond\TubeRenderer\TubeVertex.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\DisplayMolecule.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\GenericManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\HBallManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\HStickManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\LineManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\Particle\FieldLineModel.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\Particle\ParticleEffect.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\Selections.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\ShurikenParticleManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule\View\SphereManager.cs" />
+     <Compile Include="Assets\Scripts\Molecule3D.cs" />
+     <Compile Include="Assets\Scripts\MouseCameraControl.cs" />
+     <Compile Include="Assets\Scripts\OBJ\src\FaceIndices.cs" />
+     <Compile Include="Assets\Scripts\OBJ\src\GeometryBuffer.cs" />
+     <Compile Include="Assets\Scripts\OBJ\src\OBJ.cs" />
+     <Compile Include="Assets\Scripts\ParseData\IParsePDB\IPdbModel.cs" />
+     <Compile Include="Assets\Scripts\ParseData\ParsePDB\Atom.cs" />
+     <Compile Include="Assets\Scripts\ParseData\ParsePDB\MiniJSON.cs" />
+     <Compile Include="Assets\Scripts\ParseData\ParsePDB\ReadDX.cs" />
+     <Compile Include="Assets\Scripts\ParseData\ParsePDB\ReadJson.cs" />
+     <Compile Include="Assets\Scripts\ParseData\ParsePDB\RequestPDB.cs" />
+     <Compile Include="Assets\Scripts\ParseData\ParsePDB\SocketPDB.cs" />
+     <Compile Include="Assets\Scripts\ParseData\ParsePDB\importSPIDER.cs" />
+     <Compile Include="Assets\Scripts\ParseData\vecFieldLoader.cs" />
+     <Compile Include="Assets\Scripts\PreloadFromPDB.cs" />
+     <Compile Include="Assets\Scripts\RNAView.cs" />
+     <Compile Include="Assets\Scripts\ScenePreload_1KX2.cs" />
+     <Compile Include="Assets\Scripts\ScenePreload_Fieldlines.cs" />
+     <Compile Include="Assets\Scripts\ScenePreload_Network.cs" />
+     <Compile Include="Assets\Scripts\ScenePreload_RNA.cs" />
+     <Compile Include="Assets\Scripts\SmoothMouseLook.cs" />
+     <Compile Include="Assets\Scripts\SocketConnect\UnitySocket\UnitySocket.cs" />
+     <Compile Include="Assets\Scripts\StructIt\InteractiveStructure.cs" />
+     <Compile Include="Assets\Scripts\TransparentFocus.cs" />
+     <Compile Include="Assets\Scripts\UI\AlphaChainSmoother.cs" />
+     <Compile Include="Assets\Scripts\UI\AtomAttribution.cs" />
+     <Compile Include="Assets\Scripts\UI\BFactorRep.cs" />
+     <Compile Include="Assets\Scripts\UI\GUIDisplay.cs" />
+     <Compile Include="Assets\Scripts\UI\GUIMoleculeController.cs" />
+     <Compile Include="Assets\Scripts\UI\InputURL.cs" />
+     <Compile Include="Assets\Scripts\UI\LoadTypeGUI.cs" />
+     <Compile Include="Assets\Scripts\UI\MainMenu.cs" />
+     <Compile Include="Assets\Scripts\UI\Rectangles.cs" />
+     <Compile Include="Assets\Scripts\UI\UIData.cs" />
+     <Compile Include="Assets\Scripts\UniWii\UniWiiCheck.cs" />
+     <Compile Include="Assets\Scripts\Utility\ClickAtom.cs" />
+     <Compile Include="Assets\Scripts\Utility\ColorObject.cs" />
+     <Compile Include="Assets\Scripts\Utility\DebugStreamer.cs" />
+     <Compile Include="Assets\Scripts\Utility\GUILayoutx.cs" />
+     <Compile Include="Assets\Scripts\Utility\GradientBackground.cs" />
+     <Compile Include="Assets\Scripts\Utility\ImprovedFileBrowser.cs" />
+     <Compile Include="Assets\Scripts\Utility\MeasureDistance.cs" />
+     <Compile Include="Assets\Scripts\Utility\MeshMerger.cs" />
+     <Compile Include="Assets\Scripts\Utility\Meshcombine.cs" />
+     <Compile Include="Assets\Scripts\Utility\MouseOverMDDriverMolecule.cs" />
+     <Compile Include="Assets\Scripts\Utility\MouseOverMolecule.cs" />
+     <Compile Include="Assets\Scripts\Utility\Popup.cs" />
+     <Compile Include="Assets\Scripts\Utility\ScreenShot.cs" />
+     <Compile Include="Assets\Scripts\Utility\SelectAtomFocus.cs" />
+     <Compile Include="Assets\Scripts\Utility\SplashScreen.cs" />
+     <Compile Include="Assets\Scripts\VARNA.cs" />
+     <Compile Include="Assets\Scripts\VARNABillboard.cs" />
+     <Compile Include="Assets\Scripts\VRPNAnalogController.cs" />
+     <Compile Include="Assets\Scripts\VRPNAtomSelector.cs" />
+     <Compile Include="Assets\Scripts\VRPNButtonController.cs" />
+     <Compile Include="Assets\Scripts\VRPNDevice.cs" />
+     <Compile Include="Assets\Scripts\VRPNForceFeedback.cs" />
+     <Compile Include="Assets\Scripts\VRPNManager.cs" />
+     <Compile Include="Assets\Scripts\VRPNPickerController.cs" />
+     <Compile Include="Assets\Scripts\VRPNRemote.cs" />
+     <Compile Include="Assets\Scripts\hermitespline\GenInterpolationArray.cs" />
+     <Compile Include="Assets\Scripts\hermitespline\GenInterpolationArray_BF.cs" />
+     <Compile Include="Assets\Scripts\hermitespline\GenInterpolationPoint.cs" />
+     <Compile Include="Assets\Scripts\hermitespline\GenInterpolationPoint_BF.cs" />
+     <Compile Include="Assets\Scripts\hermitespline\MathUtils.cs" />
+     <Compile Include="Assets\Scripts\maxCamera.cs" />
+     <Compile Include="Assets\Scripts\surface\AdjacencySets.cs" />
+     <Compile Include="Assets\Scripts\surface\AtomTree.cs" />
+     <Compile Include="Assets\Scripts\surface\CullTriangles.cs" />
+     <Compile Include="Assets\Scripts\surface\EdgeArray.cs" />
+     <Compile Include="Assets\Scripts\surface\EdgeGrid.cs" />
+     <Compile Include="Assets\Scripts\surface\GenerateMesh.cs" />
+     <Compile Include="Assets\Scripts\surface\HydrophobicScales.cs" />
+     <Compile Include="Assets\Scripts\surface\MarchingCubes.cs" />
+     <Compile Include="Assets\Scripts\surface\MarchingCubesRec.cs" />
+     <Compile Include="Assets\Scripts\surface\MarchingCubesTables.cs" />
+     <Compile Include="Assets\Scripts\surface\MarchingModel.cs" />
+     <Compile Include="Assets\Scripts\surface\MeshData.cs" />
+     <Compile Include="Assets\Scripts\surface\MeshUtils.cs" />
+     <Compile Include="Assets\Scripts\surface\PDBtoDEN.cs" />
+     <Compile Include="Assets\Scripts\surface\SmoothFilter.cs" />
+     <Compile Include="Assets\Scripts\surface\Splitting.cs" />
+     <Compile Include="Assets\Scripts\surface\SurfaceManager.cs" />
+     <Compile Include="Assets\Scripts\surface\VertexTree.cs" />
+     <Compile Include="Assets\Scripts\surface\Volumetric.cs" />
+     <Compile Include="Assets\Scripts\surface\VolumetricDensity.cs" />
+     <Compile Include="Assets\Scripts\surface\VolumetricDepth.cs" />
+     <Compile Include="Assets\Scripts\surface\VolumetricFields.cs" />
+     <Compile Include="Assets\Scripts\surface\Welding.cs" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\BlendOneOne.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\NoiseEffectShaderRGB.shader" />
+     <None Include="Assets\Resources\Shader\new\Ball_HyperBalls_D3D.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_DepthOfField\SeparableWeightedBlurDof34.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ShowAlphaChannel.shader" />
+     <None Include="Assets\GoogleVR\Distortion\GvrDistortion.cginc" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\GlowConeTap.shader" />
+     <None Include="Assets\Resources\Shader\new\FieldLine.shader" />
+     <None Include="Assets\Resources\Shader\FVNano_SingleCubeSphere.shader" />
+     <None Include="Assets\Resources\Shader\LineShader.shader" />
+     <None Include="Assets\Marcs_Assets\Image Based\DreamEffectBlackChannel.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\SunShaftsComposite.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ColorCorrectionCurves.shader" />
+     <None Include="Assets\Resources\Shader\new\BallImproved.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_Antialiasing\NFAA.shader" />
+     <None Include="Assets\Resources\Shader\OIT_red.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\VignetteShader.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_DepthOfField\DepthOfFieldScatter.shader" />
+     <None Include="Assets\Resources\Shader\Maskedtexture.shader" />
+     <None Include="Assets\GoogleVR\Legacy\Resources\UnlitTexture.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\MotionBlur.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\GlowCompose.shader" />
+     <None Include="Assets\Marcs_Assets\Glass Refraction\Glass-Stained-BumpSpecDistort.shader" />
+     <None Include="Assets\Standard Assets\Particles\Sources\Shaders\Particle Alpha Blend (Queue +100).shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\Contrast Stretch\MinMaxReduction.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_Antialiasing\SSAA.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\RadialBlur.shader" />
+     <None Include="Assets\Resources\Shader\new\FieldLineCg.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_DepthOfField\DepthOfFieldDX11.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ContrastComposite.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_Antialiasing\FXAAPreset3.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\FisheyeShader.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\Contrast Stretch\Apply.shader" />
+     <None Include="Assets\Resources\Shader\Ribbons.shader" />
+     <None Include="Assets\Resources\Shader\new\Stick_HyperBalls_D3D.shader" />
+     <None Include="Assets\Standard Assets\Skyboxes\_skybox info.txt" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\frag_ao.cginc" />
+     <None Include="Assets\Resources\Shader\ParticleAlphaBlendadvanced.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_DepthOfField\DepthOfField34.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_DepthOfField\TiltShift.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\SSAOShader.shader" />
+     <None Include="Assets\Resources\Shader\new\CubeBonds_TwoColors.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ConvertDepth.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ColorCorrectionCurvesSimple.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\NoiseEffectShaderYUV.shader" />
+     <None Include="Assets\Resources\Shader\TransparentZsorted.shader" />
+     <None Include="Assets\Resources\Shader\new\VertexColor.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\GlowEffectDownsample.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\CreaseApply.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ChromaticAberrationShader.shader" />
+     <None Include="Assets\Standard Assets\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />
+     <None Include="Assets\Resources\Shader\Mobile-Particle-Alpha.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\GlobalFog.shader" />
+     <None Include="Assets\Resources\Shader\Maskedtexturenoc.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\Contrast Stretch\Luminance.shader" />
+     <None Include="Assets\Plugins\Android\AndroidManifest.xml" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ColorCorrectionSelective.shader" />
+     <None Include="Assets\Marcs_Assets\Glass Refraction\Glass-Stained-BumpDistort.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_DepthOfField\Bokeh34.shader" />
+     <None Include="Assets\Resources\ColorPanel.txt" />
+     <None Include="Assets\Resources\Shader\testlinespider.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\CameraMotionBlurDX11.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\SeparableBlurPlus.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\MultiPassHollywoodFlares.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\BlurEffectConeTaps.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\CameraMotionBlur.shader" />
+     <None Include="Assets\Resources\TexturesMenu.txt" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_Antialiasing\DLAA.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\NoiseAndGrainDX11.shader" />
+     <None Include="Assets\Resources\HowToColorPanel.txt" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\BrightPassFilter2.shader" />
+     <None Include="Assets\Resources\TexturesMenuOldVersion.txt" />
+     <None Include="Assets\Resources\Shader\Billboard.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_DepthOfField\SeparableBlur.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\MotionBlurClear.shader" />
+     <None Include="Assets\Resources\Shader\new\Normal-BumpSpec.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ColorCorrectionEffect.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\GrayscaleEffect.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\SepiaToneEffect.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\TwirlEffect.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\VortexEffect.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\Contrast Stretch\Adaptation.shader" />
+     <None Include="Assets\Plugins\Android\AndroidManifest-Daydream.xml" />
+     <None Include="Assets\Resources\Shader\new\MatCap.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\NoiseAndGrain.shader" />
+     <None Include="Assets\Resources\Shader\new\BallImprovedZ.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\VignettingShader.shader" />
+     <None Include="Assets\Standard Assets\Characters\ThirdPersonCharacter\ThirdPersonCharacterGuidelines.txt" />
+     <None Include="Assets\GoogleVR\Resources\UI\GvrReticleShader.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\Tonemapper.shader" />
+     <None Include="Assets\Resources\Shader\Particleball.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\BrightPassFilter.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_Antialiasing\FXAA2.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\ColorCorrection3DLut.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\LensFlareCreate.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\EdgeDetectNormals.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\PrepareSunShaftsBlur.shader" />
+     <None Include="Assets\Standard Assets\Characters\FirstPersonCharacter\FirstPersonCharacterGuidelines.txt" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\Blend.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\BlendModesOverlay.shader" />
+     <None Include="Assets\Marcs_Assets\Water\Sources\FX-Water.shader" />
+     <None Include="Assets\Plugins\Android\AndroidManifest-Cardboard.xml" />
+     <None Include="Assets\Standard Assets\Characters\RollerBall\RollerBallGuidelines.txt" />
+     <None Include="Assets\GoogleVR\Legacy\Resources\SolidColor.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\SimpleClear.shader" />
+     <None Include="Assets\Resources\Shader\new\SurfaceMATCAP.shader" />
+     <None Include="Assets\Resources\Shader\new\StickImproved2.shader" />
+     <None Include="Assets\Resources\Shader\new\StickImproved.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_Antialiasing\FXAA3Console.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\EdgeDetectX.shader" />
+     <None Include="Assets\Resources\Shader\OIT_blue.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_Antialiasing\FXAAPreset2.shader" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\BlurAndFlares.shader" />
+     <None Include="Assets\Resources\1KX2.txt" />
+     <None Include="Assets\Standard Assets\Image Effects (Pro Only)\_Sources\Shaders\_BloomAndFlares\BlendForBloom.shader" />
+ <Reference Include="Assembly-UnityScript-firstpass">
+ <HintPath>/Users/jcarcamo/git/UnityMol-Releases/Library/ScriptAssemblies/Assembly-UnityScript-firstpass.dll</HintPath>
+ </Reference>
+ <Reference Include="UnityEngine.UI">
+ <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
+ </Reference>
+ <Reference Include="UnityEngine.Networking">
+ <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/Networking/UnityEngine.Networking.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.ProtocolBuffers">
+ <HintPath>/Users/jcarcamo/git/UnityMol-Releases/Assets/Plugins/Google.ProtocolBuffers.dll</HintPath>
+ </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
+      <Project>{85DB08D0-E503-2CAA-F099-37FA52585F60}</Project>      <Name>Assembly-CSharp-firstpass</Name>    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  
+</Project>
