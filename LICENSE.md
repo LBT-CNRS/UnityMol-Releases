@@ -1,7 +1,7 @@
-# UnityMol is dual-licensed under the LGPL-3.0 (see under) however, all 
-# external assets used in UnityMol are under a permissive
-# open-source license: MIT/Apache-2.0/BSD-3.0. For commercial use, UnityMol
-# can be licensed under a custom license. Please contact unitymol@gmail.com
+#### UnityMol is dual-licensed under the LGPL-3.0 (see under) however, all 
+#### external assets used in UnityMol are under a permissive
+#### open-source license: MIT/Apache-2.0/BSD-3.0. For commercial use, UnityMol
+#### can be licensed under a custom license. Please contact unitymol@gmail.com
 
 ----------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ APACHE 2.0 Licensed assets:
 
 ----------------------------------------------------------------------------
 
-BSD 3.0 Licensed asset:
+BSD 3.0 Licensed assets:
 
 - 3rdParty/Unity_ColorWheel: Copyright (c) 2015, Felix Kate
 - CEAlign: https://pymolwiki.org/index.php/Cealign_plugin#License
@@ -41,7 +41,7 @@ The UnityMol logo was created by Xavier Martinez and is
 Copyright (c) 2019 Xavier Martinez
 
 ----------------------------------------------------------------------------
-
+```
                    GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -207,3 +207,4 @@ whether future versions of the GNU Lesser General Public License shall
 apply, that proxy's public statement of acceptance of any version is
 permanent authorization for you to choose that version for the
 Library.
+```
