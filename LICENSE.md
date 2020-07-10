@@ -1,16 +1,42 @@
-#### UnityMol is dual-licensed under the LGPL-3.0 (see under) however, all 
-#### external assets used in UnityMol are under a permissive
-#### open-source license: MIT/Apache-2.0/BSD-3.0. For commercial use, UnityMol
-#### can be licensed under a custom license. Please contact unitymol@gmail.com
-
+### UnityMol open-source version is licensed under the LGPL-3.0 (see under)
 ----------------------------------------------------------------------------
 
-FFMPEG is licensed under the LGPL 2.1 and some parts under the GPL 2.0
+#### Dual-license
+
+You can use this open-source edition of UnityMol to create open-source
+softwares, under the GNU LGPL-3.0 license or a similarly recognized
+open-source license.
+
+It is also possible to develop commercial software using UnityMol but
+to do so you must buy a commercial license for UnityMol Commercial version.
+If you buy a commercial version of UnityMol you can sell your software
+for any price you like.
+
+If you use UnityMol open-source version, there are certain licensing
+conditions that the LGPL imposes on you, to ensure that your users enjoy
+the freedoms guaranteed by the LGPL. Users are entitle to:
+
+- Run your software for any purpose.
+- Obtain and study your software's source code, and adapt it to their needs.
+- Redistribute your software and its source code to others (under the same terms).
+- Improve or modify your software, and release these changes to the public (hopefully via the github repository)
+
+These freedoms apply to all the source code for all the modules your
+software is based on, regardless of whether they have been written
+by you or by others.
+
+
+----------------------------------------------------------------------------
+### UnityMol code uses external assets with various permissive licenses:
+
+#### FFMPEG
+
+FFMPEG is licensed under the LGPL 2.1 and some parts under the GPL 2.0.
 Please check https://www.ffmpeg.org/legal.html
 
 ----------------------------------------------------------------------------
 
-MIT Licensed assets:
+#### MIT Licensed assets:
 
 - 3rdParty/KNN: Copyright (c) 2019 Arthur Brussee
 - 3rdParty/OutlineFX: Copyright (c) 2018 Michael Curtiss
@@ -19,28 +45,37 @@ MIT Licensed assets:
 - 3rdParty/UnityPopUpSystem: Copyright (c) 2018 Xavier Martinez
 - 3rdParty/PythonIntegration: Copyright (c) 2017 AlexLemminG
 - 3rdParty/UnityWindowFileDrag-Drop: Copyright (c) 2018 Markus Göbel (Bunny83)
+- 3rdParty/PCX: Copyright (c) 2017 Keijiro Takahashi
+- 3rdParty/SimpleFileBrowser: Copyright (c) 2016 Süleyman Yasir KULA
+- 3rdParty/SMAA: Copyright (c) 2015 Thomas Hourdel
+- 3rdParty/Unity_ColorWheel: Copyright (c) 2015, Felix Kate
+- 3rdParty/StandaloneFileBrowser: Copyright (c) 2017 Gökhan Gökçe
+- 3rdParty/VRTK: Copyright (c) 2016 TheStonefox
 - Assets/Scripts/Utilities/MiniJSON: Copyright (c) 2013 Calvin Rien
 
 ----------------------------------------------------------------------------
 
-APACHE 2.0 Licensed assets:
+#### APACHE 2.0 Licensed assets:
 
 - 3rdParty/Material-UI: Copyright 2014 Invex Games http://invexgames.com
 - 3rdParty/PythonIntegration/IronPython
 
 ----------------------------------------------------------------------------
 
-BSD 3.0 Licensed assets:
+####  BSD 3.0 Licensed assets:
 
 - 3rdParty/Unity_ColorWheel: Copyright (c) 2015, Felix Kate
 - CEAlign: https://pymolwiki.org/index.php/Cealign_plugin#License
 
 ----------------------------------------------------------------------------
+#### UnityMol logo <img src="Assets/Resources/Logo/LogoUnityMol1.0_outline.png" width="50">
 
 The UnityMol logo was created by Xavier Martinez and is
-Copyright (c) 2019 Xavier Martinez
+Copyright (c) 2018 Xavier Martinez
 
 ----------------------------------------------------------------------------
+#### LGPL-3.0 License terms
+
 ```
                    GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
