@@ -15,9 +15,11 @@ Working on Unity 2019.4.x LTS, tested on Windows/Mac/Linux.
 
 ## License
 
-<b>UnityMol is dual-licensed under the LGPL-3.0 (see under) however, all external assets used in UnityMol are under a permissive open-source license: MIT/Apache-2.0/BSD-3.0</b>
+<b> This is UnityMol open-source version licensed under the LGPL-3.0 (see under) </b>
 
-<b>For commercial use, UnityMol can be licensed under a custom license. Please contact unitymol@gmail.com</b>
+<b> For commercial use, UnityMol proposes a commercial license that be negociated by contacting us at unitymol@gmail.com</b>
+
+<b> For more details please read [LICENCE file](LICENSE.md).
 
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
