@@ -17,7 +17,7 @@ Working on Unity 2019.4.x LTS, tested on Windows/Mac/Linux.
 
 <b> This is UnityMol open-source version licensed under the LGPL-3.0 (see under) </b>
 
-<b> For commercial use, UnityMol proposes a commercial license that be negociated by contacting us at unitymol@gmail.com</b>
+<b> For commercial use, UnityMol proposes a commercial license that can be negociated by contacting us at unitymol@gmail.com</b>
 
 <b> For more details please read [LICENCE file](LICENSE.md).
 
