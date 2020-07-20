@@ -65,10 +65,10 @@ using UMol.API;
 public class loadMolecule : MonoBehaviour {
 	void Start() {
 		UnityMolStructure s = APIPython.fetch("1KX2");//This fetches the file from the PDB
-		UnityMolStructure s2 = APIPython.fetch("PDBs/3eam.cif");//This loads a local file
+		UnityMolStructure s2 = APIPython.load("PDBs/3eam.cif");//This loads a local file
 
 		UnityMolSelection sel = APIPython.select("3eam and resid 1:10 and chain A", "chainA");//Create a selection
-		APIPython.showSelection("chainA", "hyperball");//Show the selection as hyperball
+		APIPython.showSelection("chainA", "hb");//Show the selection as hyperball
 
 		APIPython.delete(s.name);//Remove a loaded molecule
 
@@ -76,6 +76,16 @@ public class loadMolecule : MonoBehaviour {
 	}
 }
 ```
+Same commands from the python console or a script:
+
+```python
+s = fetch("1KX2")
+s2 = load("PDBs/3eam.cif")
+sel = select("3eam and resid 1:10 and chain A", "chainA")
+showSelection("chainA", "hb")
+delete(s.name)
+```
+
 - When loading molecules the "LoadedMolecules" object will be created if it doesn't exist and all selections of the molecules will be created under it. The global scale is set by changing this LoadedMolecules object.
 - In desktop mode, the camera does not move, the mocules are moving !
 - For VR: There are a lot of scripts for VR molecular interactions, check "[VRTK_Scripts]" child objects in the VR scene. Grabbing molecules is based on a custom raycasting implementation (CustomRaycast). The VR camera is different for each HMD type, check "[VRTK_SDKManager]" object based on the VRTK framework.
