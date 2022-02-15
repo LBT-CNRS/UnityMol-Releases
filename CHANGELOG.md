@@ -1,9 +1,21 @@
 # UnityMol Changelog
 
+## [1.0.36]
+
+- Bond order representation (WIP)
+- Parse XML bonds for covalent and non-covalent bonds (WIP)
+- Fast implementation of "within" selection
+- CEAlign
+- Fix bounding boxes for hyperball during trajectory
+- Export SS info to PDB
+- Save/Restore representation parameters (WIP)
+- Fix IMD force clear
+- Drag and Drop now supports different file types
+- Bug fixes
+
 ## [1.0.34] - 2019-10-14
 
 - Separated threads to compute molecular surfaces at load time
-- Ultra-fast cartoon representation
 - Ambient Occlusion for hyperballs in Van der Waals representation
 - Add a new representation "Sheherasade"
 - Parse mmCIF connectivity

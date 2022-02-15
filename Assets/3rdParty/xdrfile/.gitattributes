@@ -1,0 +1,5 @@
+linux32/libxdrfile.so filter=lfs diff=lfs merge=lfs -text
+linux64/libxdrfile.so filter=lfs diff=lfs merge=lfs -text
+osx/libxdrfile.bundle filter=lfs diff=lfs merge=lfs -text
+windows32/xdrfile.dll filter=lfs diff=lfs merge=lfs -text
+windows64/xdrfile.dll filter=lfs diff=lfs merge=lfs -text

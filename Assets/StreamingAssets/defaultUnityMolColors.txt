@@ -1,0 +1,225 @@
+H #ffffff 1.2
+2H #ffffc0 1.2
+3H #ffffa0 1.2
+
+He #ffc0cb 1.4
+
+Li #b22222 1.82
+LI+ #b22222 1.82
+LIT #b22222 1.82
+QL #b22222 1.82
+
+Be #ff1493 2.0
+B #00ff00 2.0
+
+C #48997f 1.7
+13C #505050 1.7
+14C #404040 1.7
+BC #404040 1.7
+
+N #71a9e1 1.55
+15N #105050 1.55
+
+O #d24b55 1.52
+F #daa520 1.47
+Ne #ff1493 1.54
+
+Na #0000ff 1.36
+NA+ #0000ff 1.36
+SOD #0000ff 1.36
+QN #0000ff 1.36
+
+Mg #228b22 1.18
+MG2+ #228b22 1.18
+
+Al #808090 2.0
+Si #daa520 2.10
+P #ffa500 1.80
+S #ffc832 1.80
+
+Cl #00ff00 2.27
+CLA #00ff00 2.27
+CLAL #00ff00 2.27
+CL- #00ff00 2.27
+
+Ar #ff1493 1.88
+
+K #ff1493 1.76
+POT #ff1493 1.76
+K+ #ff1493 1.76
+QK #ff1493 1.76
+
+Ca #808090 1.37
+CAL #808090 1.37
+C0 #808090 1.37
+CA2+ #808090 1.37
+
+Sc #ff1493 2.0
+Ti #808090 2.00
+V #ff1493 2.00
+Cr #808090 2.00
+Mn #808090 2.00
+Fe #ffa500 2.00
+Fe2 #ffa500 2.00
+Co #ff1493 2.00
+Ni #a52a2a 1.63
+Cu #a52a2a 1.40
+Zn #a52a2a 1.39
+Ga #ff1493 1.07
+Ge #ff1493 2.0
+As #ff1493 1.85
+Se #ff1493 1.90
+Br #a52a2a 1.85
+Kr #ff1493 2.02
+Rb #ff1493 2.0
+QR #ff1493 2.0
+Sr #ff1493 2.0
+Y #ff1493 2.00
+Zr #ff1493 2.00
+Nb #ff1493 2.00
+Mo #ff1493 2.00
+Tc #ff1493 2.00
+Ru #ff1493 2.00
+Rh #ff1493 2.00
+Pd #ff1493 1.63
+Ag #808090 1.72
+Cd #ff1493 1.58
+In #ff1493 1.93
+Sn #ff1493 2.17
+Sb #ff1493 2.0
+Te #ff1493 2.06
+
+I #a020f0 1.98
+IOD #a020f0 1.98
+
+Xe #ff1493 2.16
+
+Cs #ff1493 2.1
+CS+ #ff1493 2.1
+CES #ff1493 2.1
+
+Ba #ffa500 2.0
+La #ff1493 2.00
+Ce #ff1493 2.00
+QC #ff1493 2.00
+Pr #ff1493 2.00
+Nd #ff1493 2.00
+Pm #ff1493 2.00
+Sm #ff1493 2.00
+Eu #ff1493 2.00
+Gd #ff1493 2.00
+Tb #ff1493 2.00
+Dy #ff1493 2.00
+Ho #ff1493 2.00
+Er #ff1493 2.00
+Tm #ff1493 2.00
+Yb #ff1493 2.00
+Lu #ff1493 2.00
+Hf #ff1493 2.00
+Ta #ff1493 2.00
+W #ff1493 2.00
+Re #ff1493 2.00
+Os #ff1493 2.00
+Ir #ff1493 2.00
+Pt #ff1493 1.72
+Au #daa520 1.66
+Hg #ff1493 1.55
+Tl #ff1493 1.96
+Pb #ff1493 2.02
+Bi #ff1493 2.0
+Po #ff1493 2.0
+At #ff1493 2.0
+Rn #ff1493 2.0
+Fr #ff1493 2.0
+Ra #ff1493 2.0
+Ac #ff1493 2.00
+Th #ff1493 2.00
+Pa #ff1493 2.00
+U #ff1493 1.86
+Np #ff1493 2.00
+Pu #ff1493 2.00
+Am #ff1493 2.00
+Cm #ff1493 2.00
+Bk #ff1493 2.00
+Cf #ff1493 2.00
+Es #ff1493 2.00
+Fm #ff1493 2.00
+Md #ff1493 2.00
+No #ff1493 2.00
+Lr #ff1493 2.00
+Rf #ff1493 2.00
+Db #ff1493 2.00
+Sg #ff1493 2.00
+Bh #ff1493 2.00
+Hs #ff1493 2.00
+Mt #ff1493 2.00
+Ds #ff1493 2.00
+Rg #ff1493 2.00
+Cn #ff1493 2.00
+Nh #ff1493 2.00
+Fl #ff1493 2.00
+Mc #ff1493 2.00
+Lv #ff1493 2.00
+Ts #ff1493 2.00
+Og #ff1493 2.00
+
+#HiRERNA
+HiRERNA_P #ffa500 3.5
+HiRERNA_O5* #f00000 3.5
+HiRERNA_C5* #48997f 3.5
+HiRERNA_CA #48997f 3.5
+HiRERNA_CY #48997f 3.5
+HiRERNA_G1 #00ff00 3.5
+HiRERNA_G2 #00ff00 3.5
+HiRERNA_C1 #ffff00 3.5
+HiRERNA_A1 #ff0000 3.5
+HiRERNA_A2 #ff0000 3.5
+HiRERNA_U1 #ff00ff 3.5
+
+#OPEP
+ALA #c7c7c7 2.287
+ARG #135aff 3.411
+ASN #00dcdc 2.797
+ASP #e60909 2.707
+CYS #e6e600 2.426
+GLN #00dcdc 3.01
+GLU #e60909 2.968
+GLY #ebebeb 3.0
+HIS #8282d2 3.078
+ILE #0f820f 2.939
+LEU #0f820f 2.928
+LYS #135aff 3.143
+MET #e6e600 2.999
+PHE #3131aa 3.33
+PRO #dc9582 2.669
+SEC #135aff 3.0
+SER #f99500 2.334
+THR #f99500 2.675
+TRP #b45ab4 3.67
+TYR #3131aa 3.382
+VAL #0f820f 2.88
+
+OXT #d24b55 1.52 
+OT #d24b55 1.52 
+HN #ffffff 1.2
+NT #71a9e1 1.55
+CB #48997f 1.7
+CG #48997f 1.7
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
