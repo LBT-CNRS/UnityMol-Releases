@@ -648,10 +648,6 @@ setMouseMoveSpeed(val: float)
 stopRotations()
 ```
 
-```python
-### Turn docking mode on and off
-switchDockingMode()
-```
 
 ```python
 ### Transform a of: str representation type to a RepType object
