@@ -29,7 +29,6 @@ The language is not fully implemented, also some keywords have been added.
 
 - This version is a snapshot, the developpement continued, a lot of bug fixes, perf improvements, features were developed in the meantime.
 - Dev was done on Windows and Mac.
-- UnityMol uses VRTK 3.x that is limited to the SteamVR 1.2.3, you cannot install the latest version in the Unity project.
 - Some shaders do not work correctly on Metal so make sure you use OpenGL on mac
 - There is a bug on Unity for Mac (before 2020.2.0a12) that makes an empty Unity project consume a lot of CPU resources even when the focus is lost. This is not UnityMol code causing it.
 - Raycasting is done using a custom engine without using PhysX that caused a lot of slow downs for medium to large molecules.

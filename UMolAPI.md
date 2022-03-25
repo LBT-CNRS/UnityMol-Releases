@@ -1,3 +1,5 @@
+# List of commands available through the Python console
+
 ```python
 ### Load a local molecular file (pdb/mmcif/gro/mol2/sdf/xyz formats)
 load(filePath: str, readHetm: bool = True, forceDSSP: bool = False, showDefaultRep: bool = True, center: bool = True)
