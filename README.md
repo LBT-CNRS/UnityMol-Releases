@@ -32,7 +32,12 @@ Recent UnityMol versions can be found on [sourceforge](https://sourceforge.net/p
 
 UnityMol is based on the game engine [Unity](https://unity.com).
 
-This version is working on **Unity 2019.4.21f1 LTS**, tested on Windows/Mac/Linux.
+This version is working on **Unity 2019.4.21f1 LTS**, tested on Windows/Mac/Linux. Main developpement is done on Windows.
+
+### Known Bugs
+ - Some shaders do not work correctly on Metal so make sure you use OpenGL on Mac.
+ - There is a bug on Unity for Mac (before 2020.2.0a12) that makes an empty Unity project consume a lot of CPU resources even when the focus is lost. This is not UnityMol code causing it.
+ - Do not activate adaptive rendering for Oculus... Rendering bugs.
 
 
 ## How to use
@@ -40,6 +45,18 @@ This version is working on **Unity 2019.4.21f1 LTS**, tested on Windows/Mac/Linu
 - Clone the repo with **git lfs installed** and open the project using the 2019.4.21f1 version of Unity.
 - `MainUIScene.unity` is the main scene for desktop.
 - `MainScene_VR_Desktop.unity` is the Virtual Reality (VR) scene that has a switch to turn VR on/off.
+
+### APBS
+
+The integration of APBS tools was mainly done by Joseph Laurenti from Nathan Baker's group at PNNL.
+
+First, install PDB2PQR and APBS (https://sourceforge.net/projects/pdb2pqr/  &  https://sourceforge.net/projects/apbs/), for example with "C:/APBS_PDB2PQR/apbs/bin/apbs.exe" & "C:/APBS_PDB2PQR/pdb2pqr/pdb2pqr.exe".
+Set executable path by clicking the first button of the PDB2PQR menu, UnityMol will look in sub directories for apbs and pdb2pqr binaries.
+
+Note that some steps will load another molecular file and hide the previous one.
+
+APBS tools are not binded to APIPython functions so you cannot script APBS calls for now.
+
 
 ### Additional configuration for the VR scene
 
@@ -61,12 +78,25 @@ To add it to the scene:
 
 ## Ressources
 
- - The website of UnityMol is here: http://www.baaden.ibpc.fr/umol/
+ - The website of UnityMol is here: http://unitymol.sourceforge.net
  - a tutorial can be found here: https://nezix.github.io/
  - UnityMol provides a Python API to access functions from the console. The documentation is here: [UMolAPI](UMolAPI.md)
 
 
-## Development
+## Features
+
+### Python console
+
+This is implemented with IronPython, an interpreter for Python 2.7 in C#.
+You can use most of standard library python modules but not numpy of cython.
+
+
+### MDAnalysis selection language
+
+UnityMol implements an atom selection language,  based on the [MDAnalysis](https://www.mdanalysis.org/) one.
+Please refer to MDAnalysis documentation ([here](https://www.mdanalysis.org/docs/documentation_pages/selections.html)) for a detailed explanation about the language and some examples.
+
+The language is not fully implemented, also some keywords have been added.
 
 ### Scripting
 
@@ -104,10 +134,12 @@ delete(s.name)
 
 ### Notes
 
+- This version is a snapshot, UnityMol is still in continuous development.
 - When loading molecules the `LoadedMolecules` object will be created if it doesn't exist and all selections of the molecules will be created under it. The global scale is set by changing this `LoadedMolecules` object.
 - In desktop mode, the camera does not move, the mocules are moving!
 - For VR: There are a lot of scripts for VR molecular interactions, check `[VRTK_Scripts]` child objects in the VR scene. Grabbing molecules is based on a custom raycasting implementation (`CustomRaycast`). The VR camera is different for each HMD type, check `[VRTK_SDKManager]` object based on the VRTK framework.
 - Anti-aliasing is done using SMAA script because hyperball shaders do not support it. You can disable MSAA.
+- Raycasting is done using a custom engine without using PhysX that caused a lot of slow downs for medium to large molecules.
 
 ## License
 
