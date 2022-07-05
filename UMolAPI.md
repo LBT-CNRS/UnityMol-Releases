@@ -1,878 +1,742 @@
-# UnityMol 1.0.36 Public version API
--------------------------------------
+# List of commands available through the Python console
 
 ```python
-# Allow to call python API commands and record them in the history from C#
-
-ExecuteCommand(string command) 
+### Load a local molecular file (pdb/mmcif/gro/mol2/sdf/xyz formats)
+load(filePath: str, readHetm: bool = True, forceDSSP: bool = False, showDefaultRep: bool = True, center: bool = True)
 ```
-```python
-# Load a local molecular file (pdb/mmcif/gro/mol2/sdf/xyz formats)
 
-UnityMolStructure load(string filePath, bool readHetm = True, bool forceDSSP = False, bool showDefaultRep = True, bool center = True, bool modelsAsTraj = True) 
-```
 ```python
-# Load a molecular file (pdb/mmcif/gro/mol2/sdf/xyz formats) from a string
-
-UnityMolStructure loadFromString(string fileName, string fileContent, bool readHetm = True, bool forceDSSP = False, bool showDefaultRep = True, bool center = True, bool modelsAsTraj = True) 
+### Load a molecular file (pdb/mmcif/gro/mol2/sdf/xyz formats) from a string
+loadFromString(fileName: str, fileContent: str, readHetm: bool = True, forceDSSP: bool = False, showDefaultRep: bool = True, center: bool = True)
 ```
-```python
-# Fetch a remote molecular file (pdb or mmcif zipped)
 
-UnityMolStructure fetch(string PDBId, bool usemmCIF = True, bool readHetm = True, bool forceDSSP = False, bool showDefaultRep = True, bool center = True, bool modelsAsTraj = True) 
-```
 ```python
-# Load a XML file containing covalent and noncovalent bonds
-# modelId = -1 means currentModel
-
-loadBondsXML(string structureName, string filePath, int modelId = -1) 
+### Fetch a remote molecular file (pdb or mmcif zipped)
+fetch(PDBId, usemmCIF: bool = True, readHetm: bool = True, forceDSSP: bool = False, showDefaultRep: bool = True, center = True)
 ```
-```python
 
-overrideBondsWithXML(string structureName,  int modelId = -1) 
-```
 ```python
-
-restoreBonds(string structureName,  int modelId = -1) 
+loadMartiniITP(structureName: str, filePath: str)
 ```
-```python
 
-unloadCustomBonds(string structureName, int modelId) 
-```
-```python
-# Delete all the loaded molecules
 
-reset() 
-```
 ```python
-# Switch between parsed secondary structure information and DSSP computation
-
-switchSSAssignmentMethod(string structureName, bool forceDSSP = False) 
+### Delete all the loaded molecules
+reset()
 ```
-```python
-# Show/Hide hydrogens in representations of the provided selection
-# This only works for lines, hyperball and sphere representations
 
-showHideHydrogensInSelection(string selName, bool? shouldShow = null) 
-```
 ```python
-# Show/Hide side chains in representations of the current selection
-# This only works for lines, hyperball and sphere representations only
-
-showHideSideChainsInSelection(string selName) 
+### Switch between parsed secondary structure information and DSSP computation
+switchSSAssignmentMethod(structureName: str, forceDSSP: bool = False)
 ```
-```python
-# Show/Hide backbone in representations of the current selection
-# This only works for lines, hyperball and sphere representations only
 
-showHideBackboneInSelection(string selName) 
-```
 ```python
-# Set the current model of the structure
-# This function is used by ModelPlayers.cs to read the models of a structure like a trajectory
-
-setModel(string structureName, int modelId) 
+### Show/Hide hydrogens in representations of the provided selection
+### This only works for lines, hyperball and sphere representations
+showHideHydrogensInSelection(selName: str)
 ```
-```python
-# Load a trajectory for a loaded structure
-# It creates a XDRFileReader in the corresponding UnityMolStructure and a TrajectoryPlayer
 
-loadTraj(string structureName, string path) 
-```
 ```python
-# Unload a trajectory for a specific structure
-
-unloadTraj(string structureName) 
+### Show/Hide side chains in representations of the current selection
+### This only works for lines, hyperball and sphere representations only
+showHideSideChainsInSelection(selName: str)
 ```
-```python
-# Load a density map for a specific structure
-# This function creates a DXReader instance in the UnityMolStructure
 
-loadDXmap(string structureName, string path) 
-```
 ```python
-# Unload the density map for the structure
-
-unloadDXmap(string structureName) 
+### Show/Hide backbone in representations of the current selection
+### This only works for lines, hyperball and sphere representations only
+showHideBackboneInSelection(selName: str)
 ```
-```python
-# Read a json file and display fieldLines for the specified structure
 
-readJSONFieldlines(string structureName, string path) 
-```
 ```python
-# Remove the json file for fieldlines stored in the currentModel of the specified structure
-
-unloadJSONFieldlines(string structureName) 
+### Set the current model of the structure
+### This function is used by ModelPlayers.cs to read the models of a structure like a trajectory
+setModel(structureName: str, modelId: int)
 ```
-```python
-# Change fieldline computation gradient threshold
 
-setFieldlineGradientThreshold(string selName, float val) 
-```
 ```python
-# Utility function to be able to get the group of the structure
-# This group is used to be able to move all the loaded molecules in the same group
-# Groups can be between 0 and 9 included
-
-int getStructureGroup(string structureName) 
+### Load a trajectory for a loaded structure
+### It creates a XDRFileReader in the corresponding UnityMolStructure and a TrajectoryPlayer
+loadTraj(structureName: str, path: str)
 ```
-```python
-# Utility function to be able to get the structures of the group
-# This group is used to be able to move all the loaded molecules in the same group
-# Groups can be between 0 and 9 included
 
-HashSet<UnityMolStructure> getStructuresOfGroup(int group) 
-```
 ```python
-# Utility function to be set the group of a structure
-# This group is used to be able to move all the loaded molecules in the same group
-# Groups can be between 0 and 9 included
-
-setStructureGroup(string structureName, int newGroup) 
+### Unload a trajectory for a specific structure
+unloadTraj(structureName: str)
 ```
-```python
-# Delete a molecule and all its UnityMolSelection and UnityMolRepresentation
 
-delete(string structureName) 
-```
 ```python
-# Show as 'type' all loaded molecules
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
-
-show(string type) 
+### Load a density map for a specific structure
+### This function creates a DXReader instance in the UnityMolStructure
+loadDXmap(structureName: str, path: str)
 ```
-```python
-# Show all loaded molecules only as the 'type' representation
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
 
-showAs(string type) 
-```
 ```python
-# Create selections and default representations: all in cartoon, not protein in hyperballs
-# Also create a selection containing "not protein and not water and not ligand and not ions"
-
-bool defaultRep(string selName) 
+### Unload the density map for the structure
+unloadDXmap(structureName: str)
 ```
-```python
-# Create default representations (cartoon for protein + HB for not protein atoms)
 
-showDefault(string selName) 
-```
 ```python
-
-waitOneFrame() 
+### Read a json file and display fieldLines for the specified structure
+readJSONFieldlines(structureName: str, path: str)
 ```
-```python
-# Unhide all representations already created for a specified structure
 
-showStructureAllRepresentations(string structureName) 
-```
 ```python
-# Show the selection as 'type'
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
-# If the representation is already there, update it if the selection content changed and show it
-# Surface example: showSelection("all(1kx2)", "s", True, True, True, SurfMethod.MSMS)
-# Iso-surface example: showSelection("all(1kx2)", "dxiso", last().dxr, 0.0f)
-
-showSelection(string selName, string type, params object[] args) 
+### Remove the json file for fieldlines stored in the currentModel of the specified structure
+unloadJSONFieldlines(structureName: str)
 ```
-```python
-# Hide every representations of the specified selection
 
-hideSelection(string selName) 
-```
 ```python
-# Hide every representation of type 'type' of the specified selection
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
-
-hideSelection(string selName, string type) 
+### Change fieldline computation gradient threshold
+setFieldlineGradientThreshold(selName: str, val: float)
 ```
-```python
-# Delete every representations of type 'type' of the specified selection
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
 
-deleteRepresentationInSelection(string selName, string type) 
-```
 ```python
-# Delete every representations of the specified selection
-
-deleteRepresentationsInSelection(string selName) 
+### Utility function to be able to get the group of the structure
+### This group is used to be able to move all the loaded molecules in the same group
+### Groups can be between 0 and 9 included
+getStructureGroup(structureName: str)
 ```
-```python
-# Hide every representations of the specified structure
 
-hideStructureAllRepresentations(string structureName) 
-```
 ```python
-# Utility function to test if a representation is shown for a specified structure
-
-bool areRepresentationsOn(string structureName) 
+### Utility function to be able to get the structures of the group
+### This group is used to move all the loaded molecules in the same group
+### Groups can be between 0 and 9 included
+getStructuresOfGroup(group: int)
 ```
-```python
-# Utility function to test if a representation of type 'type' is shown for a specified selection
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
 
-bool areRepresentationsOn(string selName, string type) 
-```
 ```python
-# Hide all representations of type 'type'
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
-
-hide(string type) 
+### Utility function to be set the group of a structure
+### This group is used to be able to move all the loaded molecules in the same group
+### Groups can be between 0 and 9 included
+setStructureGroup(structureName: str, newGroup: int)
 ```
-```python
-# Switch between the 2 types of surface computation methods: EDTSurf and MSMS
 
-switchSurfaceComputeMethod(string selName) 
-```
 ```python
-# Switch between cut surface mode and no-cut surface mode
-
-switchCutSurface(string selName, bool isCut) 
+### Delete a molecule and all its UnityMolSelection and UnityMolRepresentation
+delete(structureName: str)
 ```
-```python
-# Switch all surface representation in selection to a solid surface material
 
-setSolidSurface(string selName) 
-```
 ```python
-# Switch all surface representation in selection to a wireframe surface material when available
-
-setWireframeSurface(string selName) 
+### Show as 'type' all loaded molecules
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+show(type: str)
 ```
-```python
-# Switch all surface representation in selection to a transparent surface material
 
-setTransparentSurface(string selName, float alpha = 0.8f) 
-```
 ```python
-# Recompute the DX surface with a new iso value
+### Show all loaded molecules only as the 'type' representation
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+showAs(type: str)
 
-updateDXIso(string selName, float newVal) 
+### Create selections and default representations: all in cartoon, not protein in hyperballs
+### Also create a selection containing "not protein and not water and not ligand and not ions"
+defaultRep(selName: str)
 ```
-```python
-# Change hyperball representation parameters in the specified selection to a preset
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
 
-setSmoothness(string selName, string type, float val) 
-```
 ```python
-# Change hyperball representation parameters in the specified selection to a preset
-# Metaphores can be "Smooth", "Balls&Sticks", "VdW", "Licorice"
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
-
-setMetal(string selName, string type, float val) 
+### Create default representations (cartoon for protein + HB for not protein atoms)
+showDefault(selName: str)
 ```
-```python
-# Change surface wireframe size
 
-setSurfaceWireframe(string selName, string type, float val) 
-```
 ```python
-# Change hyperball representation parameters in all selections that contains a hb representation
-# Metaphores can be "Smooth", "Balls&Sticks", "VdW", "Licorice"
-
-setHyperBallMetaphore(string metaphore, bool forceAOOff = False) 
+### Unhide all representations already created for a specified structure
+showStructureAllRepresentations(structureName: str)
 ```
-```python
-# Change hyperball representation parameters in the specified selection to a preset
-# Metaphores can be "Smooth", "Balls&Sticks", "VdW", "Licorice"
 
-setHyperBallMetaphore(string selName, string metaphore, bool forceAOOff = False) 
-```
 ```python
-# Set shininess for the hyperball representations of the specified selection
-
-setHyperBallShininess(string selName, float shin) 
+### Show the selection as 'type'
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+### If the representation is already there, update it if the selection content changed and show it
+### Surface example: showSelection("all(1kx2)", "s", True, True, True, SurfMethod.MSMS)
+### Iso-surface example: showSelection("all(1kx2)", "dxiso", last().dxr, 0.0f)
+showSelection(selName: str, type: str, args)
 ```
-```python
-# Set the shrink factor for the hyperball representations of the specified selection
 
-setHyperballShrink(string selName, float shrink) 
-```
 ```python
-# Change all hyperball representation in the selection with a new texture mapped
-# idTex of the texture is the index in UnityMolMain.atomColors.textures
-
-setHyperballTexture(string selName, int idTex) 
+### Hide every representations of the specified selection
+hideSelection(selName: str)
 ```
-```python
-# Change all bond order representation in the selection with a new texture mapped
-# idTex of the texture is the index in UnityMolMain.atomColors.textures
 
-setBondOrderTexture(string selName, int idTex) 
-```
 ```python
-
-clearHyperballAO(string selName) 
+### Hide every representation of type 'type' of the specified selection
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+hideSelection(selName: str, type: str)
 ```
-```python
 
-clearSurfaceAO(string selName) 
-```
 ```python
-
-increaseAmbientLight() 
+### Delete every representations of type 'type' of the specified selection
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+deleteRepresentationInSelection(selName: str, type: str)
 ```
-```python
 
-decreaseAmbientLight() 
-```
 ```python
-# Set the color of the cartoon representation of the specified selection based on the nature of secondary structure assigned
-# ssType can be "helix", "sheet" or "coil"
-
-setCartoonColorSS(string selName, string ssType, Color col) 
+### Delete every representations of the specified selection
+deleteRepresentationsInSelection(selName: str)
 ```
-```python
-# Change the size of the representation of type 'type' in the selection
-# Mainly used for hyperball representation
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
 
-setRepSize(string selName, string type, float size) 
-```
 ```python
-# Change the color of all representation of type 'type' in selection
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
-
-colorSelection(string selName, string type, Color col) 
+### Hide every representations of the specified structure
+hideStructureAllRepresentations(structureName: str)
 ```
-```python
-# Change the color of all representation of type 'type' in selection
-# colorS can be "black", "white", "yellow", "green", "red", "blue", "pink", "gray"
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
 
-colorSelection(string selName, string type, string colorS) 
-```
 ```python
-# Change the color of all representation of type 'type' in selection
-# colors is a list of colors the length of the selection named selName
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
-
-colorSelection(string selName, string type, List<Color> colors) 
+### Utility function to test if a representation is shown for a specified structure
+areRepresentationsOn(structureName: str)
 ```
-```python
-# Reset the color of all representation of type 'type' in selection to the default value
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
 
-resetColorSelection(string selName, string type) 
-```
 ```python
-# In the representation of type repType, color all atoms of type atomType in the selection selName with
-
-colorAtomType(string selName, string repType, string atomType, Color col) 
+### Utility function to test if a representation of type 'type' is shown for a specified selection
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+areRepresentationsOn(selName: str, type: str)
 ```
-```python
-# Use the color palette to color representations of type 'type' in the selection 'selName' by chain
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
 
-colorByChain(string selName, string type) 
-```
 ```python
-# Use the color palette to color representations of type 'type' in the selection 'selName' by residue
-# type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
-
-colorByResidue(string selName, string type) 
+### Hide all representations of type 'type'
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+hide(type: str)
 ```
-```python
-# Color representations of type 'type' in the selection 'selName' by atom
 
-colorByAtom(string selName, string type) 
-```
 ```python
-# Color representations of type 'type' in the selection 'selName' by hydrophobicity
-
-colorByHydrophobicity(string selName, string type) 
+### Switch between the 2 types of surface computation methods: EDTSurf and MSMS
+switchSurfaceComputeMethod(selName: str)
 ```
-```python
-# Color representations of type 'type' in the selection 'selName' by sequence (rainbow effect)
 
-colorBySequence(string selName, string type) 
-```
 ```python
-# Use the dx map to color by charge around atoms
-# Only works for surface for now
-# If normalizeDensity is set to true, the density values will be normalized
-# if it is set to true, the default -10|10 range is used
-
-colorByCharge(string selName, bool normalizeDensity = False, float minDens = -10.0f, float maxDens = 10.0f) 
+### Switch between cut surface mode and no-cut surface mode
+switchCutSurface(selName: str, isCut: bool)
 ```
-```python
-# Color residues by "restype": negatively charge = red, positively charged = blue, nonpolar = light yellow,
-# polar = green, cys = orange
 
-colorByResidueType(string selName, string type) 
-```
 ```python
-# Color residues by "restype": negatively charge = red, positively charged = blue, neutral = white
-
-colorByResidueCharge(string selName, string type) 
+### Switch all surface representation in selection to a solid surface material
+setSolidSurface(selName: str)
 ```
-```python
-# Color residues by Bfactor
 
-colorByBfactor(string selName, string type, Color startColor, Color endColor) 
-```
 ```python
-# Color residues by Bfactor: low to high = blue to red
-
-colorByBfactor(string selName, string type) 
+### Switch all surface representation in selection to a wireframe surface material when available
+setWireframeSurface(selName: str)
 ```
-```python
 
-setLineSize(string selName, float val) 
-```
 ```python
-
-setTraceSize(string selName, float val) 
+### Switch all surface representation in selection to a transparent surface material
+setTransparentSurface(selName: str, alpha: float = 0.8)
 ```
-```python
-# Offsets all representations to center the structure 'structureName'
-# Instead of moving the camera, move the loaded molecules to center them on the center of the camera
 
-centerOnStructure(string structureName, bool lerp = False, bool recordCommand = True) 
-```
 ```python
-
-ManipulationManager getManipulationManager() 
+### Recompute the DX surface with a new iso value
+updateDXIso(selName: str, newVal: float)
 ```
-```python
-# Offsets all representations to center the selection 'selName'
 
-centerOnSelection(string selName, bool lerp = False) 
-```
 ```python
-# CEAlign algorithm to align two proteins with "little to no sequence similarity", only uses Calpha atoms
-# For more details: https://pymolwiki.org/index.php/Cealign
-
-cealign(string selNameTarget, string selNameMobile) 
+### Change hyperball representation parameters in the specified selection to a preset
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+setSmoothness(selName: str, type: str, val: float)
 ```
-```python
-# Create a UnityMolSelection based on MDAnalysis selection language (https://www.mdanalysis.org/docs/documentation_pages/selections.html)
-# Returns a UnityMolSelection object, adding it to the selection manager if createSelection is true
-# If a selection with the same name already exists and addToExisting is true, add atoms to the already existing selection
-# Set forceCreate to true if the selection is empty but still need to generate the selection
 
-UnityMolSelection select(string selMDA, string name = "selection", bool createSelection = True, bool addToExisting = False, bool silent = False, bool setAsCurrentSelection = True, bool forceCreate = False, bool allModels = False, bool addToSelectionKeyword = True) 
-```
 ```python
-# Add a keyword to the selection language
-
-addSelectionKeyword(string keyword, string selName) 
+### Change hyperball representation parameters in the specified selection to a preset
+### Metaphores can be "Smooth", "Balls&Sticks", "VdW", "Licorice"
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+setMetal(selName: str, type: str, val: float)
 ```
-```python
-# Remove a keyword from the selection language
 
-removeSelectionKeyword(string keyword, string selName) 
-```
 ```python
-# Set the selection as currentSelection in the UnityMolSelectionManager
-
-setCurrentSelection(string selName) 
+### Change surface wireframe size
+setSurfaceWireframe(selName: str, type: str, val: float)
 ```
-```python
-# Look for an existing selection named 'name' and add atoms to it based on MDAnalysis selection language
 
-addToSelection(string selMDA, string name = "selection", bool silent = False, bool allModels = False) 
-```
 ```python
-# Look for an existing selection named 'name' and remove atoms from it based on MDAnalysis selection language
-
-removeFromSelection(string selMDA, string name = "selection", bool silent = False, bool allModels = False) 
+### Change hyperball representation parameters in all selections that contains a hb representation
+### Metaphores can be "Smooth", "Balls&Sticks", "VdW", "Licorice"
+setHyperBallMetaphore(metaphore: str)
 ```
-```python
-# Delete selection 'selName' and all its representations
 
-deleteSelection(string selName) 
-```
 ```python
-# Duplicate selection 'selName' and without the representations
-
-string duplicateSelection(string selName) 
+### Change hyperball representation parameters in the specified selection to a preset
+### Metaphores can be "Smooth", "Balls&Sticks", "VdW", "Licorice"
+setHyperBallMetaphore(selName: str, metaphore: str)
 ```
-```python
-# Change the 'oldSelName' selection name into 'newSelName'
 
-bool renameSelection(string oldSelName, string newSelName) 
-```
 ```python
-# Update the atoms of the selection based on a new MDAnalysis language selection
-# The selection only applies to the structures of the selection
-
-bool updateSelectionWithMDA(string selName, string selectionString, bool forceAlteration, bool silent = False, bool recordCommand = True, bool allModels = False) 
+### Set shininess for the hyperball representations of the specified selection
+setHyperBallShininess(selName: str, shin: float)
 ```
-```python
 
-cleanHighlight() 
-```
 ```python
-# Select atoms of all loaded molecules inside a sphere defined by a world space position and a radius in Anstrom
-
-UnityMolSelection selectInSphere(Vector3 position, float radius) 
+### Set the shrink factor for the hyperball representations of the specified selection
+setHyperballShrink(selName: str, shrink: float)
 ```
-```python
-# Update representations of the specified selection, called automatically after a selection content change
 
-updateRepresentations(string selName) 
-```
 ```python
-# Clear the currentSelection in UnityMolSelectionManager
-
-clearSelections() 
+### Change all hyperball representation in the selection with a new texture mapped
+### idTex of the texture is the index in UnityMolMain.atomColors.textures
+setHyperballTexture(selName: str, idTex: int)
 ```
-```python
-# Utility function to test if a trajectory is playing for any loaded molecule
 
-bool isATrajectoryPlaying() 
-```
 ```python
-
-setUpdateSelectionTraj(string selName, bool v) 
+clearHyperballAO(selName: str)
 ```
-```python
-# Show or hide representation shadows
 
-setShadows(string selName, string type, bool enable) 
-```
 ```python
-# Enable DOF effect, only available in desktop mode
-
-enableDOF() 
+### Set the color of the cartoon representation of the specified selection based on the nature of secondary structure assigned
+### ssType can be "helix", "sheet" or "coil"
+setCartoonColorSS(selName: str, ssType: str, col: Color)
 ```
-```python
-# Disable DOF effect, only available in desktop mode
 
-disableDOF() 
-```
 ```python
-# Set DOF aperture
-
-setDOFAperture(float a) 
+### Change the size of the representation of type 'type' in the selection
+### Mainly used for hyperball representation
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+setRepSize(selName: str, type: str, size: float)
 ```
-```python
-# Set DOF focal length
 
-setDOFFocalLength(float f) 
-```
 ```python
-# Enable outline post-process effect
-
-enableOutline() 
+### Change the color of all representation of type 'type' in selection
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+colorSelection(selName: str, type: str, col: Color)
 ```
-```python
-# Disable outline effect
 
-disableOutline() 
-```
 ```python
-# Utility function to change the material of highlighted selection
-
-changeHighlightMaterial(Material newMat) 
+### Change the color of all representation of type 'type' in selection
+### colorS can be "black", "white", "yellow", "green", "red", "blue", "pink", "gray"
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+colorSelection(selName: str, type: str, colorS: str)
 ```
-```python
-# Take a screenshot of the current viewpoint with a specific resolution
 
-screenshot(string path, int resolutionWidth = 1280, int resolutionHeight = 720, bool transparentBG = False) 
-```
 ```python
-# Start to record a video with FFMPEG at a specific resolution and framerate
-
-startVideo(string filePath, int resolutionWidth = 1280, int resolutionHeight = 720, int frameRate = 30) 
+### Change the color of all representation of type 'type' in selection
+### colors is a list of colors the length of the selection named selName
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+colorSelection(selName: str, type: str, colors: List<Color>)
 ```
-```python
-# Stop recording
 
-stopVideo() 
-```
 ```python
-# Play the opposite function of the lastly called APIPython function recorded in UnityMolMain.pythonUndoCommands
-
-undo() 
+### Reset the color of all representation of type 'type' in selection to the default value
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+resetColorSelection(selName: str, type: str)
 ```
-```python
-# Set the local position and rotation (euler angles) of the given structure
 
-setStructurePositionRotation(string structureName, Vector3 pos, Vector3 rot) 
-```
 ```python
-
-getStructurePositionRotation(string structureName, ref Vector3 pos, ref Vector3 rot) 
+### In the representation of type repType, color all atoms of type atomType in the selection selName with
+colorAtomType(selName: str, repType: str, atomType: str, col: Color)
 ```
-```python
-# Save the history of commands executed in a file
 
-saveHistoryScript(string path) 
-```
 ```python
-
-setRotationCenter(Vector3 newPos) 
+### Use the color palette to color representations of type 'type' in the selection 'selName' by chain
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+colorByChain(selName: str, type: str)
 ```
-```python
-# Load a python script of commands (possibly the output of the saveHistoryScript function)
 
-loadHistoryScript(string path) 
-```
 ```python
-# Set the position, scale and rotation of the parent of all loaded molecules
-# Linear interpolation between the current state of the camera to the specified values
-
-setMolParentTransform(Vector3 pos, Vector3 scale, Vector3 rot, Vector3 centerOfRotation) 
+### Use the color palette to color representations of type 'type' in the selection 'selName' by residue
+### type can be "cartoon", "c", "surface", "s", "hb", "line", "l", "hbond"
+colorByResidue(selName: str, type: str)
 ```
-```python
-# Change the scale of the parent of the representations of each molecules
-# Try to not move the center of mass
 
-changeGeneralScale_cog(float newVal) 
-```
 ```python
-# Change the scale of the parent of the representations of each molecules
-# Keep relative positions of molecules, use the first loaded molecule center of gravity to compensate the translation due to scaling
-
-changeGeneralScale(float newVal) 
+### Color representations of type 'type' in the selection 'selName' by atom
+colorByAtom(selName: str, type: str)
 ```
-```python
-# Use Reduce method to add hydrogens
 
-addHydrogensReduce(string structureName) 
-```
 ```python
-# Use HAAD method to add hydrogens
-
-addHydrogensHaad(string structureName) 
+### Color representations of type 'type' in the selection 'selName' by hydrophobicity
+colorByHydrophobicity(selName: str, type: str)
 ```
-```python
-# Set the atoms of the selection named 'selName' to ligand
 
-setAsLigand(string selName, bool isLig = True, bool updateAllSelections = True) 
-```
 ```python
-# Merge UnityMolStructure structureName2 in structureName using a different chain name to avoid conflict
-
-mergeStructure(string structureName, string structureName2, string chainName = "Z") 
+### Color representations of type 'type' in the selection 'selName' by sequence (rainbow effect)
+colorBySequence(selName: str, type: str)
 ```
-```python
-# Save current atom positions of the selection to a PDB file
-# World atom positions are transformed to be relative to the first structure in the selection
 
-saveToPDB(string selName, string filePath, bool writeSSinfo = False) 
-```
 ```python
-# Connect to a running simulation using the IMD protocol implemented in Artemis
-# The running simulation is binded to a UnityMolStructure
-
-bool connectIMD(string structureName, string adress, int port) 
+### Use the dx map to color by charge around atoms
+### Only works for surface for now
+### If normalizeDensity is set to True, the density values will be normalized
+### if it is set to True, the default -10|10 range is used
+colorByCharge(selName: str, normalizeDensity: bool = False, minDens: float = -10.0, maxDens: float = 10.0)
 ```
-```python
-# Disconnect from the IMD simulation for the specified structure
 
-disconnectIMD(string structureName) 
-```
 ```python
-
-string getSurfaceType(string selName) 
+### Color residues by "restype": negatively charge = red, positively charged = blue, nonpolar = light yellow,
+### polar = green, cys = orange
+colorByResidueType(selName: str, type: str)
 ```
-```python
 
-string getHyperBallMetaphore(string selName) 
-```
 ```python
-
-setCameraNearPlane(float newV) 
+### Color residues by Bfactor
+colorByBfactor(selName: str, type: str, startColor: Color, endColor: Color)
 ```
-```python
 
-setCameraFarPlane(float newV) 
-```
 ```python
-
-enableDepthCueing() 
+### Color residues by Bfactor: low to high = blue to red
+colorByBfactor(selName: str, type: str)
 ```
-```python
 
-disableDepthCueing() 
-```
 ```python
-
-setDepthCueingStart(float v) 
+setLineSize(selName: str, val: float)
 ```
-```python
 
-setDepthCueingDensity(float v) 
+```python
+setTraceSize(selName: str, val: float)
 ```
+
 ```python
+switchSheherasadeMethod(selName: str)
+```
 
-setDepthCueingColor(Color col) 
+```python
+setSheherasadeTexture(selName: str, idTex: int)
 ```
+
 ```python
-# Print the content of the current directory
+### Offsets all representations to center the structure 'structureName'
+### Instead of moving the camera, move the loaded molecules to center them on the center of the camera
+centerOnStructure(structureName: str, lerp: bool = False, recordCommand: bool = True)
+```
 
-List<string> ls() 
+```python
+getManipulationManager()
 ```
+
 ```python
-# Change the current directory
+### Offsets all representations to center the selection 'selName'
+centerOnSelection(selName: str, lerp: bool = False)
+```
 
-cd(string newPath) 
+```python
+### Create a UnityMolSelection based on MDAnalysis selection language (https://www.mdanalysis.org/docs/documentation_pages/selections.html)
+### Returns a UnityMolSelection object, adding it to the selection manager if createSelection is True
+### If a selection with the same name already exists and addToExisting is True, add atoms to the already existing selection
+### Set forceCreate to True if the selection is empty but still need to generate the selection
+select(selMDA: str, name: str = "selection", createSelection: bool = True, addToExisting: bool = False, silent: bool = False, setAsCurrentSelection: bool = True, forceCreate: bool = False, allModels: bool = False)
 ```
+
 ```python
-# Print the current directory
+### Add a keyword to the selection language
+addSelectionKeyword(keyword: str, selName: str)
+```
 
-pwd() 
+```python
+### Remove a keyword from the selection language
+removeSelectionKeyword(keyword: str, selName: str)
 ```
+
 ```python
-# Return the lastly loaded UnityMolStructure
+### Set the selection as currentSelection in the UnityMolSelectionManager
+setCurrentSelection(selName: str)
+```
 
-UnityMolStructure last() 
+```python
+### Look for an existing selection named 'name' and add atoms to it based on MDAnalysis selection language
+addToSelection(selMDA: str, name: str = "selection", silent: bool = False, allModels: bool = False)
 ```
+
 ```python
-# Change the background color of the camera based on a color name, also changes the fog color
+### Look for an existing selection named 'name' and remove atoms from it based on MDAnalysis selection language
+removeFromSelection(selMDA: str, name: str = "selection", silent: bool = False, allModels: bool = False)
+```
 
-bg_color(string colorS) 
+```python
+### Delete selection 'selName' and all its representations
+deleteSelection(selName: str)
 ```
+
 ```python
-# Change the background color of the camera, also changes the fog color
+### Duplicate selection 'selName' and without the representations
+duplicateSelection(selName: str)
+```
 
-bg_color(Color col) 
+```python
+### Change the 'oldSelName' selection name into 'newSelName'
+renameSelection(oldSelName: str, newSelName: str)
 ```
+
 ```python
-# Convert a color string to a standard Unity Color
-# Values can be "black", "white", "yellow" ,"green", "red", "blue", "pink", "gray"
-# Switch on or off the rotation around the X axis of all loaded molecules
+### Update the atoms of the selection based on a new MDAnalysis language selection
+### The selection only applies to the structures of the selection
+updateSelectionWithMDA(selName: str, selectionString: str, forceAlteration: bool, silent: bool = False, recordCommand: bool = True, allModels: bool = False)
 
-switchRotateAxisX() 
+cleanHighlight()
 ```
-```python
-# Switch on or off the rotation around the Y axis of all loaded molecules
 
-switchRotateAxisY() 
+```python
+### Select atoms of all loaded molecules inside a sphere defined by a world space position and a radius in Anstrom
+selectInSphere(position: Vector3, radius: float)
 ```
+
 ```python
-# Switch on or off the rotation around the Z axis of all loaded molecules
+### Update representations of the specified selection
+updateRepresentations(selName: str)
+```
 
-switchRotateAxisZ() 
+```python
+### Clear the currentSelection in UnityMolSelectionManager
+clearSelections()
 ```
+
 ```python
-# Change the rotation speed around the X axis
+### Utility function to test if a trajectory is playing for any loaded molecule
+isATrajectoryPlaying()
+```
 
-changeRotationSpeedX(float val) 
+```python
+setUpdateSelectionTraj(selName: str, v: bool)
 ```
+
 ```python
-# Change the rotation speed around the Y axis
+### Utility function to change the material of highlighted selection
+changeHighlightMaterial(Material newMat)
+```
 
-changeRotationSpeedY(float val) 
+```python
+### Take a screenshot of the current viewpowith: int a specific resolution
+screenshot(path: str, resolutionWidth: int = 1280, resolutionHeight: int = 720, transparentBG: bool = False)
 ```
+
 ```python
-# Change the rotation speed around the Z axis
+### Start to record a video with FFMPEG at a specific resolution and framerate
+startVideo(filePath: str, resolutionWidth: int = 1280, resolutionHeight: int = 720, frameRate: int = 30)
+```
 
-changeRotationSpeedZ(float val) 
+```python
+### Stop recording
+stopVideo()
 ```
+
 ```python
-# Change the mouse scroll speed
+### Play the opposite function of the lastly called APIPython function recorded in UnityMolMain.pythonUndoCommands
+undo()
+```
 
-setMouseScrollSpeed(float val) 
+```python
+### Set the local position and rotation (euler angles) of the given structure
+setStructurePositionRotation(structureName: str, pos: Vector3, rot: Vector3)
 ```
+
 ```python
-# Change the speed of mouse rotations and translations
+getStructurePositionRotation(structureName: str, ref pos: Vector3, ref rot: Vector3)
+```
 
-setMouseMoveSpeed(float val) 
+```python
+### Save the history of commands executed in a file
+saveHistoryScript(path: str)
 ```
+
 ```python
-# Stop rotation around all axis
+setRotationCenter(newPos: Vector3)
+```
 
-stopRotations() 
+```python
+### Load a python script of commands (possibly the output of the saveHistoryScript function)
+loadHistoryScript(path: str)
 ```
+
 ```python
-# Transform a string of representation type to a RepType object
+### Set the position, scale and rotation of the parent of all loaded molecules
+### Linear interpolation between the current state of the camera to the specified values
+setMolParentTransform(pos: Vector3, scale: Vector3, rot: Vector3, centerOfRotation: Vector3)
+```
 
-RepType getRepType(string type) 
+```python
+### Change the scale of the parent of the representations of each molecules
+### Try to not move the center of mass
+changeGeneralScale_cog(newVal: float)
 ```
+
 ```python
-# Transform a representation type into a string
+### Change the scale of the parent of the representations of each molecules
+### Keep relative positions of molecules, use the first loaded molecule center of gravity to compensate the translation due to scaling
+changeGeneralScale(newVal: float)
+```
 
-string getTypeFromRepType(RepType rept) 
+```python
+### Use Reduce method to add hydrogens
+addHydrogensReduce(structureName: str)
 ```
+
 ```python
-# Measure modes : 0 = distance, 1 = angle, 2 = torsion angle
+### Use HAAD method to add hydrogens
+addHydrogensHaad(structureName: str)
+```
 
-setMeasureMode(int newMode) 
+```python
+### Set the atoms of the selection named 'selName' to ligand
+setAsLigand(selName: str, isLig: bool = True, updateAllSelections: bool = True)
 ```
+
 ```python
+### Merge UnityMolStructure structureName2 in structureName using a different chain name to avoid conflict
+mergeStructure(structureName: str, structureName2: str, chainName: str = "Z")
+```
 
-annotateAtom(string structureName, int atomId) 
+```python
+### Connect to a running simulation using the IMD protocol implemented in Artemis
+### The running simulation is binded to a UnityMolStructure
+connectIMD(structureName: str, adress: str, port: int)
 ```
+
 ```python
+### Disconnect from the IMD simulation for the specified structure
+disconnectIMD(structureName: str)
+```
 
-removeAnnotationAtom(string structureName, int atomId) 
+```python
+getSurfaceType(selName: str)
 ```
+
 ```python
+getHyperBallMetaphore(selName: str)
+```
 
-annotateAtomText(string structureName, int atomId, string text) 
+```python
+setCameraNearPlane(newV: float)
 ```
+
 ```python
+setCameraFarPlane(newV: float)
+```
 
-removeAnnotationAtomText(string structureName, int atomId, string text) 
+```python
+### Return the lastly loaded UnityMolStructure
+last()
 ```
+
 ```python
+### Change the background color of the camera
+bg_color(colorS: str)
+```
 
-annotateLine(string structureName, int atomId, string structureName2, int atomId2) 
+```python
+### Switch on or off the rotation around the X axis of all loaded molecules
+switchRotateAxisX()
 ```
+
 ```python
+### Switch on or off the rotation around the Y axis of all loaded molecules
+switchRotateAxisY()
+```
 
-removeAnnotationLine(string structureName, int atomId, string structureName2, int atomId2) 
+```python
+### Switch on or off the rotation around the Z axis of all loaded molecules
+switchRotateAxisZ()
 ```
+
 ```python
+### Change the rotation speed around the X axis
+changeRotationSpeedX(val: float)
+```
 
-annotateDistance(string structureName, int atomId, string structureName2, int atomId2) 
+```python
+### Change the rotation speed around the Y axis
+changeRotationSpeedY(val: float)
 ```
+
 ```python
+### Change the rotation speed around the Z axis
+changeRotationSpeedZ(val: float)
+```
 
-removeAnnotationDistance(string structureName, int atomId, string structureName2, int atomId2) 
+```python
+### Change the mouse scroll speed
+setMouseScrollSpeed(val: float)
 ```
+
 ```python
+### Change the speed of mouse rotations and translations
+setMouseMoveSpeed(val: float)
+```
 
-annotateAngle(string structureName, int atomId, string structureName2, int atomId2, string structureName3, int atomId3) 
+```python
+### Stop rotation around all axis
+stopRotations()
 ```
+
+
 ```python
+### Transform a of: str representation type to a RepType object
+getRepType(type: str)
+```
 
-removeAnnotationAngle(string structureName, int atomId, string structureName2, int atomId2, string structureName3, int atomId3) 
+```python
+### Transform a representation type into a string
+getTypeFromRepType(rept: RepType)
 ```
+
 ```python
+annotateAtom(structureName: str, atomId: int)
+```
 
-annotateDihedralAngle(string structureName, int atomId, string structureName2, int atomId2, string structureName3, int atomId3, string structureName4, int atomId4) 
+```python
+removeAnnotationAtom(structureName: str, atomId: int)
 ```
+
 ```python
+annotateAtomText(structureName: str, atomId: int, text: str)
+```
 
-removeAnnotationDihedralAngle(string structureName, int atomId, string structureName2, int atomId2, string structureName3, int atomId3, string structureName4, int atomId4) 
+```python
+removeAnnotationAtomText(structureName: str, atomId: int, text: str)
 ```
+
 ```python
+annotateLine(structureName: str, atomId: int, structureName2: str, atomId2: int)
+```
 
-annotateRotatingArrow(string structureName, int atomId, string structureName2, int atomId2) 
+```python
+removeAnnotationLine(structureName: str, atomId: int, structureName2: str, atomId2: int)
 ```
+
 ```python
+annotateDistance(structureName: str, atomId: int, structureName2: str, atomId2: int)
+```
 
-removeAnnotationRotatingArrow(string structureName, int atomId, string structureName2, int atomId2) 
+```python
+removeAnnotationDistance(structureName: str, atomId: int, structureName2: str, atomId2: int)
 ```
+
 ```python
+annotateAngle(structureName: str, atomId: int, structureName2: str, atomId2: int, structureName3: str, atomId3: int)
+```
 
-annotateArcLine(string structureName, int atomId, string structureName2, int atomId2, string structureName3, int atomId3) 
+```python
+removeAnnotationAngle(structureName: str, atomId: int, structureName2: str, atomId2: int, structureName3: str, atomId3: int)
 ```
+
 ```python
+annotateDihedralAngle(structureName: str, atomId: int, structureName2: str, atomId2: int, structureName3: str, atomId3: int, structureName4: str, atomId4: int)
+```
 
-removeAnnotationArcLine(string structureName, int atomId, string structureName2, int atomId2, string structureName3, int atomId3) 
+```python
+removeAnnotationDihedralAngle(structureName: str, atomId: int, structureName2: str, atomId2: int, structureName3: str, atomId3: int, structureName4: str, atomId4: int)
 ```
+
 ```python
+annotateRotatingArrow(structureName: str, atomId: int, structureName2: str, atomId2: int)
+```
 
-annotateDrawLine(string structureName, List<Vector3> line, Color col) 
+```python
+removeAnnotationRotatingArrow(structureName: str, atomId: int, structureName2: str, atomId2: int)
 ```
+
 ```python
+annotateArcLine(structureName: str, atomId: int, structureName2: str, atomId2: int, structureName3: str, atomId3: int)
+```
 
-removeLastDrawLine(string structureName, int id) 
+```python
+removeAnnotationArcLine(structureName: str, atomId: int, structureName2: str, atomId2: int, structureName3: str, atomId3: int)
 ```
+
 ```python
+annotateDrawLine(structureName: str, line: List<Vector3>, col: Color)
+```
 
-clearDrawings() 
+```python
+removeLastDrawLine(structureName: str, id: int)
 ```
+
 ```python
+clearDrawings()
+```
 
-clearAnnotations() 
+```python
+clearAnnotations()
 ```
