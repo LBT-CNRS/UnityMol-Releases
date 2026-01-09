@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,28 +27,15 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace UMol {
 /// <summary>
@@ -64,14 +49,11 @@ public class UnityMolBonds {
 	public int NBBONDS = 27;
 
 	/// <summary>
-	/// Stores the bonds of the model, empty bonds are null
+	/// Store the bonds as a dictionary of atom id associated with an array of atom ids
+	/// Both A1-A2 and A2-A1 are stored
+	/// (NBBONDS preallocated atom ids with -1)
 	/// </summary>
-	public Dictionary<UnityMolAtom, UnityMolAtom[]> bonds;
-
-	/// <summary>
-	/// Stores the bonds of the model, empty bonds are null, contains both A1+A2 and A2+A1
-	/// </summary>
-	public Dictionary<UnityMolAtom, UnityMolAtom[]> bondsDual;
+	public Dictionary<int, int[]> bonds;
 
 
 	/// <summary>
@@ -79,13 +61,11 @@ public class UnityMolBonds {
 	/// </summary>
 	public int bondsCount = 0;
 
-
 	/// <summary>
 	/// UnityMolBonds constructor initializing the dictionary
 	/// </summary>
 	public UnityMolBonds() {
-		bonds = new Dictionary<UnityMolAtom, UnityMolAtom[]>();
-		bondsDual = new Dictionary<UnityMolAtom, UnityMolAtom[]>();
+		bonds = new Dictionary<int, int[]>();
 		bondsCount = 0;
 	}
 
@@ -93,41 +73,45 @@ public class UnityMolBonds {
 	/// Returns the number of bonds stored
 	/// </summary>
 	public int Count {
-		get { return bondsCount; }
+		get {
+			if (bondsCount == -1) reCount();
+			return bondsCount;
+		}
 	}
 
 	public int Length {
-		get { return bondsCount; }
-	}
-
-	public Dictionary<UnityMolAtom, UnityMolAtom[]> Dbonds {
-		get { return bonds; }
-	}
-
-	/// <summary>
-	/// Add an array of atoms in the dictionary
-	/// </summary>
-	public void Add(UnityMolAtom atom, UnityMolAtom[] bonded) {
-		for (int i = 0; i < bonded.Length; i++) {
-			Add(atom, bonded[i]);
+		get {
+			return Count;
 		}
 	}
 
 	/// <summary>
-	/// Add a UnityMolAtom in the dictionary, prints a Debug.LogError when no more space is available
+	/// Add a UnityMolAtom in the bonds dictionary, prints a Debug.LogError when no more space is available
 	/// </summary>
 	public void Add(UnityMolAtom atom, UnityMolAtom bonded) {
-		UnityMolAtom[] res = null;
-		if (bonds.TryGetValue(atom, out res)) {
+		int[] res = null;
+		int idA = atom.idInAllAtoms;
+		int idB = bonded.idInAllAtoms;
+
+		if (idA == -1 || idB == -1) {
+			Debug.LogWarning("Wrong atom id, this is bad");
+			return;
+		}
+		if (idA == idB) {
+			Debug.LogError("Cannot bind atom to itself");
+			return;
+		}
+
+		if (bonds.TryGetValue(idA, out res)) {
 			bool added = false;
 			for (int i = 0; i < NBBONDS; i++) {
-				if (res[i] != null && res[i] == bonded) {
+				if (res[i] == idB) {//Already there
 					added = true;
 					break;
 				}
 
-				if (res[i] == null) {
-					res[i] = bonded;
+				if (res[i] == -1) {//Not there
+					res[i] = idB;
 					added = true;
 					bondsCount++;
 					break;
@@ -135,83 +119,167 @@ public class UnityMolBonds {
 			}
 			if (!added) {
 				Debug.LogError("More than " + NBBONDS + " bonds for atom " + atom);
+				throw new System.Exception("AddBondError");
 			}
 		}
-		// else if (!isBondedTo(atom, bonded)) {
 		else {
-			bonds[atom] = new UnityMolAtom[NBBONDS];
-			for (int i = 0; i < NBBONDS; i++)
-				bonds[atom][i] = null;
-			bonds[atom][0] = bonded;
+			bonds[idA] = new int[NBBONDS];
+			bonds[idA][0] = idB;
+			for (int i = 1; i < NBBONDS; i++)
+				bonds[idA][i] = -1;
 			bondsCount++;
-
 		}
-		AddDual(atom, bonded);
-		AddDual(bonded, atom);
-	}
 
-	private void AddDual(UnityMolAtom atom, UnityMolAtom bonded) {
-		UnityMolAtom[] res = null;
-		if (bondsDual.TryGetValue(atom, out res)) {
+		//Add the reverse
+		if (bonds.TryGetValue(idB, out res)) {
 			bool added = false;
 			for (int i = 0; i < NBBONDS; i++) {
-				if (res[i] != null && res[i] == bonded) {
+				if (res[i] == idA) {//Already there
 					added = true;
 					break;
 				}
 
-				if (res[i] == null) {
-					res[i] = bonded;
+				if (res[i] == -1) {//Not there
+					res[i] = idA;
 					added = true;
 					break;
 				}
 			}
 			if (!added) {
 				Debug.LogError("More than " + NBBONDS + " bonds for atom " + atom);
+				throw new System.Exception("AddBondError");
 			}
-		} else {
-			bondsDual[atom] = new UnityMolAtom[NBBONDS];
-			for (int i = 0; i < NBBONDS; i++)
-				bondsDual[atom][i] = null;
-			bondsDual[atom][0] = bonded;
+		}
+		else {
+			bonds[idB] = new int[NBBONDS];
+			bonds[idB][0] = idA;
+			for (int i = 1; i < NBBONDS; i++)
+				bonds[idB][i] = -1;
 		}
 	}
+	/// <summary>
+	/// Add a couple of atom ids in the dictionary, prints a Debug.LogError when no more space is available
+	/// </summary>
+	public void Add(int idA, int idB, UnityMolModel curM) {
+		UnityMolAtom a = curM.allAtoms[idA];
+		UnityMolAtom b = curM.allAtoms[idB];
+		Add(a, b);
+	}
+
+	/// <summary>
+	/// Remove all bonds containing the given atom
+	/// </summary>
+	public void Remove(int idA, UnityMolModel curM) {
+		if (idA == -1) {
+			Debug.LogWarning("Wrong atom id, this is bad");
+			return;
+		}
+		int[] res = null;
+		if (bonds.TryGetValue(idA, out res)) {
+
+			//Loop over all bonds to look for the atom and rewrite the array if needed
+			foreach (int idB in res) {
+				if (idB != -1) {
+					bool contains = false;
+					for (int i = 0; i < NBBONDS; i++) {
+						if (bonds[idB][i] == idA) {
+							bonds[idB][i] = -1;
+							contains = true;
+						}
+					}
+					if (contains) {//-1 should be at the end of the array
+						Array.Reverse(bonds[idB]);
+					}
+				}
+			}
+
+			bonds.Remove(idA);
+		}
+		bondsCount = -1;
+	}
+
+	/// <summary>
+	/// Remove all bonds containing the given atom
+	/// </summary>
+	public void Remove(UnityMolAtom a) {
+		Remove(a.idInAllAtoms, a.residue.chain.model);
+	}
+
 
 	/// <summary>
 	/// Returns the number of atoms bonded to the atom A
 	/// </summary>
 	public int countBondedAtoms(UnityMolAtom a) {
-		try {
-			UnityMolAtom[] res = bondsDual[a];
+		int[] res = null;
+		if (bonds.TryGetValue(a.idInAllAtoms, out res)) {
 			int count = 0;
 			for (int i = 0; i < NBBONDS; i++) {
-				if (res[i] != null) {
+				if (res[i] != -1) {
 					count++;
 				}
 			}
 			return count;
 		}
-		catch {
-			// Debug.LogWarning("Did not find atom "+a+" in bonds");
-			return -1;
+
+		// Debug.LogWarning("Did not find atom "+a+" in bonds");
+		return -1;
+	}
+
+	///Recount the number of bonded atoms
+	private void reCount() {
+		int count = 0;
+		foreach (int idA in bonds.Keys) {
+			foreach (int idB in bonds[idA]) {
+				if (idB != -1) {
+					count++;
+				}
+			}
 		}
+		bondsCount = count / 2;
+	}
+
+	/// <summary>
+	/// Returns the number of atoms bonded to the atom with id
+	/// </summary>
+	public int countBondedAtoms(int ida) {
+		int[] res = null;
+		if (bonds.TryGetValue(ida, out res)) {
+			int count = 0;
+			for (int i = 0; i < NBBONDS; i++) {
+				if (res[i] != -1) {
+					count++;
+				}
+			}
+			return count;
+		}
+
+		// Debug.LogWarning("Did not find atom "+a+" in bonds");
+		return -1;
 	}
 
 	/// <summary>
 	/// Check if atom a1 and atom a2 are bonded
 	/// </summary>
 	public bool isBondedTo(UnityMolAtom a1, UnityMolAtom a2) {
-		UnityMolAtom[] res = null;
-		if (bondsDual.TryGetValue(a1, out res)) {
+		int a1i = a1.idInAllAtoms;
+		int a2i = a2.idInAllAtoms;
+		return isBondedTo(a1i, a2i);
+	}
+
+	/// <summary>
+	/// Check if atom id a1 and atom id a2 are bonded
+	/// </summary>
+	public bool isBondedTo(int a1, int a2) {
+		int[] res = null;
+		if (bonds.TryGetValue(a1, out res)) {
 			for (int i = 0; i < NBBONDS; i++) {
-				if (res[i] != null && res[i] == a2) {
+				if (res[i] == a2) {
 					return true;
 				}
 			}
 		}
 		return false;
 	}
-
 
 	/// <summary>
 	/// Get bond order, check current model for parsed bond orders
@@ -227,7 +295,7 @@ public class UnityMolBonds {
 		AtomDuo d = new AtomDuo(a1, a2);
 		AtomDuo dinv = new AtomDuo(a2, a1);
 		UnityMolModel m = a1.residue.chain.model;
-		if(m.covBondOrders != null){
+		if (m.covBondOrders != null) {
 			if (m.covBondOrders.ContainsKey(d)) {
 				return m.covBondOrders[d];
 			}
@@ -236,7 +304,7 @@ public class UnityMolBonds {
 			}
 		}
 
-		if(useProtDef){
+		if (useProtDef) {
 			return getBondOrderProt(a1, a2);
 		}
 		return res;
@@ -266,44 +334,31 @@ public class UnityMolBonds {
 			}
 			i++;
 		}
-
 		return res;
 	}
 
-	/// <summary>
-	/// Return a flatten list of atom couples (not from the dual dictionary)
-	/// </summary>
-	public List<AtomDuo> ToList() {
-		List<AtomDuo> result = new List<AtomDuo>();
+	public List<UnityMolAtom> getAtomList(UnityMolModel m) {
+		List<UnityMolAtom> res = new List<UnityMolAtom>(bonds.Count);
+		foreach (int idA in bonds.Keys) {
+			res.Add(m.allAtoms[idA]);
+		}
+		return res;
+	}
 
-		foreach (UnityMolAtom a in bonds.Keys) {
-			foreach (UnityMolAtom a2 in bonds[a]) {
-				if (a2 != null) {
-					result.Add(new AtomDuo(a, a2));
+	///Convert all atoms ids with new id, used when deleting atoms from the structure or split by chains
+	public void convertIds(Dictionary<int, int> oldIdToNew, UnityMolModel m){
+		Dictionary<int, int[]> savedbonds = bonds;
+		bonds = new Dictionary<int, int[]>(savedbonds.Count);
+		bondsCount = 0;
+		foreach(int id in savedbonds.Keys){
+			int newId = oldIdToNew[id];
+			foreach(int id2 in savedbonds[id]){
+				if(id2 != -1){
+					int newId2 = oldIdToNew[id2];
+					Add(newId, newId2, m);
 				}
 			}
 		}
-
-		return result;
 	}
-
-	/// <summary>
-	/// Return a flatten list of atom couples bidirectional
-	/// </summary>
-	public List<AtomDuo> ToListDual() {
-		List<AtomDuo> result = new List<AtomDuo>();
-
-		foreach (UnityMolAtom a in bonds.Keys) {
-			foreach (UnityMolAtom a2 in bonds[a]) {
-				if (a2 != null) {
-					result.Add(new AtomDuo(a, a2));
-					result.Add(new AtomDuo(a2, a));
-				}
-			}
-		}
-
-		return result;
-	}
-
 }
 }

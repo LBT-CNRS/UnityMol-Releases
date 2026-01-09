@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,12 +47,82 @@ public class UnityMolAnnotationManager : MonoBehaviour {
     /// <summary>
     /// Dictionary of UnityMolAnnotations that can be accessed with UnityMolAtoms
     /// </summary>
-    public Dictionary<UnityMolAtom, HashSet<UnityMolAnnotation>> annotationsDict = new Dictionary<UnityMolAtom, HashSet<UnityMolAnnotation>>();
+
 
     /// <summary>
-    /// List of all the UnityMolAnnotations created
+    /// Hashset of all the UnityMolAnnotations created
     /// </summary>
     public HashSet<UnityMolAnnotation> allAnnotations = new HashSet<UnityMolAnnotation>(new AnnotationComparer());
+
+    /// Keep track of annotations by structure, useful when removing a structure
+    private Dictionary<UnityMolStructure, List<UnityMolAnnotation>> structureToAnno = new Dictionary<UnityMolStructure, List<UnityMolAnnotation>>();
+
+    public delegate void AnnotationNew(AnnoEventArgs args);
+    public static event AnnotationNew OnNewAnnotation;
+
+    public delegate void AnnotationRemoved(AnnoEventArgs args);
+    public static event AnnotationRemoved OnRemoveAnnotation;
+
+
+    private Dictionary<UnityMolAtom, GameObject> atomToGo = new Dictionary<UnityMolAtom, GameObject>();
+
+    public GameObject getGO(UnityMolAtom a) {
+        GameObject go = null;
+        if (atomToGo.TryGetValue(a, out go))
+            return go;
+        var s = a.residue.chain.model.structure;
+        go = new GameObject("Atom");
+        go.transform.SetParent(s.annotationParent);
+        go.transform.localPosition = a.position;
+        go.transform.localRotation = Quaternion.identity;
+        go.transform.localScale = Vector3.one;
+        atomToGo[a] = go;
+        return go;
+    }
+    public GameObject getGOIfExists(UnityMolAtom a) {
+        GameObject go = null;
+        if (atomToGo.TryGetValue(a, out go))
+            return go;
+        return null;
+    }
+    public void setGOPos(UnityMolAtom a, GameObject go) {
+        var s = a.residue.chain.model.structure;
+        go.transform.SetParent(s.annotationParent);
+        go.transform.localPosition = a.position;
+        go.transform.localRotation = Quaternion.identity;
+        go.transform.localScale = Vector3.one;
+    }
+
+
+    public void UpdateAtomPositions() {
+        foreach (UnityMolAtom a in atomToGo.Keys) {
+            if (atomToGo[a]) {
+                atomToGo[a].transform.localPosition = a.position;
+            }
+        }
+        // If atom positions have changed, one   need to update the annotations
+        foreach (UnityMolAnnotation anno in allAnnotations) {
+            anno.Update();
+        }
+    }
+
+    void Awake() {
+        UnityMolStructureManager.OnMoleculeDeleted += updateDeletedAtoms;
+    }
+    void OnDestroy() {
+        UnityMolStructureManager.OnMoleculeDeleted -= updateDeletedAtoms;
+    }
+
+    public void updateDeletedAtoms() {
+        List<UnityMolAtom> toRM = new List<UnityMolAtom>();
+        foreach (UnityMolAtom a in atomToGo.Keys) {
+            if (atomToGo[a] == null)
+                toRM.Add(a);
+        }
+        foreach (UnityMolAtom a in toRM) {
+            atomToGo.Remove(a);
+        }
+    }
 
 
     //Do the update only if a trajectory is playing
@@ -86,10 +140,15 @@ public class UnityMolAnnotationManager : MonoBehaviour {
     public void Clean() {
         foreach (UnityMolAnnotation an in allAnnotations) {
             an.Delete();
+            if (OnRemoveAnnotation != null) {
+                OnRemoveAnnotation(new AnnoEventArgs(an));
+            }
         }
         allAnnotations.Clear();
-        annotationsDict.Clear();
+        structureToAnno.Clear();
+        atomToGo.Clear();
     }
+
 
     public void CleanDrawings() {
         List<UnityMolAnnotation> annos = allAnnotations.ToList();
@@ -119,30 +178,25 @@ public class UnityMolAnnotationManager : MonoBehaviour {
             allAnnotations.Remove(an);
         }
 
-        var allAtoms = annotationsDict.Keys;
-        foreach (UnityMolAtom a in allAtoms) {
-            if (annotationsDict[a].Contains(an)) {
-                annotationsDict[a].Remove(an);
-            }
+
+        if (OnRemoveAnnotation != null) {
+            OnRemoveAnnotation(new AnnoEventArgs(an));
         }
     }
     public void RemoveAnnotations(UnityMolAtom a) {
 
         HashSet<UnityMolAnnotation> toRemove = new HashSet<UnityMolAnnotation>();
 
-        if (annotationsDict.ContainsKey(a)) {
-            foreach (UnityMolAnnotation anno in annotationsDict[a]) {
-                toRemove.Add(anno);
-            }
-            annotationsDict.Remove(a);
-        }
         AnnotationComparer compa = new AnnotationComparer();
 
+        UnityMolStructure s = a.residue.chain.model.structure;
         foreach (UnityMolAnnotation anno in toRemove) {
             if (allAnnotations.Contains(anno)) {
                 foreach (UnityMolAnnotation ano in allAnnotations) {
                     if (compa.Equals(anno, ano)) {
                         ano.Delete();
+                        if (structureToAnno.ContainsKey(s))
+                            structureToAnno[s].Remove(ano);
                     }
                 }
                 allAnnotations.Remove(anno);
@@ -150,27 +204,32 @@ public class UnityMolAnnotationManager : MonoBehaviour {
         }
     }
 
+    public void RemoveAnnotations(UnityMolStructure s) {
+        if (structureToAnno.ContainsKey(s)) {
+            foreach (UnityMolAnnotation a in structureToAnno[s]) {
+                RemoveAnnotation(a);
+            }
+            if (structureToAnno.ContainsKey(s))
+                structureToAnno.Remove(s);
+        }
+    }
+
     public void AddAnnotation(UnityMolAnnotation an) {
         allAnnotations.Add(an);
 
         foreach (UnityMolAtom a in an.atoms) {
-            if (!annotationsDict.ContainsKey(a)) {
-                annotationsDict[a] = new HashSet<UnityMolAnnotation>(new AnnotationComparer());
-            }
-            annotationsDict[a].Add(an);
+            UnityMolStructure s = a.residue.chain.model.structure;
+            if (!structureToAnno.ContainsKey(s))
+                structureToAnno[s] = new List<UnityMolAnnotation>();
+            structureToAnno[s].Add(an);
+        }
+        if (OnNewAnnotation != null) {
+            OnNewAnnotation(new AnnoEventArgs(an));
         }
     }
 
     public bool AnnotationExists(UnityMolAnnotation annoType) {
-
-        // foreach (UnityMolAtom a in annoType.atoms) {
-        //     if (!annotationsDict.ContainsKey(a)) {
-        //         return false;
-        //     }
-        // }
-
         return allAnnotations.Contains(annoType);
-
     }
 
 
@@ -184,27 +243,73 @@ public class UnityMolAnnotationManager : MonoBehaviour {
             return;
         }
 
-        anno.annoParent = a.correspondingGo.transform;
+        anno.annoParent = getGO(a).transform;
         anno.Create();
         AddAnnotation(anno);
     }
 
-    public void AnnotateText(UnityMolAtom a, string text) {
+    public void AnnotateSphere(Transform par, float sScale) {
+        CustomSphereAnnotation anno = new CustomSphereAnnotation();
+
+        if (AnnotationExists(anno)) {
+            Debug.LogWarning("This parent is already annotated with a sphere");
+            return;
+        }
+
+        anno.annoParent = par;
+        anno.scale = sScale;
+        anno.Create();
+        AddAnnotation(anno);
+    }
+
+    public void AnnotateText(UnityMolAtom a, string text, Color col, bool withLine) {
 
         TextAnnotation anno = new TextAnnotation();
         anno.atoms.Add(a);
 
         if (AnnotationExists(anno)) {
-            Debug.LogWarning("This atom is already annotated with a text, overwritting");
+            Debug.LogWarning("This atom is already annotated with a text at the same position, overwritting");
             RemoveAnnotation(anno);
         }
 
-        anno.annoParent = a.correspondingGo.transform;
+        anno.annoParent = getGO(a).transform;
         anno.content = text;
+        anno.showLine = withLine;
+        anno.colorText = col;
         anno.Create();
         AddAnnotation(anno);
     }
 
+    public void AnnotateWorldText(Transform par, float scale, string text, Color textCol) {
+
+        CustomTextAnnotation anno = new CustomTextAnnotation();
+        anno.content = text;
+        anno.annoParent = par;
+
+        if (AnnotationExists(anno)) {
+            Debug.LogWarning("There is already an annotation with the same text, overwritting");
+            RemoveAnnotation(anno);
+        }
+
+        anno.scale = scale;
+        anno.colorText = textCol;
+        anno.Create();
+        AddAnnotation(anno);
+    }
+
+    public void Annotate2DText(string text, float scale, Color textCol, Vector2 screenpos) {
+
+        Annotate2D anno = new Annotate2D();
+
+        //Don't test if this already exists
+
+        anno.content = text;
+        anno.scale = scale;
+        anno.colorText = textCol;
+        anno.posPercent = screenpos;
+        anno.Create();
+        AddAnnotation(anno);
+    }
 
     public void AnnotateDistance(UnityMolAtom a1, UnityMolAtom a2) {
         DistanceAnnotation anno = new DistanceAnnotation();
@@ -216,7 +321,7 @@ public class UnityMolAnnotationManager : MonoBehaviour {
             return;
         }
 
-        anno.annoParent = a2.correspondingGo.transform;
+        anno.annoParent = getGO(a2).transform;
         anno.Create();
         AddAnnotation(anno);
     }
@@ -232,7 +337,24 @@ public class UnityMolAnnotationManager : MonoBehaviour {
         }
 
 
-        anno.annoParent = a2.correspondingGo.transform;
+        anno.annoParent = getGO(a2).transform;
+        anno.Create();
+        AddAnnotation(anno);
+    }
+    public void AnnotateWorldLine(Vector3 p1, Vector3 p2, Transform par, float sizeLine, Color lineCol) {
+
+        CustomLineAnnotation anno = new CustomLineAnnotation();
+        anno.start = p1;
+        anno.end = p2;
+        anno.annoParent = par;
+
+        if (AnnotationExists(anno)) {
+            Debug.LogWarning("These positions are already annotated with a line");
+            return;
+        }
+
+        anno.colorLine = lineCol;
+        anno.sizeLine = sizeLine;
         anno.Create();
         AddAnnotation(anno);
     }
@@ -249,7 +371,7 @@ public class UnityMolAnnotationManager : MonoBehaviour {
             return;
         }
 
-        anno.annoParent = a3.correspondingGo.transform;
+        anno.annoParent = getGO(a3).transform;
         anno.Create();
         AddAnnotation(anno);
 
@@ -267,7 +389,7 @@ public class UnityMolAnnotationManager : MonoBehaviour {
             return;
         }
 
-        anno.annoParent = a3.correspondingGo.transform;
+        anno.annoParent = getGO(a3).transform;
         anno.Create();
         AddAnnotation(anno);
 
@@ -286,7 +408,7 @@ public class UnityMolAnnotationManager : MonoBehaviour {
             return;
         }
 
-        anno.annoParent = a4.correspondingGo.transform;
+        anno.annoParent = getGO(a4).transform;
         anno.Create();
         AddAnnotation(anno);
     }
@@ -303,7 +425,7 @@ public class UnityMolAnnotationManager : MonoBehaviour {
             return;
         }
 
-        anno.annoParent = a2.correspondingGo.transform;
+        anno.annoParent = getGO(a2).transform;
         anno.Create();
         AddAnnotation(anno);
     }
@@ -315,7 +437,7 @@ public class UnityMolAnnotationManager : MonoBehaviour {
         anno.id = UnityMolAnnotationManager.idDraw++;
         anno.atoms.Add(s.currentModel.allAtoms[0]);
 
-        anno.annoParent = UnityMolMain.getStructureManager().GetStructureGameObject(s.uniqueName).transform;
+        anno.annoParent = s.annotationParent.transform;
         anno.Create();
         AddAnnotation(anno);
         return anno.id;
@@ -357,10 +479,25 @@ public class AnnotationComparer : IEqualityComparer<UnityMolAnnotation>
     public bool Equals(UnityMolAnnotation a1, UnityMolAnnotation a2)
     {
         if (a1 == null && a2 == null) { return true;}
-        if (a1 == null | a2 == null) { return false;}
+        if (a1 == null || a2 == null) { return false;}
         if (a1.GetType() == a2.GetType() && UnityMolAnnotationManager.sameAtoms(a1.atoms, a2.atoms)) {
             if (a1.GetType().ToString() == "UMol.DrawAnnotation") {
                 return ((DrawAnnotation)a1).id == ((DrawAnnotation)a2).id;
+            }
+            if (a1.GetType().ToString() == "UMol.CustomSphereAnnotation") {
+                return ((CustomSphereAnnotation)a1).annoParent.name == ((CustomSphereAnnotation)a2).annoParent.name;
+            }
+            if (a1.GetType().ToString() == "UMol.CustomLineAnnotation") {
+                return ((CustomLineAnnotation)a1).start == ((CustomLineAnnotation)a2).start &&
+                       ((CustomLineAnnotation)a1).end == ((CustomLineAnnotation)a2).end;
+            }
+            if (a1.GetType().ToString() == "UMol.CustomTextAnnotation") {
+                return ((CustomTextAnnotation)a1).content == ((CustomTextAnnotation)a2).content &&
+                       ((CustomTextAnnotation)a1).annoParent.name == ((CustomTextAnnotation)a2).annoParent.name;
+            }
+            if (a1.GetType().ToString() == "UMol.Annotate2D") {
+                return ((Annotate2D)a1).content == ((Annotate2D)a2).content &&
+                       ((Annotate2D)a1).posPercent == ((Annotate2D)a2).posPercent;
             }
             return true;
         }

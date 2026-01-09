@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,30 +27,13 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.XR;
-using VRTK;
-
 
 namespace UMol {
 public class AtomRepresentationSphere : AtomRepresentation {
@@ -61,39 +42,22 @@ public class AtomRepresentationSphere : AtomRepresentation {
     public MaterialPropertyBlock properties;
     public Dictionary<UnityMolAtom, int> atomToId;
 
+    public Material solidMat;
+    public Material transMat;
 
-
-    public AtomRepresentationSphere(string structName, UnityMolSelection sel) {
+    public AtomRepresentationSphere(int idF, string structName, UnityMolSelection sel) {
         colorationType = colorType.atom;
-        GameObject loadedMolGO = UnityMolMain.getRepresentationParent();
+        
+        representationParent = UnityMolMain.getRepStructureParent(structName).transform;
 
-
-        representationParent = loadedMolGO.transform.Find(structName);
-        if (UnityMolMain.inVR() && representationParent == null) {
-
-            Transform clref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.LeftController);
-            Transform crref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.RightController);
-            if (clref != null) {
-                representationParent = clref.Find(structName);
-            }
-            if (representationParent == null && crref != null) {
-                representationParent = crref.Find(structName);
-            }
-        }
-
-        if (representationParent == null) {
-            representationParent = (new GameObject(structName).transform);
-            representationParent.parent = loadedMolGO.transform;
-            representationParent.localPosition = Vector3.zero;
-            representationParent.localRotation = Quaternion.identity;
-            representationParent.localScale = Vector3.one;
-        }
         GameObject newRep = new GameObject("AtomInstantiatedSphereRepresentation");
         newRep.transform.parent = representationParent;
         representationTransform = newRep.transform;
 
 
         selection = sel;
+        idFrame = idF;
+
         atomToId = new Dictionary<UnityMolAtom, int>();
         DisplaySphere(newRep.transform);
         // newRep.transform.position -= offset;
@@ -101,21 +65,26 @@ public class AtomRepresentationSphere : AtomRepresentation {
         newRep.transform.localRotation = Quaternion.identity;
         newRep.transform.localScale = Vector3.one;
 
-        nbAtoms = selection.Count;
+        nbAtoms = selection.atoms.Count;
     }
 
-    private void DisplaySphere(Transform repParent){
+    private void DisplaySphere(Transform repParent) {
         meshesGO = new List<GameObject>();
         properties = new MaterialPropertyBlock();
         atomToId = new Dictionary<UnityMolAtom, int>();
         GameObject prefab = Resources.Load("Prefabs/SpherePrefab") as GameObject ;
+        solidMat = prefab.GetComponent<MeshRenderer>().sharedMaterial;
 
-
-        for (int i = 0; i < selection.Count; i++) {
+        for (int i = 0; i < selection.atoms.Count; i++) {
             Transform t = GameObject.Instantiate(prefab).transform;
-            t.name = selection.atoms[i].residue.chain.name+"_"+selection.atoms[i].residue.name+selection.atoms[i].residue.id+"_"+selection.atoms[i].name+"_"+selection.atoms[i].number;
-            t.position = selection.atoms[i].position;
-            t.localScale = Vector3.one * selection.atoms[i].radius*2;
+            t.name = selection.atoms[i].residue.chain.name + "_" + selection.atoms[i].residue.name + selection.atoms[i].residue.id + "_" + selection.atoms[i].name + "_" + selection.atoms[i].number;
+            if (idFrame != -1) {
+                t.position = selection.extractTrajFramePositions[idFrame][i];
+            }
+            else {
+                t.position = selection.atoms[i].position;
+            }
+            t.localScale = Vector3.one * selection.atoms[i].radius * 2;
             t.SetParent(repParent);
 
             properties.SetColor("_Color", selection.atoms[i].color);
@@ -128,6 +97,6 @@ public class AtomRepresentationSphere : AtomRepresentation {
             meshesGO.Add(t.gameObject);
         }
     }
-    public override void Clean(){}
+    public override void Clean() {}
 }
 }

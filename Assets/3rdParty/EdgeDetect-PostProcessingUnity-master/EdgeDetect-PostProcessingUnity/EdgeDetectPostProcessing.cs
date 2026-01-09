@@ -33,6 +33,7 @@ public class EdgeDetectPostProcessing : PostProcessEffectSettings
 	}
 
 	public EdgeDetectModeParameter mode = new EdgeDetectModeParameter() { value = EdgeDetectMode.SobelDepthThin };
+	public ColorParameter outlineColor = new ColorParameter() { value =  Color.black };
 	public FloatParameter sensitivityDepth = new FloatParameter() { value = 1.0f };
 	public FloatParameter sensitivityNormals = new FloatParameter() { value = 1.0f };
 	public FloatParameter lumThreshold = new FloatParameter() { value = 0.2f };
@@ -62,6 +63,7 @@ public class EdgeDetectPostProcessingRenderer<T> : PostProcessEffectRenderer<T> 
 		sheet.properties.SetVector("_BgColor", settings.edgesOnlyBgColor.value);
 		sheet.properties.SetFloat("_Exponent", settings.edgeExp);
 		sheet.properties.SetFloat("_Threshold", settings.lumThreshold);
+		sheet.properties.SetColor("_OutlineColor", settings.outlineColor.value);
 
 		context.command.BlitFullscreenTriangle(context.source, context.destination, sheet, (int)settings.mode.value);
 	}

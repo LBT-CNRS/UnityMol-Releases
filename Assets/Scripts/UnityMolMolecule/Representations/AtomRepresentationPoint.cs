@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,125 +27,144 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using UnityEngine.Rendering;
-using System.Collections;
-using System.Text;
 using System.Collections.Generic;
-using UnityEngine.XR;
-using VRTK;
 
 
 namespace UMol {
+
+/// <summary>
+/// Handles the Point representation (flat 2D circle) for atoms
+/// Uses 3rd Party library 'PCX' to rendering
+/// <remarks>Metal doesn't support Disk Shader so use the Point one instead</remarks>
+/// </summary>
 public class AtomRepresentationPoint : AtomRepresentation {
 
+    /// <summary>
+    /// The GameObject of the Mesh holding the representation
+    /// </summary>
+    public GameObject meshGO;
 
-	public GameObject meshGO;
-	public Dictionary<UnityMolAtom, int> atomToId;
-	// public List<Color> atomColors;
-	// public bool withShadow = true;
+    /// <summary>
+    /// General Scaling factor for the Point size.
+    /// </summary>
+    public const float ScalingFactor = 0.625f;
 
+    public Dictionary<UnityMolAtom, int> atomToId;
 
-	public AtomRepresentationPoint(string structName, UnityMolSelection sel) {
-		colorationType = colorType.atom;
+    public AtomRepresentationPoint(int idF, string structName, UnityMolSelection sel) {
+        colorationType = colorType.atom;
 
-		GameObject loadedMolGO = UnityMolMain.getRepresentationParent();
+        representationParent = UnityMolMain.getRepStructureParent(structName).transform;
 
-		representationParent = loadedMolGO.transform.Find(structName);
-		if (UnityMolMain.inVR() && representationParent == null) {
+        GameObject newRep = new("AtomRepresentationPoint") {
+            transform = {
+                parent = representationParent
+            }
+        };
+        representationTransform = newRep.transform;
 
-			Transform clref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.LeftController);
-			Transform crref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.RightController);
-			if (clref != null) {
-				representationParent = clref.Find(structName);
-			}
-			if (representationParent == null && crref != null) {
-				representationParent = crref.Find(structName);
-			}
-		}
-		if (representationParent == null) {
-			representationParent = (new GameObject(structName).transform);
-			representationParent.parent = loadedMolGO.transform;
-			representationParent.localPosition = Vector3.zero;
-			representationParent.localRotation = Quaternion.identity;
-			representationParent.localScale = Vector3.one;
-		}
-		GameObject newRep = new GameObject("AtomRepresentationPoint");
-		newRep.transform.parent = representationParent;
-		representationTransform = newRep.transform;
+        selection = sel;
+        idFrame = idF;
 
-		selection = sel;
+        atomToId = new Dictionary<UnityMolAtom, int>();
 
-		atomToId = new Dictionary<UnityMolAtom, int>();
+        displayPoints(newRep.transform);
 
-		DisplayPoints(newRep.transform);
+        newRep.transform.localPosition = Vector3.zero;
+        newRep.transform.localRotation = Quaternion.identity;
+        newRep.transform.localScale = Vector3.one;
 
-		newRep.transform.localPosition = Vector3.zero;
-		newRep.transform.localRotation = Quaternion.identity;
-		newRep.transform.localScale = Vector3.one;
+        nbAtoms = selection.atoms.Count;
+    }
 
-		nbAtoms = selection.Count;
+    /// <summary>
+    /// Display the atoms as points user the shader.
+    /// </summary>
+    /// <param name="repParent">The Transform component of the Umol Representation GO</param>
+    private void displayPoints(Transform repParent) {
 
-	}
-	void DisplayPoints(Transform repParent) {
+        meshGO = new GameObject("AtomRepPoints") {
+            transform = {
+                parent = repParent
+            }
+        };
 
-		meshGO = new GameObject("AtomRepPoints");
-		meshGO.transform.parent = repParent;
+        Mesh mesh = createMeshForPoints();
+        MeshFilter meshFilter = meshGO.AddComponent<MeshFilter>();
+        meshFilter.sharedMesh = mesh;
 
-		var mesh = createMeshForPoints();
-		var meshFilter = meshGO.AddComponent<MeshFilter>();
-		meshFilter.sharedMesh = mesh;
+        MeshRenderer meshRenderer = meshGO.AddComponent<MeshRenderer>();
 
+        // On Metal, Disk Shader is not supported.
+        if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal) {
 
-		var meshRenderer = meshGO.AddComponent<MeshRenderer>();
-		meshRenderer.sharedMaterial = new Material(Shader.Find("Point Cloud/Disk"));
+            meshRenderer.sharedMaterial = new Material(Shader.Find("Point Cloud/Point"));
+            meshRenderer.sharedMaterial.EnableKeyword("_DISTANCE_ON");
+        } else {
+            meshRenderer.sharedMaterial = new Material(Shader.Find("Point Cloud/Disk"));
 
+        }
+        //Adjust the size with a arbitrary factor
+        float scaleX = GameObject.Find("LoadedMolecules").transform.localScale.x;
+        meshRenderer.sharedMaterial.SetFloat("_PointSize", ScalingFactor * scaleX);
 
-	}
-	Mesh createMeshForPoints() {
-		var mesh = new Mesh();
-		mesh.indexFormat = selection.Count > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16;
+    }
 
-		Vector3[] vertices = new Vector3[selection.Count];
-		Color32[] colors = new Color32[selection.Count];
-		int[] indices = new int[selection.Count];
+    /// <summary>
+    /// Create the Mesh from the list of atoms selected
+    /// </summary>
+    /// <returns>the Mesh created</returns>
+    private Mesh createMeshForPoints() {
+        Mesh mesh = new();
+        int N = selection.atoms.Count;
+        mesh.indexFormat = selection.atoms.Count > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16;
 
-		for (int i = 0; i < selection.Count; i++) {
-			vertices[i] = selection.atoms[i].position;
-			colors[i] = selection.atoms[i].color;
-			indices[i] = i;
-			atomToId[selection.atoms[i]] = i;
-		}
+        Vector3[] vertices = new Vector3[N];
+        Color32[] colors = new Color32[N];
+        int[] indices = new int[N];
 
-		mesh.SetVertices(vertices);
-		mesh.SetColors(colors);
-		mesh.SetIndices(indices, MeshTopology.Points, 0);
+        if (idFrame != -1) {
+            for (int j = 0; j < N; j++) {
+                vertices[j] = selection.extractTrajFramePositions[idFrame][j];
+                colors[j] = selection.atoms[j].color;
+                indices[j] = j;
+                atomToId[selection.atoms[j]] = j;
+            }
+        }
 
-		return mesh;
+        else {
+            for (int i = 0; i < N; i++) {
+                vertices[i] = selection.atoms[i].position;
+                colors[i] = selection.atoms[i].color;
+                indices[i] = i;
+                atomToId[selection.atoms[i]] = i;
+            }
+        }
+        mesh.SetVertices(vertices);
+        mesh.SetColors(colors);
+        mesh.SetIndices(indices, MeshTopology.Points, 0);
 
+        return mesh;
+    }
 
-	}
-
-	public override void Clean() {
-		
-	}
+    /// <summary>
+    /// Destroy the representation
+    /// </summary>
+    public override void Clean() {
+        if(meshGO != null){
+            GameObject.Destroy(meshGO.GetComponent<MeshFilter>().sharedMesh);
+            GameObject.Destroy(meshGO.GetComponent<MeshRenderer>().sharedMaterial);
+        }
+        if(atomToId != null) {
+            atomToId.Clear();
+        }
+        atomToId = null;
+    }
 }
 }

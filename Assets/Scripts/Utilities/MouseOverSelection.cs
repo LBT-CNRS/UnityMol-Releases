@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -60,8 +44,12 @@ public class MouseOverSelection : MonoBehaviour {
 
     TextMesh textm;
     GameObject haloGo;
+    GameObject trajExtraGo;
     public Camera mainCam;
     UnityMolSelectionManager selM;
+    public bool disableMouseInVR = true;
+
+    public bool imdUseSelectionMode = false;
 
     public bool tempDisable = false;
     public bool showSphereHovering = true;
@@ -72,17 +60,20 @@ public class MouseOverSelection : MonoBehaviour {
     public bool clicked = false;
 
     private Vector3 worldPos = Vector3.zero;
-    public int framesToWait = 5;
+    public int framesToWait = 10;
     // int frameCount = 0;
 
 
     public bool duringIMD = false;
     UnityMolSelection curSel = null;
-    Vector3 initPos;
-    Vector3 initPosA;
-    Vector3 initVec;
+    // Vector3 imdInitPos;
+    // Vector3 imdInitPosA;
+    // Vector3 imdInitVec;
+    GameObject hoverAtomGo;
     Transform atomT;
+    UnityMolAtom imdAtom;
     GameObject arrow;
+    List<GameObject> imdArrowList = new List<GameObject>();
 
     float hoverScaleMultiplier = 1.0f;
 
@@ -90,28 +81,35 @@ public class MouseOverSelection : MonoBehaviour {
     void Start() {
         selM = UnityMolMain.getSelectionManager();
         createHaloGo();
+        trajExtraGo = new GameObject("DummyTrajExtractedGo");
+        hoverAtomGo = new GameObject("HoverAtomGo");
+        DontDestroyOnLoad(trajExtraGo);
+        DontDestroyOnLoad(hoverAtomGo);
+
 
         mainCam = Camera.main;
 
         if (arrow == null) {
-            arrow = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            arrow = Instantiate(Resources.Load("Prefabs/SpringPrefab") as GameObject);
             arrow.name = "Arrow";
-            arrow.GetComponent<MeshRenderer>().enabled = false;
-            Destroy(arrow.GetComponent<BoxCollider>());
+            arrow.GetComponentInChildren<MeshRenderer>().enabled = false;
+            DontDestroyOnLoad(arrow);
         }
-
     }
 
     void Update() {
         if (mainCam == null) {
             mainCam = Camera.main;
         }
+        if (disableMouseInVR && UnityMolMain.inVR()) {
+            return;
+        }
 
         if (arrow == null) {
-            arrow = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            arrow = Instantiate(Resources.Load("Prefabs/SpringPrefab") as GameObject);//GameObject.CreatePrimitive(PrimitiveType.Cube);
             arrow.name = "Arrow";
-            arrow.GetComponent<MeshRenderer>().enabled = false;
-            Destroy(arrow.GetComponent<BoxCollider>());
+            arrow.GetComponentInChildren<MeshRenderer>().enabled = false;
+            DontDestroyOnLoad(arrow);
         }
         if (haloGo == null) {
             createHaloGo();
@@ -134,16 +132,20 @@ public class MouseOverSelection : MonoBehaviour {
 
 
         if (Input.GetMouseButtonUp(0)) {
-            arrow.GetComponent<MeshRenderer>().enabled = false;
+            arrow.GetComponentInChildren<MeshRenderer>().enabled = false;
+
+            foreach (GameObject ar in imdArrowList) {
+                ar.SetActive(false);
+            }
+
             if (duringIMD) {
                 UnityMolStructure s = curSel.structures[0];
-                //Get artemis manager
-                ArtemisManager am = s.artemisM;
-                if (am == null) {
+
+                MDDriverManager mdm = s.mddriverM;
+                if (mdm == null) {
                     duringIMD = false;
                     return;
                 }
-                am.clearForces();
             }
             duringIMD = false;
         }
@@ -155,10 +157,17 @@ public class MouseOverSelection : MonoBehaviour {
             clicked = false;
             if (Time.time - lastClickTime < catchTime) {//Double click => center on selected structure
                 duringIMD = false;
-                UnityMolAtom a = getAtomPointed();
+                Vector3 p = Vector3.zero;
+                bool isExtrAtom = false;
+                UnityMolAtom a = getAtomPointed(true, ref p, ref isExtrAtom);
                 if (a != null) {
-                    UnityMolStructure s = a.residue.chain.model.structure;
-                    API.APIPython.centerOnStructure(s.uniqueName, true);
+                    ManipulationManager mm = API.APIPython.getManipulationManager();
+                    if (mm != null) {
+                        mm.centerOnSelection(a.residue.ToSelection(), true, -1, 0.25f);
+                    }
+
+                    // UnityMolStructure s = a.residue.chain.model.structure;
+                    // API.APIPython.centerOnStructure(s.name, true);
                 }
             }
             else { //Delay the simple click to avoid doing the selection
@@ -184,6 +193,10 @@ public class MouseOverSelection : MonoBehaviour {
 
             lastRightClickTime = Time.time;
         }
+        if (Input.GetKey(KeyCode.LeftAlt) && Input.GetMouseButtonDown(0) && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject() ) { //Mouse left clicked + alt
+            doHovering();
+            clicked = false;
+        }
 
         if (!duringIMD && clicked && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject() && Time.time - lastClickTime > catchTime) {
             if (!Input.GetMouseButton(0)) {
@@ -197,38 +210,67 @@ public class MouseOverSelection : MonoBehaviour {
 
             UnityMolStructure s = curSel.structures[0];
             UnityMolStructureManager sm = UnityMolMain.getStructureManager();
-            Transform molParent = sm.structureToGameObject[s.uniqueName].transform;
+            Transform molParent = sm.structureToGameObject[s.name].transform;
 
             Vector3 curPosA = molParent.InverseTransformPoint(atomT.position);
 
             Vector3 mousePos = Input.mousePosition;
-            mousePos.z = Vector3.Distance(mainCam.transform.position, atomT.position);
+            mousePos.z = Mathf.Abs(mainCam.transform.position.z - atomT.position.z);
             Vector3 mousePosW = mainCam.ScreenToWorldPoint(mousePos);
             Vector3 curPos = molParent.InverseTransformPoint(mousePosW);
-
 
             Vector3 between = (curPos - curPosA);
             Vector3 forceL = between;
 
-            //Get artemis manager
-            ArtemisManager am = s.artemisM;
-            if (am == null) {
+            MDDriverManager mdm = s.mddriverM;
+            if (mdm == null) {
+                duringIMD = false;
                 return;
             }
 
-            am.addForce(curSel.atoms[0].idInAllAtoms, new float[] {forceL.x, forceL.y, forceL.z});
+            Vector3 initAtomToMouse = mousePosW - atomT.position;
 
-            //Visual feedback
-            arrow.GetComponent<MeshRenderer>().enabled = true;
+            //Add same force to all atoms in the selection
+            foreach (UnityMolAtom a in curSel.atoms) {
+                mdm.addForce(a.idInAllAtoms, new float[] {forceL.x, forceL.y, forceL.z});
+            }
+            showAddedForces(initAtomToMouse);
 
-            float dist = (mousePosW - atomT.position).magnitude;
-            arrow.transform.localScale = new Vector3(dist / 12.0f, dist / 12.0f, dist);
-            arrow.transform.position = atomT.position + (mousePosW - atomT.position) / 2.0f;
-            arrow.transform.LookAt(mousePosW);
+        }
+    }
 
+    void showAddedForces(Vector3 iniAtomToMouse) {
+        //Pool objects, can be improved with a real pool
+        if (imdArrowList.Count < curSel.Count) {
+            int start = imdArrowList.Count;
+            int end = curSel.Count;
+            for (int i = start; i < end; i++) {
+                GameObject newArr = Instantiate(arrow);
+                newArr.GetComponentInChildren<MeshRenderer>().enabled = true;
+                imdArrowList.Add(newArr);
+            }
+        }
+        foreach (GameObject ar in imdArrowList) {
+            ar.SetActive(false);
+        }
+
+        float magn = iniAtomToMouse.magnitude;
+        UnityMolStructure s = imdAtom.residue.chain.model.structure;
+        int id = 0;
+        foreach (UnityMolAtom a in curSel.atoms) {
+            Transform aT = UnityMolMain.getAnnotationManager().getGO(a).transform;
+            imdArrowList[id].SetActive(true);
+
+            imdArrowList[id].transform.localScale = new Vector3(magn / 2.0f, magn / 2.0f, magn);
+            imdArrowList[id].transform.position = aT.position + iniAtomToMouse / 2.0f;
+            imdArrowList[id].transform.LookAt(aT.position + iniAtomToMouse);
+
+            id++;
         }
 
     }
+
+
 
     private void createHaloGo() {
         haloGo = GameObject.Instantiate((GameObject) Resources.Load("Prefabs/SphereOverAtom"));
@@ -236,20 +278,23 @@ public class MouseOverSelection : MonoBehaviour {
         // haloGo.layer = LayerMask.NameToLayer("Ignore Raycast");
         haloGo.SetActive(false);
         textm.gameObject.GetComponent<MeshRenderer>().sortingOrder = 50;
+        DontDestroyOnLoad(haloGo);
     }
 
-    public UnityMolAtom getAtomPointed() {
+    public UnityMolAtom getAtomPointed(bool useExtractedTraj, ref Vector3 outWPos, ref bool isExtrAtom) {
         Ray ray = mainCam.ScreenPointToRay(Input.mousePosition); // Create the ray from screen to infinite
 
         CustomRaycastBurst raycaster = UnityMolMain.getCustomRaycast();
-        UnityMolAtom a = raycaster.customRaycastAtomBurst(ray.origin, ray.direction);
+        UnityMolAtom a = raycaster.customRaycastAtomBurst(ray.origin, ray.direction, ref outWPos, ref isExtrAtom, useExtractedTraj);
 
         return a;
     }
 
     private void doHovering() {
 
-        UnityMolAtom a = getAtomPointed();
+        Vector3 p = Vector3.zero;
+        bool isExtrAtom = false;
+        UnityMolAtom a = getAtomPointed(true, ref p, ref isExtrAtom);
 
         if (a != null) {
 
@@ -258,18 +303,30 @@ public class MouseOverSelection : MonoBehaviour {
             }
             //Format the text of the atom
             textm.text = PointerHoverAtom.formatAtomText(a);
+            Debug.Log(a + ": " + a.position.x.ToString("f2") + " | " + a.position.y.ToString("f2") + " | " + a.position.z.ToString("f2"));
             haloGo.SetActive(true);
 
-            UnityMolStructureManager sm = UnityMolMain.getStructureManager();
-            UnityMolSelectionManager selM = UnityMolMain.getSelectionManager();
+            // UnityMolStructureManager sm = UnityMolMain.getStructureManager();
+            // UnityMolSelectionManager selM = UnityMolMain.getSelectionManager();
             UnityMolStructure s = a.residue.chain.model.structure;
-            Transform molPar = sm.GetStructureGameObject(s.uniqueName).transform;
+            // Transform molPar = sm.GetStructureGameObject(s.name).transform;
 
-            haloGo.transform.position = molPar.TransformPoint(a.position);
+            // haloGo.transform.position = molPar.TransformPoint(a.position);
+            haloGo.transform.position = p;
+            trajExtraGo.transform.position = p;
 
             haloGo.transform.rotation = Quaternion.LookRotation(haloGo.transform.position - mainCam.transform.position);
-            GameObject goAtom = s.atomToGo[a];
-            haloGo.transform.SetParent(goAtom.transform);
+
+            UnityMolMain.getAnnotationManager().setGOPos(a, hoverAtomGo);
+
+            if (!isExtrAtom)
+                haloGo.transform.SetParent(hoverAtomGo.transform);
+            else {
+                trajExtraGo.transform.SetParent(hoverAtomGo.transform);
+                trajExtraGo.transform.localScale = hoverAtomGo.transform.localScale;
+                haloGo.transform.SetParent(trajExtraGo.transform);
+
+            }
 
             haloGo.transform.localScale =  hoverScaleMultiplier * a.radius * Vector3.one * 1.1f;
 
@@ -287,26 +344,43 @@ public class MouseOverSelection : MonoBehaviour {
     }
 
     private void doIMDPull() {
-        UnityMolAtom hoveredAtom = getAtomPointed();
+        Vector3 p = Vector3.zero;
+        bool isExtrAtom = false;
+        UnityMolAtom hoveredAtom = getAtomPointed(false, ref p, ref isExtrAtom);
 
         if (hoveredAtom != null) {
 
             UnityMolSelection hoveredSelection = null;
 
-            if (hoveredAtom.residue.chain.model.structure.artemisM != null) {
+            if (hoveredAtom.residue.chain.model.structure.mddriverM != null) {
                 //IMD running for this structure
                 UnityMolStructure s = hoveredAtom.residue.chain.model.structure;
-                hoveredSelection = hoveredAtom.ToSelection();
+                if (imdUseSelectionMode) {
+                    if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Atom) {
+                        hoveredSelection = hoveredAtom.ToSelection();
+                    }
+                    else if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Residue) {
+                        UnityMolResidue hoveredRes = hoveredAtom.residue;
+                        hoveredSelection = hoveredRes.ToSelection(false);
+                    }
+                    else if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Chain) {
+                        UnityMolChain hoveredChain = hoveredAtom.residue.chain;
+                        hoveredSelection = hoveredChain.ToSelection(false);
+                    }
+                }
+                else {
+                    hoveredSelection = hoveredAtom.ToSelection();
+                }
 
-                UnityMolStructureManager sm = UnityMolMain.getStructureManager();
-                Transform molParent = sm.structureToGameObject[s.uniqueName].transform;
-                atomT = s.atomToGo[hoveredAtom].transform;
+                atomT = UnityMolMain.getAnnotationManager().getGO(hoveredAtom).transform;
+
+                imdAtom = hoveredAtom;
 
                 curSel = hoveredSelection;
 
-                initPos = molParent.InverseTransformPoint(atomT.position);
-                initPosA = molParent.InverseTransformPoint(atomT.position);
-                initVec = initPos - initPosA;
+                // imdInitPos = molParent.InverseTransformPoint(atomT.position);
+                // imdInitPosA = molParent.InverseTransformPoint(atomT.position);
+                // imdInitVec = imdInitPos - imdInitPosA;
 
                 duringIMD = true;
                 return;
@@ -316,7 +390,9 @@ public class MouseOverSelection : MonoBehaviour {
 
     private void doSelection() {
 
-        UnityMolAtom hoveredAtom = getAtomPointed();
+        Vector3 p = Vector3.zero;
+        bool isExtrAtom = false;
+        UnityMolAtom hoveredAtom = getAtomPointed(false, ref p, ref isExtrAtom);
 
         if (hoveredAtom != null) {
 
@@ -324,7 +400,7 @@ public class MouseOverSelection : MonoBehaviour {
 
 
             // //Do that to force creating a new selection when clicking
-            // if (selM.currentSelection != null && selM.currentSelection.name.StartsWith("all(")) {
+            // if (selM.currentSelection != null && selM.currentSelection.name.StartsWith("all_")) {
             //     API.APIPython.clearSelections();
             // }
 
@@ -360,21 +436,21 @@ public class MouseOverSelection : MonoBehaviour {
 
             int afterAdding = newSel.Count;
 
-            if (countBeforeAdding == afterAdding) {
-                API.APIPython.removeFromSelection(hoveredSelection.MDASelString, cSel.name, silent: true);
+            if (!Input.GetKey(KeyCode.LeftControl)) { //Left control only adds to selection
+                if (countBeforeAdding == afterAdding) {
+                    API.APIPython.removeFromSelection(hoveredSelection.MDASelString, cSel.name, silent: true);
+                }
             }
-            if (cSel.Count == 1) {
-                Debug.Log(cSel + " : " + cSel.atoms[0]);
-            }
-            else {
-                Debug.Log(cSel);
-            }
-            // API.APIPython.updateRepresentations(cSel.name);
+
+            Debug.Log(selM.currentSelection);
+
+            API.APIPython.updateRepresentations(selM.currentSelection.name);
 
 
         }
         else {
-            selM.ClearCurrentSelection();
+            if (!Input.GetKey(KeyCode.LeftControl))
+                API.APIPython.clearSelections();
         }
     }
 

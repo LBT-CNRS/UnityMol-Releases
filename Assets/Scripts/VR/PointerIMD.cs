@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,80 +27,91 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
-using VRTK;
+
 using UMol.API;
 
-namespace UMol {
+using HTC.UnityPlugin.Vive;
+using HTC.UnityPlugin.Utility;
 
-[RequireComponent(typeof(VRTK_Pointer))]
-[RequireComponent(typeof(VRTK_StraightPointerRendererNoRB))]
+namespace UMol {
+[RequireComponent(typeof(ViveRoleSetter))]
 public class PointerIMD : MonoBehaviour {
 
-    VRTK_Pointer pointer;
-    VRTK_StraightPointerRendererNoRB pointerR;
+    public bool imdUseSelectionMode = false;
+
     UnityMolSelectionManager selM;
     PointerHoverAtom hoveringScript;
     CustomRaycastBurst raycaster;
     UnityMolSelection curSel;
+
     Vector3 initPos;
     Vector3 initPosA;
     Vector3 initVec;
-    VRTK_ControllerReference controllerReference;
+
+    List<GameObject> imdArrowList = new List<GameObject>();
 
     Transform atomT;
     GameObject arrow;
 
+    ViveRoleProperty curRole;
+
+
     void OnEnable() {
+        curRole = GetComponent<ViveRoleSetter>().viveRole;
+
         raycaster = UnityMolMain.getCustomRaycast();
 
-        if (pointer == null) {
-            pointer = GetComponent<VRTK_Pointer>();
-        }
-        if (pointerR == null) {
-            pointerR = GetComponent<VRTK_StraightPointerRendererNoRB>();
-        }
         selM = UnityMolMain.getSelectionManager();
         curSel = null;
 
         hoveringScript = GetComponent<PointerHoverAtom>();
 
         if (arrow == null) {
-            arrow = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            arrow.GetComponent<MeshRenderer>().enabled = false;
-            Destroy(arrow.GetComponent<BoxCollider>());
+            arrow = Instantiate(Resources.Load("Prefabs/SpringPrefab") as GameObject);
+            arrow.GetComponentInChildren<MeshRenderer>().enabled = false;
+            DontDestroyOnLoad(arrow);
         }
 
+        if (curRole != null) {
+            ViveInput.AddPressDown((HandRole)curRole.roleValue, ControllerButton.Pad, buttonPressed);
+            ViveInput.AddPressUp((HandRole)curRole.roleValue, ControllerButton.Pad, buttonReleased);
+        }
+    }
 
-        pointer.SelectionButtonPressed += buttonPressed;
-        pointer.ActivationButtonReleased += buttonReleased;
+    void OnDisable() {
+        if (curRole != null) {
+            ViveInput.RemovePressDown((HandRole)curRole.roleValue, ControllerButton.Pad, buttonPressed);
+            ViveInput.RemovePressUp((HandRole)curRole.roleValue, ControllerButton.PadTouch, buttonReleased);
+        }
+
+        curSel = null;
+
+        if (arrow != null) {
+            arrow.transform.parent = null;
+            arrow.GetComponentInChildren<MeshRenderer>().enabled = false;
+        }
     }
 
 
+    void buttonPressed() {
 
-    void buttonPressed(object sender, ControllerInteractionEventArgs e) {
+        RigidPose cpose = VivePose.GetPose(curRole);
 
-        UnityMolAtom a = raycaster.customRaycastAtomBurst(pointerR.actualContainer.transform.position, pointerR.actualTracer.transform.forward);
+
+        Vector3 p = Vector3.zero;
+        bool isExtrAtom = false;
+        UnityMolAtom a = raycaster.customRaycastAtomBurst(
+                             cpose.pos,
+                             cpose.forward,
+                             ref p, ref isExtrAtom, false);
 
         if (a == null) {
             curSel = null;
@@ -113,34 +122,38 @@ public class PointerIMD : MonoBehaviour {
 
         if (clickedAtom != null) {
             UnityMolSelection imdSelection = null;
-            // if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Atom) {
-            imdSelection = clickedAtom.ToSelection();
-            // }
-            // else if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Residue) {
-            //     UnityMolResidue clickedRes = clickedAtom.residue;
-            //     imdSelection = clickedRes.ToSelection();
-            // }
-            // else if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Chain) {
-            //     UnityMolChain clickedChain = clickedAtom.residue.chain;
-            //     imdSelection = clickedChain.ToSelection();
-            // }
-            // else if(selM.selectionMode == UnityMolSelectionManager.SelectionMode.Molecule){
-            // }
+
+            if (imdUseSelectionMode) {
+                if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Atom) {
+                    imdSelection = clickedAtom.ToSelection();
+                }
+                else if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Residue) {
+                    UnityMolResidue hoveredRes = clickedAtom.residue;
+                    imdSelection = hoveredRes.ToSelection(false);
+                }
+                else if (selM.selectionMode == UnityMolSelectionManager.SelectionMode.Chain) {
+                    UnityMolChain hoveredChain = clickedAtom.residue.chain;
+                    imdSelection = hoveredChain.ToSelection(false);
+                }
+            }
+            else {
+                imdSelection = clickedAtom.ToSelection();
+            }
+
 
             if (imdSelection.structures == null || imdSelection.structures.Count != 1) {
                 return;
             }
             UnityMolStructure s = imdSelection.structures[0];
             UnityMolStructureManager sm = UnityMolMain.getStructureManager();
-            Transform molParent = sm.structureToGameObject[s.uniqueName].transform;
-            atomT = s.atomToGo[clickedAtom].transform;
+            Transform molParent = sm.structureToGameObject[s.name].transform;
+            atomT = UnityMolMain.getAnnotationManager().getGO(clickedAtom).transform;
 
             curSel = imdSelection;
+
             initPos = molParent.InverseTransformPoint(transform.position);
             initPosA = molParent.InverseTransformPoint(atomT.position);
             initVec = initPos - initPosA;
-
-            controllerReference = e.controllerReference;
         }
 
     }
@@ -154,7 +167,7 @@ public class PointerIMD : MonoBehaviour {
 
             UnityMolStructure s = curSel.structures[0];
             UnityMolStructureManager sm = UnityMolMain.getStructureManager();
-            Transform molParent = sm.structureToGameObject[s.uniqueName].transform;
+            Transform molParent = sm.structureToGameObject[s.name].transform;
 
             Vector3 curPos = molParent.InverseTransformPoint(transform.position);
             Vector3 curPosA = molParent.InverseTransformPoint(atomT.position);
@@ -162,14 +175,14 @@ public class PointerIMD : MonoBehaviour {
             Vector3 between = (curPos - curPosA);
             Vector3 forceL = between - initVec;
 
-            //Get artemis manager
-            ArtemisManager am = s.artemisM;
-            if (am == null) {
+            MDDriverManager mdm = s.mddriverM;
+            if (mdm == null) {
                 return;
             }
 
-            foreach(UnityMolAtom a in curSel.atoms){
-                am.addForce(a.idInAllAtoms, new float[] {forceL.x, forceL.y, forceL.z});
+            foreach (UnityMolAtom a in curSel.atoms) {
+                // am.addForce(a.idInAllAtoms, new float[] {forceL.x, forceL.y, forceL.z});
+                mdm.addForce(a.idInAllAtoms, new float[] {forceL.x, forceL.y, forceL.z});
             }
 
             //Haptic feedback
@@ -178,20 +191,24 @@ public class PointerIMD : MonoBehaviour {
             float vibrationStrength = Mathf.Clamp01(forceL.magnitude / 50f);
             float actualVibration = Mathf.Lerp(0.0f, 1.0f, vibrationStrength);
 
-            VRTK_ControllerHaptics.TriggerHapticPulse(controllerReference, actualVibration);
+            ViveInput.TriggerHapticPulseEx(curRole.roleType, curRole.roleValue, (ushort)(actualVibration * 3999));//3999 is the max value
 
             //Visual feedback
-            arrow.GetComponent<MeshRenderer>().enabled = true;
+            arrow.GetComponentInChildren<MeshRenderer>().enabled = true;
+
+            Vector3 initAtomToCtrl = transform.position - atomT.position;
+
+            showAddedForces(initAtomToCtrl);
 
 
-            float dist = (transform.position - atomT.position).magnitude;
-            float clampedForceMag = Mathf.Clamp(forceL.magnitude, 0.1f, 50.0f);
-            float lerped = Mathf.Lerp(0.1f, 1.0f, clampedForceMag / 50.0f);
+            // float dist = (transform.position - atomT.position).magnitude;
+            // float clampedForceMag = Mathf.Clamp(forceL.magnitude, 0.1f, 50.0f);
+            // float lerped = Mathf.Lerp(0.1f, 1.0f, clampedForceMag / 50.0f);
 
-            arrow.transform.localScale = new Vector3(lerped / 10.0f, lerped / 10.0f, dist);
-            // arrow.transform.localScale = new Vector3(dist/12.0f, dist/12.0f, dist);
-            arrow.transform.position = atomT.position + (transform.position - atomT.position) / 2.0f;
-            arrow.transform.LookAt(transform.position);
+            // arrow.transform.localScale = new Vector3(lerped / 10.0f, lerped / 10.0f, dist);
+            // // arrow.transform.localScale = new Vector3(dist/12.0f, dist/12.0f, dist);
+            // arrow.transform.position = atomT.position + (transform.position - atomT.position) / 2.0f;
+            // arrow.transform.LookAt(transform.position);
 
         }
         else {
@@ -201,36 +218,52 @@ public class PointerIMD : MonoBehaviour {
         }
     }
 
-    void buttonReleased(object sender, ControllerInteractionEventArgs e) {
-        curSel = null;
-        arrow.transform.parent = null;
-        arrow.GetComponent<MeshRenderer>().enabled = false;
-        if (curSel != null && curSel.Count != 0) {
 
-            UnityMolStructure s = curSel.structures[0];
-
-            //Get artemis manager
-            ArtemisManager am = s.artemisM;
-            if (am == null) {
-                return;
+    void showAddedForces(Vector3 iniAtomToCtrl) {
+        //Pool objects, can be improved with a real pool
+        if (imdArrowList.Count < curSel.Count) {
+            int start = imdArrowList.Count;
+            int end = curSel.Count;
+            for (int i = start; i < end; i++) {
+                GameObject newArr = Instantiate(arrow);
+                newArr.GetComponentInChildren<MeshRenderer>().enabled = true;
+                imdArrowList.Add(newArr);
             }
-            am.clearForces();
         }
-        // gameObject.GetComponent<VRTK_UIPointer>().enabled = true;
-    }
-    void buttonOut(object sender, DestinationMarkerEventArgs e) {
-        curSel = null;
-        arrow.transform.parent = null;
-        arrow.GetComponent<MeshRenderer>().enabled = false;
-        // gameObject.GetComponent<VRTK_UIPointer>().enabled = true;
+        foreach (GameObject ar in imdArrowList) {
+            ar.SetActive(false);
+        }
+
+        float magn = iniAtomToCtrl.magnitude;
+        UnityMolStructure s = curSel.structures[0];
+        int id = 0;
+        foreach (UnityMolAtom a in curSel.atoms) {
+            Transform aT = UnityMolMain.getAnnotationManager().getGO(a).transform;
+            imdArrowList[id].SetActive(true);
+
+            imdArrowList[id].transform.localScale = new Vector3(magn / 2.0f, magn / 2.0f, magn);
+            imdArrowList[id].transform.position = aT.position + iniAtomToCtrl / 2.0f;
+            imdArrowList[id].transform.LookAt(aT.position + iniAtomToCtrl);
+
+            id++;
+        }
+
     }
 
-    void OnDisable() {
-        curSel = null;
-        pointer.SelectionButtonPressed -= buttonPressed;
-        pointer.ActivationButtonReleased -= buttonReleased;
+    void buttonReleased() {
         arrow.transform.parent = null;
-        arrow.GetComponent<MeshRenderer>().enabled = false;
+        arrow.GetComponentInChildren<MeshRenderer>().enabled = false;
+        foreach (GameObject ar in imdArrowList) {
+            ar.SetActive(false);
+        }
+
+        curSel = null;
+
+    }
+    void buttonOut() {
+        curSel = null;
+        arrow.transform.parent = null;
+        arrow.GetComponentInChildren<MeshRenderer>().enabled = false;
     }
 }
 }

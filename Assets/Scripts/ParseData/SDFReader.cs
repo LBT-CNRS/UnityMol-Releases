@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,23 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
 
 // Unity Classes
 using UnityEngine;
@@ -136,7 +121,8 @@ public class SDFReader: Reader {
     /// <summary>
     /// Parses a SDF file file to a Molecule object
     /// </summary>
-    protected override UnityMolStructure ReadData(StreamReader sr, bool readHET, bool readWater, bool simplyParse = false) {
+    protected override UnityMolStructure ReadData(StreamReader sr, bool readHET, bool readWater,
+            bool simplyParse = false, UnityMolStructure.MolecularType? forceStructureType = null) {
         List<UnityMolModel> models = new List<UnityMolModel>();
 
         using (sr) { // Don't use garbage collection but free temp memory after reading the pdb file
@@ -165,11 +151,12 @@ public class SDFReader: Reader {
 
             }
         }
-        UnityMolStructure newStruct = new UnityMolStructure(models, this.fileNameWithoutExtension);
+        UnityMolStructure newStruct = new UnityMolStructure(models, this.FileNameWithoutExtension);
         foreach (UnityMolModel m in models) {
             m.structure = newStruct;
             if (!simplyParse) {
-                m.ComputeCenterOfGravity();
+                m.ComputeCentroid();
+                m.fillIdAtoms();
             }
         }
 
@@ -177,14 +164,14 @@ public class SDFReader: Reader {
             return newStruct;
         }
         UnityMolSelection sel = newStruct.ToSelection();
-        
+
         if (newStruct.models.Count != 1) {
             for (int i = 1; i < newStruct.models.Count; i++) {
-                CreateColliders(new UnityMolSelection(newStruct.models[i].allAtoms, newBonds: null, sel.name, newStruct.uniqueName));
+                CreateUnityObjects(newStruct.ToSelectionName(), new UnityMolSelection(newStruct.models[i].allAtoms, newBonds: null, sel.name, newStruct.name));
             }
         }
-        CreateColliders(sel);
-        newStruct.surfThread = startSurfaceThread(sel);
+        CreateUnityObjects(newStruct.ToSelectionName(), sel);
+        newStruct.surfThread = StartSurfaceThread(sel);
 
 
         UnityMolMain.getStructureManager().AddStructure(newStruct);
@@ -248,7 +235,7 @@ public class SDFReader: Reader {
         }
 
 
-        UnityMolResidue uniqueRes = new UnityMolResidue(0, allAtoms, "SDF");
+        UnityMolResidue uniqueRes = new UnityMolResidue(0, 0, allAtoms, "SDF");
         foreach (UnityMolAtom a in allAtoms) {
             a.SetResidue(uniqueRes);
         }
@@ -428,40 +415,39 @@ public class SDFReader: Reader {
         sw.Append(name);
         sw.Append("\n");
         sw.Append("\tUnityMol version ");
-        sw.Append(UnityMolMain.version);
+        sw.Append(UnityMolMain.Version);
         sw.Append("\n\n");
 
         //Header, connection table
-        sw.Append(String.Format("{0,3}", select.atoms.Count));
-        sw.Append(String.Format("{0,3}", select.bonds.Count));
+        sw.AppendFormat("{0,3}", select.atoms.Count);
+        sw.AppendFormat("{0,3}", select.bonds.Count);
         sw.Append("  0  0  1  0  0  0  0  0999 V200\n");
 
 
         //Atoms
         foreach (UnityMolAtom a in atoms) {
-            sw.Append(String.Format("{0,10:N4}", (-1 * a.oriPosition.x)));
-            sw.Append(String.Format("{0,10:N4}", a.oriPosition.y));
-            sw.Append(String.Format("{0,10:N4}", a.oriPosition.z));
-            sw.Append(String.Format("{0,2}", a.type));
+            sw.AppendFormat("{0,10:N4}", (-1 * a.oriPosition.x));
+            sw.AppendFormat("{0,10:N4}", a.oriPosition.y);
+            sw.AppendFormat("{0,10:N4}", a.oriPosition.z);
+            sw.AppendFormat("{0,2}", a.type);
             sw.Append("   0  0  0  0  0\n");
         }
 
         int idA = 1;
+        int[] res = null;
         //Bonds
         foreach (UnityMolAtom a in atoms) {
-            try {
-                foreach (UnityMolAtom b in select.bonds.bonds[a]) {
-                    if (b != null) {
+            if(select.bonds.bonds.TryGetValue(a.idInAllAtoms, out res)){
+                foreach (int idb in res) {
+                    if (idb != -1) {
+                        UnityMolAtom b = a.residue.chain.model.allAtoms[idb];
                         int idB = atoms.IndexOf(b) + 1;
-                        sw.Append(String.Format("{0,3}", idA));
-                        sw.Append(String.Format("{0,3}", idB));
-                        sw.Append(String.Format("{0,3}", 8)); //Single = 1 / Double = 2 ... / 8 = Any
+                        sw.AppendFormat("{0,3}", idA);
+                        sw.AppendFormat("{0,3}", idB);
+                        sw.AppendFormat("{0,3}", 8); //Single = 1 / Double = 2 ... / 8 = Any
                         sw.Append("  0  0  0\n");
                     }
                 }
-            }
-            catch {
-
             }
             idA++;
         }

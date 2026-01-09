@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -63,7 +47,8 @@ public class SugarRibbons {
 	public static float height = 0.1f;
 	public static bool createPlanes = true;
 
-	public static List<Mesh> createSugarRibbons(UnityMolSelection sel, ref Dictionary<UnityMolAtom, List<int>> atomToVertId,
+	public static List<Mesh> createSugarRibbons(UnityMolSelection sel, int idFrame,
+	        ref Dictionary<UnityMolAtom, List<int>> atomToVertId,
 	        float rthickness = 0.1f, float rheight = 0.1f, bool createPlanes = true) {
 
 		thick = rthickness;
@@ -91,14 +76,16 @@ public class SugarRibbons {
 		for (int i = 0; i < cycles.Count; i++) {
 			List<UnityMolAtom> c = cycles[i];
 
-			Vector3 center = cog(c);
-			Vector3 normal = computeMeanNormal(c, center);
+			Vector3 center = cog(c, sel, idFrame);
+			Vector3 normal = computeMeanNormal(c, center, sel, idFrame);
 
 			if (createPlanes) {
-				constructCyclePlanes(c, center, normal, vertices, normals, triangles, newColors);
+				constructCyclePlanes(c, center, normal, vertices, normals, triangles, newColors,
+				                     sel, idFrame);
 			}
 
-			constructCycleBackbone(c, center, normal, verticesBB, normalsBB, trianglesBB, newColorsBB, atomToVertId);
+			constructCycleBackbone(c, center, normal, verticesBB, normalsBB, trianglesBB, newColorsBB, atomToVertId,
+			                       sel, idFrame);
 		}
 		for (int i = 0; i < cycles.Count - 1; i++) {
 			for (int j = i + 1; j < cycles.Count; j++) {
@@ -138,7 +125,8 @@ public class SugarRibbons {
 
 	static void constructCyclePlanes(List<UnityMolAtom> cycleAtoms, Vector3 center, Vector3 normal,
 	                                 List<Vector3> vertices, List<Vector3> normals, List<int> triangles,
-	                                 List<Color32> colors) {
+	                                 List<Color32> colors,
+	                                 UnityMolSelection sel, int idFrame) {
 
 		if (cycleAtoms != null && cycleAtoms.Count > 2) {
 
@@ -155,8 +143,19 @@ public class SugarRibbons {
 
 			for (int i = 0; i < cycleAtoms.Count - 1; i++) {
 				int id = vertices.Count;
-				vertices.Add(cycleAtoms[i].position);
-				vertices.Add(cycleAtoms[i + 1].position);
+
+				Vector3 curCycleAtomPos = cycleAtoms[i].position;
+				Vector3 curCycleAtomPosP1 = cycleAtoms[i + 1].position;
+
+				if (idFrame != -1) {
+					int iida = sel.atomToIdInSel[cycleAtoms[i]];
+					curCycleAtomPos = sel.extractTrajFramePositions[idFrame][iida];
+					iida = sel.atomToIdInSel[cycleAtoms[i + 1]];
+					curCycleAtomPosP1 = sel.extractTrajFramePositions[idFrame][iida];
+				}
+
+				vertices.Add(curCycleAtomPos);
+				vertices.Add(curCycleAtomPosP1);
 
 				normals.Add(normal);
 				normals.Add(normal);
@@ -169,8 +168,8 @@ public class SugarRibbons {
 
 				//Add the inverted triangle too
 
-				vertices.Add(cycleAtoms[i].position);
-				vertices.Add(cycleAtoms[i + 1].position);
+				vertices.Add(curCycleAtomPos);
+				vertices.Add(curCycleAtomPosP1);
 
 				normals.Add(-normal);
 				normals.Add(-normal);
@@ -183,9 +182,20 @@ public class SugarRibbons {
 			}
 
 			int idlast = vertices.Count;
+
+			Vector3 firstCycleAtomPos = cycleAtoms[0].position;
+			Vector3 lastCycleAtomPos = cycleAtoms[cycleAtoms.Count - 1].position;
+
+
+			if (idFrame != -1) {
+				int iida = sel.atomToIdInSel[cycleAtoms[0]];
+				firstCycleAtomPos = sel.extractTrajFramePositions[idFrame][iida];
+				iida = sel.atomToIdInSel[cycleAtoms[cycleAtoms.Count - 1]];
+				lastCycleAtomPos = sel.extractTrajFramePositions[idFrame][iida];
+			}
 			//Last triangle from last to 0
-			vertices.Add(cycleAtoms[0].position);
-			vertices.Add(cycleAtoms[cycleAtoms.Count - 1].position);
+			vertices.Add(firstCycleAtomPos);
+			vertices.Add(lastCycleAtomPos);
 
 			normals.Add(normal);
 			normals.Add(normal);
@@ -197,8 +207,8 @@ public class SugarRibbons {
 			triangles.Add(idlast + 1);
 
 			//Add the inverted triangle too
-			vertices.Add(cycleAtoms[0].position);
-			vertices.Add(cycleAtoms[cycleAtoms.Count - 1].position);
+			vertices.Add(firstCycleAtomPos);
+			vertices.Add(lastCycleAtomPos);
 
 			normals.Add(-normal);
 			normals.Add(-normal);
@@ -214,7 +224,8 @@ public class SugarRibbons {
 
 	static void constructCycleBackbone(List<UnityMolAtom> cycleAtoms, Vector3 center, Vector3 normal,
 	                                   List<Vector3> vertices, List<Vector3> normals, List<int> triangles,
-	                                   List<Color32> colors, Dictionary<UnityMolAtom, List<int>> atomToVertId) {
+	                                   List<Color32> colors, Dictionary<UnityMolAtom, List<int>> atomToVertId,
+	                                   UnityMolSelection sel, int idFrame) {
 
 		if (cycleAtoms != null && cycleAtoms.Count > 2) {
 			int idVStart = vertices.Count;
@@ -225,13 +236,28 @@ public class SugarRibbons {
 				Vector3 a1 = cycleAtoms[i].position;
 				Vector3 a2 = Vector3.zero;
 
+				if (idFrame != -1) {
+					int iida = sel.atomToIdInSel[cycleAtoms[i]];
+					a1 = sel.extractTrajFramePositions[idFrame][iida];
+				}
+
+
 				if (i == cycleAtoms.Count - 1) {
 					a2 = cycleAtoms[0].position;
 					aa2 = cycleAtoms[0];
+					if (idFrame != -1) {
+						int iida = sel.atomToIdInSel[cycleAtoms[0]];
+						a2 = sel.extractTrajFramePositions[idFrame][iida];
+					}
+
 				}
 				else {
 					a2 = cycleAtoms[i + 1].position;
 					aa2 = cycleAtoms[i + 1];
+					if (idFrame != -1) {
+						int iida = sel.atomToIdInSel[cycleAtoms[i + 1]];
+						a2 = sel.extractTrajFramePositions[idFrame][iida];
+					}
 				}
 
 				Vector3 a1Toa2 = a2 - a1;
@@ -494,26 +520,50 @@ public class SugarRibbons {
 	}
 
 
-	static Vector3 cog(List<UnityMolAtom> cycleAtoms) {
+	static Vector3 cog(List<UnityMolAtom> cycleAtoms,
+	                   UnityMolSelection sel, int idFrame) {
 		Vector3 p = Vector3.zero;
 
 		foreach (UnityMolAtom a in cycleAtoms) {
-			p += a.position;
+			if (idFrame != -1) {
+				int iida = sel.atomToIdInSel[a];
+				p += sel.extractTrajFramePositions[idFrame][iida];
+			}
+			else {
+				p += a.position;
+			}
 		}
 		return p / Mathf.Max(1, cycleAtoms.Count);
 	}
 
-	static Vector3 computeMeanNormal(List<UnityMolAtom> cycleAtoms, Vector3 c) {
+	static Vector3 computeMeanNormal(List<UnityMolAtom> cycleAtoms, Vector3 c,
+	                                 UnityMolSelection sel, int idFrame) {
 
 		Vector3 n = Vector3.zero;
 		for (int i = 0; i < cycleAtoms.Count - 1; i++) {
 			Vector3 cToa1 = cycleAtoms[i].position - c;
 			Vector3 cToa2 = cycleAtoms[i + 1].position - c;
+			
+			if (idFrame != -1) {
+				int iida = sel.atomToIdInSel[cycleAtoms[i]];
+				cToa1 = sel.extractTrajFramePositions[idFrame][iida] - c;
+				iida = sel.atomToIdInSel[cycleAtoms[i + 1]];
+				cToa2 = sel.extractTrajFramePositions[idFrame][iida] - c;
+			}
+
 			n += Vector3.Cross(cToa1, cToa2);
 
 			if (i == cycleAtoms.Count - 1) {
 				cToa1 = cycleAtoms[i].position - c;
 				cToa2 = cycleAtoms[0].position - c;
+
+				if (idFrame != -1) {
+					int iida = sel.atomToIdInSel[cycleAtoms[i]];
+					cToa1 = sel.extractTrajFramePositions[idFrame][iida] - c;
+					iida = sel.atomToIdInSel[cycleAtoms[0]];
+					cToa2 = sel.extractTrajFramePositions[idFrame][iida] - c;
+				}
+
 				n += Vector3.Cross(cToa1, cToa2);
 			}
 		}
@@ -567,9 +617,11 @@ public class SugarRibbons {
 			dicNode[u].nodeCol = 1;
 
 			// simple dfs on graph
-			if (selection.bonds.bondsDual.ContainsKey(u)) {
-				foreach (UnityMolAtom v in selection.bonds.bondsDual[u]) {
-					if (v != null) {
+			int[] res = null;
+			if(selection.bonds.bonds.TryGetValue(u.idInAllAtoms, out res)){
+				foreach (int idv in res) {
+					if (idv != -1) {
+						UnityMolAtom v = u.residue.chain.model.allAtoms[idv];
 						if (v == dicNode[u].nodePar) {
 							continue;
 						}
@@ -643,12 +695,17 @@ public class SugarRibbons {
 				return null;
 			}
 
+			int[] res = null;
+			int[] res2 = null;
+			UnityMolModel curM = atoms[0].residue.chain.model;
 			foreach (UnityMolAtom firstA in atoms) {
-				if (selection.bonds.bondsDual.ContainsKey(firstA)) {
-					foreach (UnityMolAtom a in selection.bonds.bondsDual[firstA]) {
-						if (a != null && selection.bonds.bondsDual.ContainsKey(a)) {
-							foreach (UnityMolAtom b in selection.bonds.bondsDual[a]) {
-								if (b != null) {
+				if(selection.bonds.bonds.TryGetValue(firstA.idInAllAtoms, out res)){
+					foreach (int ida in res) {
+						if (ida != -1 && selection.bonds.bonds.TryGetValue(ida, out res2)) {
+							UnityMolAtom a = curM.allAtoms[ida];
+							foreach (int idb in res2) {
+								if (idb != -1) {
+									UnityMolAtom b = curM.allAtoms[idb];
 									int count = selection.bonds.countBondedAtoms(a);
 									if (count > 1) {
 										return new AtomDuo(a, b);
@@ -684,10 +741,14 @@ public class SugarRibbons {
 			visited.Add(v);
 			curList.Add(v);
 
-			if (selection.bonds.bondsDual.ContainsKey(v)) {
-				foreach (UnityMolAtom x in selection.bonds.bondsDual[v]) {
-					if (x != null && !visited.Contains(x)) {
-						DFSUtil(x, visited);
+			int[] res = null;
+			if(selection.bonds.bonds.TryGetValue(v.idInAllAtoms, out res)){
+				foreach (int idx in res) {
+					if (idx != -1){
+						UnityMolAtom x = v.residue.chain.model.allAtoms[idx];
+						if(!visited.Contains(x)) {
+							DFSUtil(x, visited);
+						}
 					}
 				}
 			}
@@ -714,18 +775,22 @@ public class SugarRibbons {
 				}
 				UnityMolAtom a = q.First();
 				q.RemoveAt(0);
-				if (selection.bonds.bondsDual.ContainsKey(a)) {
-					foreach (UnityMolAtom b in selection.bonds.bondsDual[a]) {
-						if (b != null && !visited.Contains(b)) {
-							visited.Add(b);
-							pred[b] = a;
-							q.Add(b);
+				
+				int[] bonded = null;
+				if(selection.bonds.bonds.TryGetValue(a.idInAllAtoms, out bonded)){
+					foreach(int idb in bonded){
+						if (idb != -1){
+							UnityMolAtom b = start.residue.chain.model.allAtoms[idb];
+							if(!visited.Contains(b)) {
+								visited.Add(b);
+								pred[b] = a;
+								q.Add(b);
 
-							if (b == stop) {
-								found = true;
-								break;
+								if (b == stop) {
+									found = true;
+									break;
+								}
 							}
-
 						}
 					}
 				}

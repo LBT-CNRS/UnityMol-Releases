@@ -1,0 +1,6 @@
+3rdParty/HTC.UnityPlugin/ filter=lfs diff=lfs merge=lfs -text
+3rdParty/HTC.UnityPlugin/** filter=lfs diff=lfs merge=lfs -text
+Resources/Models/** filter=lfs diff=lfs merge=lfs -text
+StreamingAssets/ff14SB.json filter=lfs diff=lfs merge=lfs -text
+3rdParty/SimpleFileBrowser/** filter=lfs diff=lfs merge=lfs -text
+StreamingAssets/IronPython/** filter=lfs diff=lfs merge=lfs -text

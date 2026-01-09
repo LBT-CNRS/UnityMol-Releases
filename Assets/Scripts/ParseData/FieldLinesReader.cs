@@ -1,20 +1,18 @@
-/*
+﻿/*
     ================================================================================
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,70 +27,94 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
-using System.Globalization;
 using MiniJSON;
 
 namespace UMol {
+
+/// <summary>
+/// Parse a JSON fieldLines.
+/// File Format: https://manual.gromacs.org/current/reference-manual/file-formats.html#gro
+/// </summary>
 public class FieldLinesReader {
+    public Dictionary <string, List<Vector3>> LinesPositions;
 
-	public string path = "";
-	public Dictionary <string, List<Vector3>> linesPositions;
 
-	public FieldLinesReader () {
-	}
+	public FieldLinesReader () {}
 	public FieldLinesReader (string filePath) {
+        LinesPositions = new Dictionary <string, List<Vector3>>();
+		IDictionary deserializedData;
+        StreamReader sr;
 
-		path = filePath;
+        if (Application.platform == RuntimePlatform.Android) {
+            StringReaderStream textStream = new(AndroidUtils.GetFileText(filePath));
+            sr = new StreamReader(textStream);
+        }
+        else {
+            sr = new StreamReader(filePath);
+        }
 
-		linesPositions = new Dictionary <string, List<Vector3>>();
-
-		IDictionary deserializedData = null;
-		using(StreamReader sr = new StreamReader(path)) {
+        using(sr) {
 			string jsonString = sr.ReadToEnd();
 			deserializedData = (IDictionary) Json.Deserialize(jsonString);
 		}
 
+
 		foreach (string v in deserializedData.Keys) {
-			List<Vector3> listP = new List<Vector3>();
+			List<Vector3> listP = new();
 			IList d = (IList)deserializedData[v];
 
 			foreach (IList p in d) {
-
 				float x = -Convert.ToSingle( p[0] );
 				float y = Convert.ToSingle( p[1] );
 				float z = Convert.ToSingle( p[2] );
 
-				Vector3 pos = new Vector3(x, y, z);
+				Vector3 pos = new(x, y, z);
 				listP.Add(pos);
 
 			}
 
-			linesPositions[v] = listP;
+			LinesPositions[v] = listP;
 
 		}
 	}
+
+    /// <summary>
+    /// Compute Field lines from a DX object
+    /// </summary>
+    /// <param name="r">DX object parsed from a file</param>
+    /// <param name="nbIter">Number of iterations</param>
+    /// <param name="gradThreshold">Threshold for fieldlines</param>
+    /// <returns>FieldLinesReader object</returns>
+    public static FieldLinesReader ComputeFieldlinesToFlReader(DXReader r, int nbIter, float gradThreshold) {
+
+        Vector3[] grad = r.gradient;
+
+        List<Vector3>[] fl = FieldLinesBurst.computeFL(grad, r.deltaS, r.origin, r.gridSize, nbIter, gradThreshold, r.xl, r.yl, r.zl);
+
+        if (fl == null) {
+            return null;
+        }
+
+        FieldLinesReader fakeFLR = new();
+        Dictionary<string, List<Vector3>> linesPos = new();
+        int id = 0;
+        for (int i = 0; i < fl.Length; i++) {
+            if (fl[i].Count != 0) {
+                linesPos[id.ToString()] = fl[i];
+                id++;
+            }
+        }
+        fakeFLR.LinesPositions = linesPos;
+        return fakeFLR;
+    }
 }
 }

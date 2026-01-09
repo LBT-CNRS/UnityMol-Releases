@@ -1,0 +1,12 @@
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Ambient Occlusion">
+  <Param enum_val1="per-Face (deprecated)" enum_val0="per-Vertex" value="0" type="RichEnum" description="Occlusion mode:" isxmlparam="0" enum_cardinality="2" name="occMode" tooltip="Occlusion may be calculated per-vertex or per-face, color and quality will be saved in the chosen component."/>
+  <Param value="0" type="RichFloat" description="Directional Bias [0..1]" isxmlparam="0" name="dirBias" tooltip="The balance between a uniform and a directionally biased set of lighting direction&lt;br>: - 0 means light came only uniformly from any direction&lt;br> - 1 means that all the light cames from the specified cone of directions &lt;br> - other values mix the two set of lighting directions "/>
+  <Param value="256" type="RichInt" description="Requested views" isxmlparam="0" name="reqViews" tooltip="Number of different views uniformly placed around the mesh. More views means better accuracy at the cost of increased calculation time"/>
+  <Param type="RichPoint3f" description="Lighting Direction" z="0" y="1" isxmlparam="0" name="coneDir" tooltip="Number of different views placed around the mesh. More views means better accuracy at the cost of increased calculation time" x="0"/>
+  <Param value="30" type="RichFloat" description="Cone amplitude" isxmlparam="0" name="coneAngle" tooltip="Number of different views uniformly placed around the mesh. More views means better accuracy at the cost of increased calculation time"/>
+  <Param value="true" type="RichBool" description="Use GPU acceleration" isxmlparam="0" name="useGPU" tooltip="Only works for per-vertex AO. In order to use GPU-Mode, your hardware must support FBOs, FP32 Textures and Shaders. Normally increases the performance by a factor of 4x-5x"/>
+  <Param value="1024" type="RichInt" description="Depth texture size(should be 2^n)" isxmlparam="0" name="depthTexSize" tooltip="Defines the depth texture size used to compute occlusion from each point of view. Higher values means better accuracy usually with low impact on performance"/>
+ </filter>
+</FilterScript>

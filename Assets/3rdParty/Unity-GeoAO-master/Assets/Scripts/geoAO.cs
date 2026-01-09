@@ -25,11 +25,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-
-
 public class geoAO : MonoBehaviour {
-
-
 
 	public enum samplesAOpreset  {
 		VeryLow = 16,
@@ -66,6 +62,7 @@ public class geoAO : MonoBehaviour {
 
 	private Material AOMat;
 
+	///Total number of vertices in all the meshes
 	private int nbVert = 0;
 
 	private int vertByRow = 512;
@@ -89,11 +86,11 @@ public class geoAO : MonoBehaviour {
 		mfs = tmpMFlist.ToArray();
 		for (int i = 0; i < mfs.Length; i++) {
 			if (mfs[i].gameObject.GetComponent<MeshRenderer>().enabled) {
-				nbVert += mfs[i].mesh.vertices.Length;
+				nbVert += mfs[i].sharedMesh.vertexCount;
 				usedMeshes++;
 			}
 		}
-		if(nbVert == 0){
+		if (nbVert == 0) {
 			return;
 		}
 
@@ -114,6 +111,7 @@ public class geoAO : MonoBehaviour {
 			g.layer = savedLayers[i];
 		}
 #endif
+		GameObject.Destroy(AOMat);
 	}
 
 	void InitSamplePos() {
@@ -164,14 +162,14 @@ public class geoAO : MonoBehaviour {
 				saveRot[i] = mfs[i].transform.rotation;
 				saveMat[i] = mfs[i].GetComponent<Renderer>().sharedMaterial;
 				if (i == 0)
-					allBounds = mfs[i].mesh.bounds;
+					allBounds = mfs[i].sharedMesh.bounds;
 				else
-					allBounds.Encapsulate(mfs[i].mesh.bounds);
+					allBounds.Encapsulate(mfs[i].sharedMesh.bounds);
 			}
 		}
-		#if DEBUGAO
-		Debug.Log("Center = " + allBounds.center.ToString("F3")+" Min " + allBounds.min.ToString("F3") + " Max " + allBounds.max.ToString("F3") + " size = " + allBounds.size.ToString("F3"));
-		#endif
+#if DEBUGAO
+		Debug.Log("Center = " + allBounds.center.ToString("F3") + " Min " + allBounds.min.ToString("F3") + " Max " + allBounds.max.ToString("F3") + " size = " + allBounds.size.ToString("F3"));
+#endif
 	}
 
 	void CreateAOCam() {
@@ -240,7 +238,7 @@ public class geoAO : MonoBehaviour {
 		for (int i = 0; i < mfs.Length; i++) {
 			if (mfs[i].gameObject.GetComponent<MeshRenderer>().enabled) {
 
-				Vector3[] vert = mfs[i].mesh.vertices;
+				Vector3[] vert = mfs[i].sharedMesh.vertices;
 				for (int j = 0; j < vert.Length; j++) {
 					vertInfo[idVert].r = vert[j].x;
 					vertInfo[idVert].g = vert[j].y;
@@ -293,7 +291,6 @@ public class geoAO : MonoBehaviour {
 
 
 	void DoAO() {
-
 
 		AOMat.SetInt("_uCount", (int)samplesAO);
 		AOMat.SetTexture("_AOTex", AORT);
@@ -351,16 +348,16 @@ public class geoAO : MonoBehaviour {
 			}
 		}
 
+		GameObject.Destroy(standardMat);
 	}
 	void OnRenderImage (RenderTexture source, RenderTexture destination) {
-
 
 		var matrix = AOCam.cameraToWorldMatrix;
 		AOMat.SetMatrix("_InverseView", matrix);
 		Graphics.Blit(null, AORT, AOMat);
 		AOCam.targetTexture = null;
 		Graphics.Blit(AORT, AORT2);
-		// Graphics.Blit(source, destination);
+		Graphics.Blit(source, destination);//Just to avoid a warning
 	}
 
 	void DisplayAO() {
@@ -376,74 +373,53 @@ public class geoAO : MonoBehaviour {
 			for (int i = 0; i < mfs.Length; i++) {
 				if (mfs[i].gameObject.GetComponent<MeshRenderer>().enabled) {
 
-					Vector3[] vert = mfs[i].mesh.vertices;
+					Vector3[] vert = mfs[i].sharedMesh.vertices;
 					alluv.Add( new Vector2[vert.Length] );
 					for (int j = 0; j < vert.Length; j++) {
 						alluv[i][j] = new Vector2((idVert % vertByRow) / w, (idVert / (vertByRow) / h));
 						idVert++;
 					}
-					mfs[i].mesh.uv2 = alluv[i];
+					mfs[i].sharedMesh.uv2 = alluv[i];
 					mfs[i].gameObject.GetComponent<Renderer>().material = matShowAO;
 				}
 			}
+			Destroy(matShowAO);
 		}
 		else { //Directly modify the colors of the mesh (slower)
 			// Material matShowAO = new Material(Shader.Find("Vertex Colored"));
 
-			List<Color> allColors = new List<Color>(nbVert);
+			Vector2[] aoFactors = new Vector2[nbVert];
 			RenderTexture.active = AORT2;
 			Texture2D resulTex = new Texture2D(AORT2.width, AORT2.height, TextureFormat.RGBAHalf, false);
 			resulTex.ReadPixels( new Rect(0, 0, AORT2.width, AORT2.height), 0, 0);
 
 			for (int i = 0; i < nbVert; i++) {
-				allColors.Add(resulTex.GetPixel(i % vertByRow, i / (vertByRow)));
+				Color ao = resulTex.GetPixel(i % vertByRow, i / (vertByRow));
+				aoFactors[i] = new Vector2(ao.r, ao.r);
 			}
+
 
 
 			int idVert = 0;
 			for (int i = 0; i < mfs.Length; i++) {
 				if (mfs[i].gameObject.GetComponent<MeshRenderer>().enabled) {
-
-					int nbVerts = mfs[i].mesh.vertices.Length;
-					Color[] colors = mfs[i].mesh.colors;
-					if (colors.Length == 0) {
-						colors = new Color[nbVerts];
-						for (int c = 0; c < nbVerts; c++) {
-							colors[c] = Color.white;
-						}
-
-					}
-
-					if (colors.Length == 0) {
-						//Override mesh colors
-						// mfs[i].mesh.colors = allColors.GetRange(idVert, nbVerts).ToArray();
-						// idVert += nbVerts;
-
-						colors = new Color[nbVerts];
-						for (int c = 0; c < nbVerts; c++) {
-							Color tmpCol = Color.white;
-							tmpCol.a = allColors[idVert++].r;
-							colors[c] = tmpCol;
-						}
-						mfs[i].mesh.colors = colors;
-					}
-					else {
-
-						//Fill the alpha value of mesh colors
-						for (int c = 0; c < colors.Length; c++) {
-							Color tmpCol = colors[c];
-
-							tmpCol.a = allColors[idVert++].r;
-							colors[c] = tmpCol;
-						}
-						mfs[i].mesh.colors = colors;
-					}
-
+					int nmesh = mfs[i].sharedMesh.vertexCount;
+					if (mfs[i].sharedMesh.uv2 == null)
+						mfs[i].sharedMesh.uv2 = new Vector2[nmesh];
+					mfs[i].sharedMesh.SetUVs(1, aoFactors, idVert, nmesh);
+					idVert += nmesh;
 				}
 			}
+			RenderTexture.active = null;
+			Destroy(resulTex);
 		}
 	}
-
+	void OnDestroy() {
+		Destroy(AOMat);
+		Destroy(AORT);
+		Destroy(AORT2);
+		Destroy(vertTex);
+	}
 
 
 #if DEBUGAO

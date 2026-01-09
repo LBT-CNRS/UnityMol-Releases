@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,6 +42,13 @@ public class UnityMolSelectionManager {
     public delegate void OnNewClickSelection(NewSelEventArgs args);
     public OnNewClickSelection onNewClickSelection;
 
+
+    public delegate void NewSelection();
+    public static event NewSelection OnNewSelection;
+    public delegate void DelSelection();
+    public static event DelSelection OnSelectionDeleted;
+    public delegate void ModifSelection();
+    public static event ModifSelection OnSelectionModified;
 
     public enum SelectionMode {Atom, Residue, Chain, Molecule};
 
@@ -93,6 +84,8 @@ public class UnityMolSelectionManager {
         if (selections.ContainsKey(sel.name)) {
             Delete(sel.name);
         }
+        else if (OnNewSelection != null)
+            OnNewSelection();
         selections[sel.name] = sel;
     }
 
@@ -109,6 +102,9 @@ public class UnityMolSelectionManager {
         DeleteRepresentations(selections[selName]);
 
         selections.Remove(selName);
+
+        if (OnSelectionDeleted != null)
+            OnSelectionDeleted();
     }
 
     public void DeleteRepresentations(UnityMolSelection sel) {
@@ -165,7 +161,7 @@ public class UnityMolSelectionManager {
         }
 
         //New "(selection)"
-        result = new UnityMolSelection(new List<UnityMolAtom>(), clickSelectionName);
+        result = new UnityMolSelection(new List<UnityMolAtom>(), null, clickSelectionName, "nothing");
         SetCurrentSelection(result);
 
         return result;
@@ -205,15 +201,15 @@ public class UnityMolSelectionManager {
                 sel.isAlterable = true;
 
                 if (sel.fromSelectionLanguage) {
-                    UnityMolSelection result = new UnityMolSelection(new List<UnityMolAtom>(), "", "");
 
                     MDAnalysisSelection selec = new MDAnalysisSelection(sel.MDASelString, allAtoms);
                     UnityMolSelection ret = selec.process();
-                    result = result + ret;
 
-                    sel.atoms = result.atoms;
-                    sel.bonds = result.bonds;
-                    sel.structures = result.structures;
+                    sel.atoms = ret.atoms;
+                    sel.bonds = ret.bonds;
+                    sel.structures = ret.structures;
+                    if (OnSelectionModified != null)
+                        OnSelectionModified();
                 }
                 else {
                     List<UnityMolAtom> newAtomList = new List<UnityMolAtom>(sel.atoms.Count);
@@ -228,8 +224,11 @@ public class UnityMolSelectionManager {
                         }
                     }
 
+                    newAtomList = newAtomList.Distinct().ToList();
                     sel.atoms = newAtomList;
                     sel.bonds = null;
+                    if (OnSelectionModified != null)
+                        OnSelectionModified();
                 }
                 sel.isAlterable = saveIsAlterable;
 
@@ -243,8 +242,8 @@ public class UnityMolSelectionManager {
         bool updateNecessary = false;
         //Test if update is needed
         foreach (UnityMolSelection sel in selections.Values) {
-            if (sel.structures.Contains(s)) {
-                if (sel.updateWithTraj && sel.fromSelectionLanguage) {
+            if (sel.Count == 0 || sel.structures.Contains(s)) {
+                if (sel.updateContentWithTraj && sel.fromSelectionLanguage) {
                     updateNecessary = true;
                     break;
                 }
@@ -253,20 +252,22 @@ public class UnityMolSelectionManager {
         if (!updateNecessary) {
             return;
         }
+
         List<UnityMolAtom> allAtoms = new List<UnityMolAtom>();
 
-        if(sm.loadedStructures.Count == 1){
+        if (sm.loadedStructures.Count == 1) {
             allAtoms = sm.loadedStructures[0].currentModel.allAtoms;
         }
-        else{
+        else {
             foreach (UnityMolStructure ss in sm.loadedStructures) {
                 allAtoms.AddRange(ss.currentModel.allAtoms);
             }
         }
 
         foreach (UnityMolSelection sel in selections.Values) {
-            if (sel.structures.Contains(s)) {
-                if (sel.updateWithTraj) {
+            if (sel.Count == 0 || sel.structures.Contains(s)) {
+                if (sel.updateContentWithTraj) {
+
                     bool saveIsAlterable = sel.isAlterable;
                     sel.isAlterable = true;
                     if (sel.fromSelectionLanguage) {
@@ -279,6 +280,9 @@ public class UnityMolSelectionManager {
                             sel.bonds = result.bonds;
                         }
                         sel.structures = result.structures;
+
+                        if (OnSelectionModified != null)
+                            OnSelectionModified();
                     }
                     else {
                         //Cannot update a selection without MDASelection string
@@ -296,6 +300,10 @@ public class UnityMolSelectionManager {
     }
 
 
+    public static void launchSelectionModified() {
+        if (OnSelectionModified != null)
+            OnSelectionModified();
+    }
     public void updateSelectionsWithMDA(UnityMolStructure s, bool forceModif = false) {
         UnityMolStructureManager sm = UnityMolMain.getStructureManager();
 
@@ -312,15 +320,16 @@ public class UnityMolSelectionManager {
                     sel.isAlterable = true;
                 }
                 if (sel.fromSelectionLanguage) {
-                    UnityMolSelection result = new UnityMolSelection(new List<UnityMolAtom>(), "", "");
 
                     MDAnalysisSelection selec = new MDAnalysisSelection(sel.MDASelString, allAtoms);
                     UnityMolSelection ret = selec.process();
-                    result = result + ret;
 
-                    sel.atoms = result.atoms;
-                    sel.bonds = result.bonds;
-                    sel.structures = result.structures;
+                    sel.atoms = ret.atoms;
+                    sel.bonds = ret.bonds;
+                    sel.structures = ret.structures;
+
+                    if (OnSelectionModified != null)
+                        OnSelectionModified();
 
                 }
                 else {
@@ -358,7 +367,6 @@ public class UnityMolSelectionManager {
 
 #if !DISABLE_HIGHLIGHT
         UnityMolHighlightManager hM = UnityMolMain.getHighlightManager();
-        hM.Clean();
         hM.HighlightAtoms(currentSelection);
 #endif
     }

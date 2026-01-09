@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -115,20 +99,27 @@ public class UnityMolSugarRibbonsManager : UnityMolGenericRepresentationManager 
         isBackboneOn = true;
     }
 
+    public override void InitRT() {
+    }
+
     public override void Clean() {
         GameObject parent = null;
         if (meshesGO.Count != 0) {
             parent = meshesGO[0].transform.parent.gameObject;
         }
 
-        for (int i = 0; i < meshesGO.Count; i++) {
-            GameObject.DestroyImmediate(meshesGO[i]);
+        if (meshesGO != null) {
+            for (int i = 0; i < meshesGO.Count; i++) {
+                GameObject.Destroy(meshesGO[i].GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(meshesGO[i]);
+            }
+            meshesGO.Clear();
         }
         if (parent != null) {
-            GameObject.DestroyImmediate(parent);
+            GameObject.Destroy(parent);
         }
 
-        meshesGO.Clear();
+
         meshesGO = null;
         atomRep = null;
         isEnabled = false;
@@ -159,18 +150,17 @@ public class UnityMolSugarRibbonsManager : UnityMolGenericRepresentationManager 
         isBackboneOn = show;
     }//Does not really make sense for sugarRibbons
 
-    public override void SetColor(Color col, UnityMolSelection sele) {
+    public override void SetColor(Color32 col, UnityMolSelection sele) {
         SetColors(col, sele.atoms);
     }
 
-    public override void SetColor(Color col, UnityMolAtom atom) {//Does not really make sense for atoms
+    public override void SetColor(Color32 col, UnityMolAtom atom) {//Does not really make sense for atoms
         try {
-            Color32 newCol = col;
 
             if (atomRep.atomToVertBB.ContainsKey(atom)) {
                 Color32[] cols = atomRep.meshesGO[1].GetComponent<MeshFilter>().sharedMesh.colors32;
                 foreach (int vid in atomRep.atomToVertBB[atom]) {
-                    cols[vid] = newCol;
+                    cols[vid] = col;
                 }
                 atomRep.meshesGO[1].GetComponent<MeshFilter>().sharedMesh.colors32 = cols;
             }
@@ -181,13 +171,12 @@ public class UnityMolSugarRibbonsManager : UnityMolGenericRepresentationManager 
 
     }
 
-    public override void SetColors(Color col, List<UnityMolAtom> atoms) {
-        Color32 newCol = col;
+    public override void SetColors(Color32 col, List<UnityMolAtom> atoms) {
         Color32[] cols = atomRep.meshesGO[1].GetComponent<MeshFilter>().sharedMesh.colors32;
         foreach (UnityMolAtom a in atoms) {
             if (atomRep.atomToVertBB.ContainsKey(a)) {
                 foreach (int vid in atomRep.atomToVertBB[a]) {
-                    cols[vid] = newCol;
+                    cols[vid] = col;
                 }
             }
         }
@@ -195,35 +184,35 @@ public class UnityMolSugarRibbonsManager : UnityMolGenericRepresentationManager 
 
     }
 
-    public override void SetColors(List<Color> cols, List<UnityMolAtom> atoms) {
+    public override void SetColors(List<Color32> cols, List<UnityMolAtom> atoms) {
         if (atoms.Count != cols.Count) {
             Debug.LogError("Lengths of color list and atom list are different");
             return;
         }
         for (int i = 0; i < atoms.Count; i++) {
             UnityMolAtom a = atoms[i];
-            Color col = cols[i];
+            Color32 col = cols[i];
             SetColor(col, a);
         }
     }
 
 
     public override void SetDepthCueingStart(float v) {
-        if (meshesGO != null && meshesGO.Count >= 1){
+        if (meshesGO != null && meshesGO.Count >= 1) {
             Material[] mats = meshesGO[1].GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_FogStart", v);
         }
     }
 
     public override void SetDepthCueingDensity(float v) {
-        if (meshesGO != null && meshesGO.Count >= 1){
+        if (meshesGO != null && meshesGO.Count >= 1) {
             Material[] mats = meshesGO[1].GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_FogDensity", v);
         }
     }
 
     public override void EnableDepthCueing() {
-        if (meshesGO != null && meshesGO.Count >= 1){
+        if (meshesGO != null && meshesGO.Count >= 1) {
 
             Material[] mats = meshesGO[1].GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_UseFog", 1.0f);
@@ -231,7 +220,7 @@ public class UnityMolSugarRibbonsManager : UnityMolGenericRepresentationManager 
     }
 
     public override void DisableDepthCueing() {
-        if (meshesGO != null && meshesGO.Count >= 1){
+        if (meshesGO != null && meshesGO.Count >= 1) {
             Material[] mats = meshesGO[1].GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_UseFog", 0.0f);
         }
@@ -285,7 +274,7 @@ public class UnityMolSugarRibbonsManager : UnityMolGenericRepresentationManager 
     }
 
     public override void ResetColor(UnityMolAtom atom) {
-        SetColor(atom.color, atom);
+        SetColor(atom.color32, atom);
     }
     public override void ResetColors() {
 
@@ -318,12 +307,14 @@ public class UnityMolSugarRibbonsManager : UnityMolGenericRepresentationManager 
         Material[] mats = meshesGO[1].GetComponent<Renderer>().sharedMaterials;
         mats[0].SetFloat("_Metallic", val);
     }
-    public override UnityMolRepresentationParameters Save(){
+    public override void UpdateLike() {
+    }
+    public override UnityMolRepresentationParameters Save() {
         UnityMolRepresentationParameters res = new UnityMolRepresentationParameters();
         return res;
     }
-    public override void Restore(UnityMolRepresentationParameters savedParams){
-        
+    public override void Restore(UnityMolRepresentationParameters savedParams) {
+
     }
 }
 }

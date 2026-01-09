@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,111 +27,168 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
-using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace UMol {
 /// <summary>
-/// Part of the SMCRA data structure, UnityMolChain stores the residues of the structure as a list of UnityMolResidue
-/// A reference to the model it belongs is provided
+/// Part of the SMCRA data structure, it stores the residues of the structure as a list of <see cref="UnityMolResidue"/>.
+/// A reference to the <see cref="UnityMolModel"/> model it belongs is provided.
 /// </summary>
 public class UnityMolChain {
 
-	/// <summary>
-	/// Store all the residues of the chain based on their ids
-	/// </summary>
-	public Dictionary<int, UnityMolResidue> residues;
+    /// <summary>
+    /// Store all the residues of the chain based on their ids
+    /// </summary>
+    public List<UnityMolResidue> residues;
 
-	/// <summary>
-	/// Reference to the model the chain belongs to
-	/// </summary>
-	public UnityMolModel model;
+    /// <summary>
+    /// Reference to the model the chain belongs to
+    /// </summary>
+    public UnityMolModel model;
 
-	/// <summary>
-	/// Name of the chain
-	/// </summary>
-	public string name;
+    /// <summary>
+    /// Name of the chain
+    /// </summary>
+    public string name;
 
+    private int _count = -1;
 
-	/// <summary>
-	/// UnityMolChain constructor taking a list of residues as arg
-	/// </summary>
-	public UnityMolChain(List<UnityMolResidue> _residues, string _name) {
-		residues = new Dictionary<int, UnityMolResidue>();
-		AddResidues(_residues);
-		name = _name;
-	}
+    /// <summary>
+    /// Construct a UnityMolChain with a list of UnityMolResidue and a name
+    /// </summary>
+    public UnityMolChain(List<UnityMolResidue> _residues, string _name) {
+        residues = new List<UnityMolResidue>();
+        AddResidues(_residues);
+        name = _name;
+    }
 
-	/// <summary>
-	/// UnityMolChain constructor taking a residue as arg
-	/// </summary>
-	public UnityMolChain(UnityMolResidue _residue, string _name) {
-		residues = new Dictionary<int, UnityMolResidue>();
-		residues[_residue.id] = _residue;
-		name = _name;
-	}
+    /// <summary>
+    /// Construct a UnityMolChain with one UnityMolResidue and a name
+    /// </summary>
+    public UnityMolChain(UnityMolResidue _residue, string _name) {
+        residues = new List<UnityMolResidue> { _residue };
+        name = _name;
+    }
 
-	/// <summary>
-	/// Add a list of residues to the stored residues
-	/// </summary>
-	public void AddResidues(List<UnityMolResidue> newResidues) {
-		foreach (UnityMolResidue r in newResidues) {
-			residues[r.id] = r;
-		}
-	}
+    /// <summary>
+    /// Number of residues in the chain
+    /// </summary>
+    public int Count {
+        get {
+            if (_count < 0) {
+                getCount();
+            }
+            return _count;
+        }
+    }
 
-	/// <summary>
-	/// Add a dictionary of residues to the stored residues
-	/// </summary>
-	public void AddResidues(Dictionary<int, UnityMolResidue> newResidues) {
-		foreach (UnityMolResidue r in newResidues.Values) {
-			residues[r.id] = r;
-		}
-	}
+    /// <summary>
+    /// Add a list of residues to the stored residues
+    /// </summary>
+    public void AddResidues(List<UnityMolResidue> newResidues) {
+        foreach (UnityMolResidue r in newResidues) {
+            residues.Add(r);
+        }
+        _count = -1;
+    }
 
-	public List<UnityMolAtom> allAtoms {
-		get { return ToAtomList(); }
-	}
+    /// <summary>
+    /// Compute the number of residue and update the _count attribute
+    /// </summary>
+    private void getCount() {
+        _count = 0;
+        foreach (UnityMolResidue r in residues) {
+            _count += r.Count;
+        }
+    }
 
-	public List<UnityMolAtom> ToAtomList() {
-		List<UnityMolAtom> res = new List<UnityMolAtom>();
+    /// <summary>
+    /// List of all UnityMolAtom of the chain
+    /// </summary>
+    public List<UnityMolAtom> AllAtoms => ToAtomList();
 
-		foreach (UnityMolResidue r in residues.Values) {
-			// res.AddRange(r.allAtoms);
-			foreach (UnityMolAtom a in r.atoms.Values) {
-				res.Add(a);
-			}
-		}
-		return res;
-	}
+    /// <summary>
+    /// Return a UnityMolAtom list containing all atoms of the chain
+    /// </summary>
+    /// <returns>the UnityMolAtom list</returns>
+    public List<UnityMolAtom> ToAtomList() {
+        List<UnityMolAtom> res = new();
 
-	public UnityMolSelection ToSelection(bool doBonds = true) {
-		List<UnityMolAtom> selectedAtoms = ToAtomList();
-		string selectionMDA = model.structure.uniqueName + " and chain " + name;
+        foreach (UnityMolResidue r in residues) {
+            foreach (UnityMolAtom a in r.atoms.Values) {
+                res.Add(a);
+            }
+        }
+        return res;
+    }
 
-		if (doBonds) {
-			return new UnityMolSelection(selectedAtoms, name, selectionMDA);
-		}
-		return new UnityMolSelection(selectedAtoms, newBonds: null, name, selectionMDA);
-	}
+    /// <summary>
+    /// Return a UnityMolSelection based on the atoms of the chain
+    /// </summary>
+    /// <param name="doBonds">Whether bonds are included in the selection</param>
+    /// <returns>the new UnityMolSelection</returns>
+    public UnityMolSelection ToSelection(bool doBonds = true) {
+        List<UnityMolAtom> selectedAtoms = ToAtomList();
+        string selectionMDA = ToSelectionMDA();
+
+        if (doBonds) {
+            return new UnityMolSelection(selectedAtoms, ToSelectionName(), selectionMDA);
+        }
+        return new UnityMolSelection(selectedAtoms, newBonds: null, ToSelectionName(), selectionMDA);
+    }
+
+    /// <summary>
+    /// Return the MDAnalysis selection command of the chain as a string
+    /// Ususally : "modelName and chain X"
+    /// </summary>
+    /// <returns>the string containing the selection command</returns>
+    public string ToSelectionMDA() {
+        return model.structure.name + " and chain " + name;
+    }
+
+    /// <summary>
+    /// Generate a selection string name based on the structure, model and chain name
+    /// </summary>
+    /// <returns>the string containing the selection name</returns>
+    public string ToSelectionName() {
+        return model.structure.name + "_" + model.name + "_" + name;
+    }
+
+    //TODO: make this faster
+    /// <summary>
+    /// Return a UnityMolResidue based on the resid
+    /// Return null if not found
+    /// </summary>
+    /// <param name="resid">the resid to look for</param>
+    /// <returns>the UnityMolResidue. null if not found</returns>
+    public UnityMolResidue GetResidueWithId(int resid) {
+        return residues.FirstOrDefault(t => t.id == resid);
+    }
+
+    /// <summary>
+    /// Clone a UnityMolChain by cloning residues and atoms
+    /// </summary>
+    public UnityMolChain Clone() {
+        List<UnityMolResidue> clonedRes = new(residues.Count);
+
+        foreach (UnityMolResidue r in residues) {
+            UnityMolResidue newR = r.Clone();
+            clonedRes.Add(newR);
+        }
+
+        UnityMolChain cloned = new(clonedRes, name);
+
+        foreach (UnityMolResidue r in cloned.residues) {
+            r.chain = cloned;
+        }
+
+        return cloned;
+    }
+
 }
 }

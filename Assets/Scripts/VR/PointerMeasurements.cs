@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,44 +27,27 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using VRTK;
+
+using HTC.UnityPlugin.Vive;
+using HTC.UnityPlugin.Utility;
+
 using UMol.API;
 
 namespace UMol {
-
-[RequireComponent(typeof(VRTK_Pointer), typeof(VRTK_ControllerEvents))]
-[RequireComponent(typeof(VRTK_StraightPointerRendererNoRB))]
+[RequireComponent(typeof(ViveRoleSetter))]
+[RequireComponent(typeof(AudioSource))]
 public class PointerMeasurements : MonoBehaviour {
 
     private MeasureMode prevMeasureMode = MeasureMode.distance;
-
-    VRTK_Pointer pointer;
-
-    VRTK_ControllerEvents controllerEvents;
-    VRTK_StraightPointerRendererNoRB pointerR;
 
     int touchedAtoms = 0;
 
@@ -79,24 +60,28 @@ public class PointerMeasurements : MonoBehaviour {
     CustomRaycastBurst raycaster;
 
     UnityMolAtom[] atomsArray = new UnityMolAtom[4];
+    Vector3[] posExtrArray = new Vector3[4];
+
+    AudioSource source;
+
+    ViveRoleProperty curRole;
+
+    void OnEnable() {
+        curRole = GetComponent<ViveRoleSetter>().viveRole;
+
+        if (curRole != null) {
+            ViveInput.AddPressDown((HandRole)curRole.roleValue, ControllerButton.Menu, buttonPressed);
+        }
+    }
+    void OnDisable() {
+        if (curRole != null) {
+            ViveInput.RemovePressDown((HandRole)curRole.roleValue, ControllerButton.Menu, buttonPressed);
+        }
+    }
 
     void Start() {
 
-        if (pointer == null) {
-            pointer = GetComponent<VRTK_Pointer>();
-        }
-        if (pointerR == null) {
-            pointerR = GetComponent<VRTK_StraightPointerRendererNoRB>();
-        }
-        controllerEvents = GetComponent<VRTK_ControllerEvents>();
-
-        // pointer.PointerStateValid += DetectedCollision;
-        // pointer.PointerStateInvalid += buttonOut;
-        controllerEvents.ButtonTwoPressed += buttonPressed;
-        controllerEvents.ButtonTwoReleased += buttonReleased;
-        // pointer.SelectionButtonPressed += buttonPressed;
-        // pointer.SelectionButtonReleased += buttonReleased;
-        // pointer.ActivationButtonReleased += buttonReleased;
+        source = GetComponent<AudioSource>();
 
         touchedAtoms = 0;
 
@@ -104,37 +89,57 @@ public class PointerMeasurements : MonoBehaviour {
         annoM = UnityMolMain.getAnnotationManager();
         raycaster = UnityMolMain.getCustomRaycast();
 
-
     }
 
-    void buttonPressed(object sender, ControllerInteractionEventArgs e) {
+    void buttonPressed() {
 
-        if(prevMeasureMode != UnityMolMain.measureMode){
+        if (prevMeasureMode != UnityMolMain.measureMode) {
             prevMeasureMode = UnityMolMain.measureMode;
             resetTouchedAtoms();
         }
 
+        RigidPose cpose = VivePose.GetPose(curRole);
 
-        UnityMolAtom a = raycaster.customRaycastAtomBurst(pointerR.actualContainer.transform.position, pointerR.actualTracer.transform.forward);
+        Vector3 p = Vector3.zero;
+        bool isExtrAtom = false;
+        UnityMolAtom a = raycaster.customRaycastAtomBurst(
+                             cpose.pos,
+                             cpose.forward,
+                             ref p, ref isExtrAtom, false);
 
         if (a != null) {
 
             UnityMolStructureManager sm = UnityMolMain.getStructureManager();
             UnityMolSelectionManager selM = UnityMolMain.getSelectionManager();
 
-            Transform atomPar = sm.structureToGameObject[a.residue.chain.model.structure.uniqueName].transform;
-
             string textAtom = a.ToString();
-
-            Transform currentT = a.residue.chain.model.structure.atomToGo[a].transform;
 
             if (touchedAtoms == 4) {
                 touchedAtoms = 0;
             }
 
-            atomsArray[touchedAtoms] = a;
+            switch (UnityMolMain.measureMode) {
+            case MeasureMode.distance:
+                if (touchedAtoms >= 2)
+                    touchedAtoms = 0;
+                break;
+            case MeasureMode.angle:
+                if (touchedAtoms >= 3)
+                    touchedAtoms = 0;
+                break;
+            case MeasureMode.torsAngle:
+                if (touchedAtoms >= 4)
+                    touchedAtoms = 0;
+                break;
+            }
 
-            if (atomsArray[touchedAtoms] == null || currentT == null) {
+            atomsArray[touchedAtoms] = a;
+            posExtrArray[touchedAtoms] = p;
+
+            if (source != null)
+                AudioSource.PlayClipAtPoint(source.clip, p);
+
+            if (atomsArray[touchedAtoms] == null) {
                 Debug.LogError("Problem measuring atoms");
                 resetTouchedAtoms();
                 return;
@@ -148,9 +153,9 @@ public class PointerMeasurements : MonoBehaviour {
             //Touched an atom from another molecule
             if (touchedAtoms >= 1) {
                 bool sameStruc = true;
-                string sName = atomsArray[0].residue.chain.model.structure.uniqueName;
+                string sName = atomsArray[0].residue.chain.model.structure.name;
                 for (int i = 1; i <= touchedAtoms; i++) {
-                    if (sName != atomsArray[i].residue.chain.model.structure.uniqueName) {
+                    if (sName != atomsArray[i].residue.chain.model.structure.name) {
                         sameStruc = false;
                         break;
                     }
@@ -169,8 +174,15 @@ public class PointerMeasurements : MonoBehaviour {
             string s4Name = null;
 
             if (touchedAtoms == 0) {
-                s1Name = atomsArray[0].residue.chain.model.structure.uniqueName;
-                APIPython.annotateAtom(s1Name, atomsArray[0].idInAllAtoms);
+                s1Name = atomsArray[0].residue.chain.model.structure.name;
+
+                if (!isExtrAtom) {
+                    APIPython.annotateAtom(s1Name, (int)atomsArray[0].number);
+                }
+                else {
+                    Vector3 losS = atomsArray[0].residue.chain.model.structure.annotationParent.transform.lossyScale;
+                    APIPython.annotateSphere(posExtrArray[0], losS.x);
+                }
                 touchedAtoms++;
                 return;
             }
@@ -178,47 +190,71 @@ public class PointerMeasurements : MonoBehaviour {
             switch (UnityMolMain.measureMode) {
             case MeasureMode.distance:
                 if (touchedAtoms == 1) {
-                    s1Name = atomsArray[0].residue.chain.model.structure.uniqueName;
-                    s2Name = atomsArray[1].residue.chain.model.structure.uniqueName;
+                    s1Name = atomsArray[0].residue.chain.model.structure.name;
+                    s2Name = atomsArray[1].residue.chain.model.structure.name;
 
-                    APIPython.annotateLine(s1Name, atomsArray[0].idInAllAtoms,
-                                           s2Name, atomsArray[1].idInAllAtoms);
+                    if (!isExtrAtom) {
 
-                    APIPython.annotateDistance(s1Name, atomsArray[0].idInAllAtoms,
-                                               s2Name, atomsArray[1].idInAllAtoms);
+                        APIPython.annotateLine(s1Name, (int)atomsArray[0].number,
+                                               s2Name, (int)atomsArray[1].number);
 
-                    APIPython.annotateAtom(s2Name, atomsArray[1].idInAllAtoms);
+                        APIPython.annotateDistance(s1Name, (int)atomsArray[0].number,
+                                                   s2Name, (int)atomsArray[1].number);
+
+                        APIPython.annotateAtom(s2Name, (int)atomsArray[1].number);
+                    }
+                    else {
+                        Transform sPar = atomsArray[0].residue.chain.model.structure.annotationParent.transform.parent;
+                        Vector3 a1pos = sPar.InverseTransformPoint(posExtrArray[0]);
+                        Vector3 a2pos = sPar.InverseTransformPoint(posExtrArray[1]);
+
+                        float dist = Vector3.Distance(a1pos, a2pos);
+
+                        string distText = dist.ToString("F1") + "\u212B";
+                        float sizeLine = 0.005f;//TODO: probably not the correct value => compute that
+                        APIPython.annotateWorldLine(posExtrArray[0], posExtrArray[1],
+                                                    sizeLine, new Color(0.0f, 0.0f, 0.5f, 1.0f));
+
+                        float scaleText = 1.0f;//TODO: probably not the correct value => compute that
+                        APIPython.annotateWorldText((posExtrArray[0] + posExtrArray[1]) * 0.5f,
+                                                    scaleText, distText, new Color(0.0f, 0.0f, 0.5f, 1.0f));
+
+
+                        Vector3 losS = atomsArray[1].residue.chain.model.structure.annotationParent.transform.lossyScale;
+                        APIPython.annotateSphere(posExtrArray[1], losS.x);
+                    }
                     resetTouchedAtoms();
                 }
                 break;
             case MeasureMode.angle:
                 if (touchedAtoms == 1) {
-                    s1Name = atomsArray[0].residue.chain.model.structure.uniqueName;
-                    s2Name = atomsArray[1].residue.chain.model.structure.uniqueName;
+                    s1Name = atomsArray[0].residue.chain.model.structure.name;
+                    s2Name = atomsArray[1].residue.chain.model.structure.name;
 
-                    APIPython.annotateLine(s1Name, atomsArray[0].idInAllAtoms,
-                                           s2Name, atomsArray[1].idInAllAtoms);
+                    APIPython.annotateLine(s1Name, (int)atomsArray[0].number,
+                                           s2Name, (int)atomsArray[1].number);
 
-                    APIPython.annotateAtom(s2Name, atomsArray[1].idInAllAtoms);
+                    APIPython.annotateAtom(s2Name, (int)atomsArray[1].number);
                     touchedAtoms++;
+                    break;
                 }
                 if (touchedAtoms == 2) {
-                    s1Name = atomsArray[0].residue.chain.model.structure.uniqueName;
-                    s2Name = atomsArray[1].residue.chain.model.structure.uniqueName;
-                    s3Name = atomsArray[2].residue.chain.model.structure.uniqueName;
+                    s1Name = atomsArray[0].residue.chain.model.structure.name;
+                    s2Name = atomsArray[1].residue.chain.model.structure.name;
+                    s3Name = atomsArray[2].residue.chain.model.structure.name;
 
-                    APIPython.annotateAtom(s3Name, atomsArray[2].idInAllAtoms);
+                    APIPython.annotateAtom(s3Name, (int)atomsArray[2].number);
 
-                    APIPython.annotateLine(s2Name, atomsArray[1].idInAllAtoms,
-                                           s3Name, atomsArray[2].idInAllAtoms);
+                    APIPython.annotateLine(s2Name, (int)atomsArray[1].number,
+                                           s3Name, (int)atomsArray[2].number);
 
-                    APIPython.annotateAngle(s1Name, atomsArray[0].idInAllAtoms,
-                                            s2Name, atomsArray[1].idInAllAtoms,
-                                            s3Name, atomsArray[2].idInAllAtoms);
+                    APIPython.annotateAngle(s1Name, (int)atomsArray[0].number,
+                                            s2Name, (int)atomsArray[1].number,
+                                            s3Name, (int)atomsArray[2].number);
 
-                    APIPython.annotateArcLine(s1Name, atomsArray[0].idInAllAtoms,
-                                              s2Name, atomsArray[1].idInAllAtoms,
-                                              s3Name, atomsArray[2].idInAllAtoms);
+                    APIPython.annotateArcLine(s1Name, (int)atomsArray[0].number,
+                                              s2Name, (int)atomsArray[1].number,
+                                              s3Name, (int)atomsArray[2].number);
 
                     resetTouchedAtoms();
                 }
@@ -226,43 +262,45 @@ public class PointerMeasurements : MonoBehaviour {
             case MeasureMode.torsAngle:
 
                 if (touchedAtoms == 1) {
-                    s1Name = atomsArray[0].residue.chain.model.structure.uniqueName;
-                    s2Name = atomsArray[1].residue.chain.model.structure.uniqueName;
+                    s1Name = atomsArray[0].residue.chain.model.structure.name;
+                    s2Name = atomsArray[1].residue.chain.model.structure.name;
 
-                    APIPython.annotateLine(s1Name, atomsArray[0].idInAllAtoms,
-                                           s2Name, atomsArray[1].idInAllAtoms);
+                    APIPython.annotateLine(s1Name, (int)atomsArray[0].number,
+                                           s2Name, (int)atomsArray[1].number);
 
-                    APIPython.annotateAtom(s2Name, atomsArray[1].idInAllAtoms);
+                    APIPython.annotateAtom(s2Name, (int)atomsArray[1].number);
                     touchedAtoms++;
+                    break;
                 }
                 if (touchedAtoms == 2) {
-                    s1Name = atomsArray[0].residue.chain.model.structure.uniqueName;
-                    s2Name = atomsArray[1].residue.chain.model.structure.uniqueName;
-                    s3Name = atomsArray[2].residue.chain.model.structure.uniqueName;
+                    s1Name = atomsArray[0].residue.chain.model.structure.name;
+                    s2Name = atomsArray[1].residue.chain.model.structure.name;
+                    s3Name = atomsArray[2].residue.chain.model.structure.name;
 
-                    APIPython.annotateLine(s2Name, atomsArray[1].idInAllAtoms,
-                                           s3Name, atomsArray[2].idInAllAtoms);
+                    APIPython.annotateLine(s2Name, (int)atomsArray[1].number,
+                                           s3Name, (int)atomsArray[2].number);
 
-                    APIPython.annotateAtom(s3Name, atomsArray[2].idInAllAtoms);
+                    APIPython.annotateAtom(s3Name, (int)atomsArray[2].number);
                     touchedAtoms++;
+                    break;
                 }
                 if (touchedAtoms == 3) {
-                    s1Name = atomsArray[0].residue.chain.model.structure.uniqueName;
-                    s2Name = atomsArray[1].residue.chain.model.structure.uniqueName;
-                    s3Name = atomsArray[2].residue.chain.model.structure.uniqueName;
-                    s4Name = atomsArray[3].residue.chain.model.structure.uniqueName;
+                    s1Name = atomsArray[0].residue.chain.model.structure.name;
+                    s2Name = atomsArray[1].residue.chain.model.structure.name;
+                    s3Name = atomsArray[2].residue.chain.model.structure.name;
+                    s4Name = atomsArray[3].residue.chain.model.structure.name;
 
-                    APIPython.annotateAtom(s4Name, atomsArray[3].idInAllAtoms);
+                    APIPython.annotateAtom(s4Name, (int)atomsArray[3].number);
 
-                    APIPython.annotateLine(s3Name, atomsArray[2].idInAllAtoms,
-                                           s4Name, atomsArray[3].idInAllAtoms);
-                    APIPython.annotateDihedralAngle(s1Name, atomsArray[0].idInAllAtoms,
-                                                    s2Name, atomsArray[1].idInAllAtoms,
-                                                    s3Name, atomsArray[2].idInAllAtoms,
-                                                    s4Name, atomsArray[3].idInAllAtoms);
+                    APIPython.annotateLine(s3Name, (int)atomsArray[2].number,
+                                           s4Name, (int)atomsArray[3].number);
+                    APIPython.annotateDihedralAngle(s1Name, (int)atomsArray[0].number,
+                                                    s2Name, (int)atomsArray[1].number,
+                                                    s3Name, (int)atomsArray[2].number,
+                                                    s4Name, (int)atomsArray[3].number);
 
-                    APIPython.annotateRotatingArrow(s2Name, atomsArray[1].idInAllAtoms,
-                                                    s3Name, atomsArray[2].idInAllAtoms);
+                    APIPython.annotateRotatingArrow(s2Name, (int)atomsArray[1].number,
+                                                    s3Name, (int)atomsArray[2].number);
                     resetTouchedAtoms();
                 }
                 break;
@@ -271,16 +309,8 @@ public class PointerMeasurements : MonoBehaviour {
 
     }
 
-    void buttonOut(object sender, DestinationMarkerEventArgs e) {
-        gameObject.GetComponent<VRTK_UIPointer>().enabled = true;
-    }
-
-    void buttonReleased(object sender, ControllerInteractionEventArgs e) {
-        gameObject.GetComponent<VRTK_UIPointer>().enabled = true;
-    }
     public void resetTouchedAtoms() {
         touchedAtoms = 0;
-        gameObject.GetComponent<VRTK_UIPointer>().enabled = true;
     }
 }
 

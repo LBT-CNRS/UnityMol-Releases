@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,41 +27,33 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UMol.API;
 
 namespace UMol {
-public class ReadCommandLineArguments : MonoBehaviour {
 
+/// <summary>
+/// Handle the command line arguments for the UnityMol executable
+/// </summary>
+public class ReadCommandLineArguments: MonoBehaviour {
 
-	private static List<string> GetArg(string name)
-	{
-		var args = System.Environment.GetCommandLineArgs();
+	/// <summary>
+	/// Return the value of the argument passed in 'name' as a list of strings.
+	/// For example, return 'myfile.pdb toto.pdb' for an argument like '-i myfile.pdb toto.pdb'
+	/// </summary>
+	/// <param name="name">name of the argument</param>
+	/// <returns>list of values of the argument</returns>
+	private static List<string> getArgs(string name) {
 
-		for (int i = 0; i < args.Length; i++)
-		{
-			if (args[i] == name && args.Length > i + 1)
-			{
+		string[] args = System.Environment.GetCommandLineArgs();
+		for (int i = 0; i < args.Length; i++) {
+			if (args[i] == name && args.Length > i + 1) {
 				List<string> res = new List<string>();
 				for (int j = i + 1; j < args.Length; j++) {
 					if (args[j].StartsWith("-")) {
@@ -77,20 +67,111 @@ public class ReadCommandLineArguments : MonoBehaviour {
 		return new List<string>();
 	}
 
+	/// <summary>
+	/// Return the value of the argument passed in 'name' as a string.
+	/// For example, return 'myfile.pdb' for an argument like '-i myfile.pdb'
+	/// </summary>
+	/// <param name="name">name of the argument</param>
+	/// <returns>value of the argument</returns>
+	private static string getArg(string name) {
 
-	void Start() {
-		List<string> filePaths = GetArg("-i");
-		foreach (string p in filePaths) {
-			if(PythonUtils.IsPythonFile(p)){
-				APIPython.loadHistoryScript(p);
-			}
-			else if(p.Length == 4){
-				APIPython.fetch(p);
-			}
-			else{
-				APIPython.load(p);
+		string[] args = System.Environment.GetCommandLineArgs();
+		for (int i = 0; i < args.Length; i++) {
+			if (args[i] == name && args.Length > i + 1) {
+				return args[i + 1];
 			}
 		}
+		return "";
+	}
+
+	/// <summary>
+	/// Check if the argument supplied in 'name' is found in the command line
+	/// </summary>
+	/// <param name="name">name of the argument</param>
+	/// <returns>True if found. False otherwise</returns>
+	private static bool isArgPresent(string name) {
+
+		string[] args = System.Environment.GetCommandLineArgs();
+		for (int i = 0; i < args.Length; i++) {
+			if (args[i] == name) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Start method
+	/// </summary>
+	public void Start() {
+		List<string> filePaths = getArgs("-i");
+		string directory = getArg("-d");
+
+		if (isArgPresent("-v") || isArgPresent("--version")) {
+			APIPython.getVersion();
+		}
+
+        if (isArgPresent("-r") || isArgPresent("--remoteControl")) {
+            APIPython.activateExternalCommands();
+        }
+
+        if (isArgPresent("-c") || isArgPresent("--commons")) {
+            APIPython.loadPythonCommonsModule();
+        }
+
+		// Change directory
+		if (!string.IsNullOrEmpty(directory)) {
+			Debug.Log("Setting directory to '" + directory + "'");
+			APIPython.cd(Path.GetFullPath(directory));
+		}
+
+		//Parse the different files supplied
+		foreach (string p in filePaths) {
+			if (PythonUtils.IsPythonFile(p)) {
+				APIPython.loadHistoryScript(p);
+			}
+			else if (p.Length == 4 && !p.Contains(".")) {
+				APIPython.fetch(p);
+			}
+			else {
+				if (p.EndsWith(".xtc") && APIPython.last() != null) {
+					string lastStructureName = APIPython.last().name;
+					if (lastStructureName != null) {
+						APIPython.loadTraj(lastStructureName, p);
+					}
+				}
+				else if (p.EndsWith(".dx") && APIPython.last() != null) {
+					string lastStructureName = APIPython.last().name;
+					if (lastStructureName != null) {
+						APIPython.loadDXmap(lastStructureName, p);
+					}
+				}
+				else if (p.EndsWith(".itp") && APIPython.last() != null) {
+					string lastStructureName = APIPython.last().name;
+					if (lastStructureName != null) {
+						APIPython.loadMartiniITP(lastStructureName, p);
+					}
+				}
+				else if (p.EndsWith(".psf") && APIPython.last() != null) {
+					string lastStructureName = APIPython.last().name;
+					if (lastStructureName != null) {
+						APIPython.loadPSFTopology(lastStructureName, p);
+					}
+				}
+				else if (p.EndsWith(".top") && APIPython.last() != null) {
+					string lastStructureName = APIPython.last().name;
+					if (lastStructureName != null) {
+						APIPython.loadTOPTopology(lastStructureName, p);
+					}
+				}
+				else {
+					APIPython.load(p);
+				}
+
+			}
+		}
+
+
 	}
 }
 }

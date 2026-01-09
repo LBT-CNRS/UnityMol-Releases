@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: transparentHover
-  m_Shader: {fileID: 4800000, guid: 4c84081e4523a5646919b30697cfccb8, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8ae010f9caaa48047ba046cbfbc43fa9, type: 3}
   m_ShaderKeywords: _ALPHAPREMULTIPLY_ON
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 0

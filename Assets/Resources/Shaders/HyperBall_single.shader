@@ -148,8 +148,7 @@ Shader "UMol/HyperBalls GL_D3D" {
              
                 Ray ray = primary_ray(i.i_near,i.i_far) ;
 
-                Quadric q = isect_surf_ball(ray, mat);
-                float3 M = q.s1;
+                float3 M = isect_surf_ball(ray, mat);
 
 
                 // OUT.depth = update_z_buffer(M, ModelViewProj);
@@ -290,8 +289,7 @@ Shader "UMol/HyperBalls GL_D3D" {
 
                 Ray ray = primary_ray(i.i_near,i.i_far) ;
 
-                Quadric q = isect_surf_ball(ray, mat);
-                float3 M = q.s1;
+                float3 M = isect_surf_ball(ray, mat);
 
                 float4 clipHit = UnityObjectToClipPos(float4(M,1));
                 float depth = update_z_buffer(clipHit);

@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,7 +42,11 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
 
     private Dictionary<UnityMolAtom, int> atomToId;
 
+
+    public bool isTransparent = false;
+    public float curAlpha = 1.0f;
     private int nbAtoms;
+
     private List<GameObject> meshesGO;
     public AtomRepresentationSphere atomRep;
 
@@ -73,7 +61,7 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
 
         atomRep = (AtomRepresentationSphere) umolRep.atomRep;
         meshesGO = atomRep.meshesGO;
-        nbAtoms = atomRep.selection.Count;
+        nbAtoms = atomRep.selection.atoms.Count;
         atomToId = atomRep.atomToId;
         highlightMat = (Material) Resources.Load("Materials/HighlightMaterial");
 
@@ -82,6 +70,10 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
         areSideChainsOn = true;
         areHydrogensOn = true;
         isBackboneOn = true;
+        isTransparent = false;
+    }
+
+    public override void InitRT() {
     }
 
     public override void Clean() {
@@ -91,10 +83,18 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
         }
 
         for (int i = 0; i < meshesGO.Count; i++) {
+#if UNITY_EDITOR
+            GameObject.DestroyImmediate(meshesGO[i]);
+            #else
             GameObject.Destroy(meshesGO[i]);
+#endif
         }
         if (parent != null) {
+#if UNITY_EDITOR
+            GameObject.DestroyImmediate(parent);
+#else
             GameObject.Destroy(parent);
+#endif
         }
 
         nbAtoms = 0;
@@ -107,6 +107,8 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
 
         isInit = false;
         isEnabled = false;
+        isTransparent = false;
+
         // UnityMolMain.getRepresentationManager().UpdateActiveColliders();
 
     }
@@ -173,7 +175,52 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
         isBackboneOn = show;
     }
 
-    public override void SetColor(Color col, UnityMolSelection sele) {
+
+    public void SwitchTransparent(bool force = false) {
+
+        if (isTransparent && !force) {
+            foreach (GameObject go in meshesGO) {
+                go.GetComponent<Renderer>().sharedMaterial = atomRep.solidMat;
+            }
+            isTransparent = false;
+        }
+        else {
+            if (atomRep.transMat == null) {
+                atomRep.transMat = new Material(Shader.Find("Custom/SurfaceVertexColorTransparent"));
+                atomRep.transMat.SetTexture("_DitherPattern", Resources.Load("Images/BayerDither8x8") as Texture2D);
+            }
+            foreach (GameObject go in meshesGO) {
+                go.GetComponent<Renderer>().sharedMaterial = atomRep.transMat;
+            }
+            isTransparent = true;
+        }
+
+        if (UnityMolMain.isFogOn) {
+            EnableDepthCueing();
+            SetDepthCueingStart(UnityMolMain.fogStart);
+            SetDepthCueingDensity(UnityMolMain.fogDensity);
+        } else {
+            DisableDepthCueing();
+        }
+
+    }
+    public void SetAlpha(float alpha) {
+        if (isTransparent) {
+            MaterialPropertyBlock props = new MaterialPropertyBlock();
+            foreach (GameObject meshGO in meshesGO) {
+                Renderer r = meshGO.GetComponent<Renderer>();
+                r.GetPropertyBlock(props);
+                Color col = props.GetColor("_Color");
+                col.a = alpha;
+                props.Clear();
+                props.SetColor("_Color", col);
+                r.SetPropertyBlock(props);
+            }
+            curAlpha = alpha;
+        }
+    }
+
+    public override void SetColor(Color32 col, UnityMolSelection sele) {
         foreach (UnityMolAtom a in sele.atoms) {
             SetColor(col, a);
         }
@@ -183,32 +230,34 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
         MaterialPropertyBlock props = new MaterialPropertyBlock();
         Renderer r = meshesGO[atomNum].GetComponent<Renderer>();
         r.GetPropertyBlock(props);
+        Color oldcol = props.GetColor("_Color");
+        col.a = oldcol.a;//keep alpha
         props.Clear();
         props.SetColor("_Color", col);
         r.SetPropertyBlock(props);
     }
 
-    public override void SetColor(Color col, UnityMolAtom atom) {
+    public override void SetColor(Color32 col, UnityMolAtom atom) {
         int idInCoord = 0;
         if (atomToId.TryGetValue(atom, out idInCoord)) {
             SetColor(col, idInCoord);
         }
     }
 
-    public override void SetColors(Color col, List<UnityMolAtom> atoms) {
+    public override void SetColors(Color32 col, List<UnityMolAtom> atoms) {
         foreach (UnityMolAtom a in atoms) {
             SetColor(col, a);
         }
     }
 
-    public override void SetColors(List<Color> cols, List<UnityMolAtom> atoms) {
+    public override void SetColors(List<Color32> cols, List<UnityMolAtom> atoms) {
         if (atoms.Count != cols.Count) {
             Debug.LogError("Lengths of color list and atom list are different");
             return;
         }
         for (int i = 0; i < atoms.Count; i++) {
             UnityMolAtom a = atoms[i];
-            Color col = cols[i];
+            Color32 col = cols[i];
             SetColor(col, a);
         }
     }
@@ -302,12 +351,12 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
     }
 
     public override void ResetColor(UnityMolAtom atom) {
-        SetColor(atom.color, atom);
+        SetColor(atom.color32, atom);
     }
 
     public override void ResetColors() {
         foreach (UnityMolAtom a in atomRep.selection.atoms) {
-            SetColor(a.color, a);
+            SetColor(a.color32, a);
         }
     }
 
@@ -355,12 +404,99 @@ public class UnityMolSphereManager : UnityMolGenericRepresentationManager {
             mats[0].SetFloat("_Metallic", val);
         }
     }
-    public override UnityMolRepresentationParameters Save(){
+    public override void UpdateLike() {
+    }
+    public override UnityMolRepresentationParameters Save() {
         UnityMolRepresentationParameters res = new UnityMolRepresentationParameters();
+
+        res.repT.atomType = AtomType.sphere;
+        res.colorationType = atomRep.colorationType;
+
+        if (res.colorationType == colorType.custom) {
+            Debug.Log("Custom");
+            int atomNum = 0;
+            res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(atomRep.selection.atoms.Count);
+            foreach (UnityMolAtom a in atomRep.selection.atoms) {
+                Renderer r = meshesGO[atomNum].GetComponent<Renderer>();
+                Color col = r.sharedMaterial.color;
+                res.colorPerAtom[a] = col;
+                atomNum++;
+            }
+        }
+        else if (res.colorationType == colorType.full) { //Get color of first atom/residue
+            Renderer r = meshesGO[0].GetComponent<Renderer>();
+            MaterialPropertyBlock props = new MaterialPropertyBlock();
+            r.GetPropertyBlock(props);
+            Color col = props.GetColor("_Color");
+            res.fullColor = col;
+        }
+        else if (res.colorationType == colorType.bfactor) {
+            res.bfactorStartColor = atomRep.bfactorStartCol;
+            res.bfactorMidColor = atomRep.bfactorMidColor;
+            res.bfactorEndColor = atomRep.bfactorEndCol;
+        }
+        // res.shadow = (meshesGO[0].GetComponent<Renderer>().shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.On);
+        // res.HBScale = lastScale;
+
         return res;
     }
-    public override void Restore(UnityMolRepresentationParameters savedParams){
-        
+    public override void Restore(UnityMolRepresentationParameters savedParams) {
+
+        if (savedParams.repT.atomType == AtomType.sphere) {
+            if (savedParams.colorationType == colorType.full) {
+                SetColor(savedParams.fullColor, atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.custom) {
+                List<Color32> colors = new List<Color32>(atomRep.selection.atoms.Count);
+                List<UnityMolAtom> restoredAtoms = new List<UnityMolAtom>(atomRep.selection.atoms.Count);
+                foreach (UnityMolAtom a in atomRep.selection.atoms) {
+                    if (savedParams.colorPerAtom.ContainsKey(a)) {
+                        colors.Add(savedParams.colorPerAtom[a]);
+                        restoredAtoms.Add(a);
+                    }
+                }
+                SetColors(colors, restoredAtoms);
+            }
+            else if (savedParams.colorationType == colorType.defaultCartoon) {
+                //Do nothing !
+            }
+            else if (savedParams.colorationType == colorType.res) {
+                colorByRes(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.chain) {
+                colorByChain(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.hydro) {
+                colorByHydro(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.seq) {
+                colorBySequence(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.charge) {
+                colorByCharge(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.restype) {
+                colorByResType(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.rescharge) {
+                colorByResCharge(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.resid) {
+                colorByResid(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.resnum) {
+                colorByResnum(atomRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.bfactor) {
+                colorByBfactor(atomRep.selection, savedParams.bfactorStartColor, savedParams.bfactorMidColor, savedParams.bfactorEndColor);
+            }
+
+            // SetSizes(atomRep.selection.atoms, savedParams.SphereSize);
+            atomRep.colorationType = savedParams.colorationType;
+        }
+        else {
+            Debug.LogError("Could not restore representation parameters");
+        }
     }
 }
 }

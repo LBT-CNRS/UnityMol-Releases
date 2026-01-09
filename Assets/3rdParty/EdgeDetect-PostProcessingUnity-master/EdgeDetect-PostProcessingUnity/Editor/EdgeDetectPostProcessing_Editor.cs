@@ -13,6 +13,7 @@ using UnityEngine.Rendering.PostProcessing;
 public class EdgeDetectPostProcessing_Editor<T> : PostProcessEffectEditor<T> where T : EdgeDetectPostProcessing
 {
 	SerializedParameterOverride mode;
+	SerializedParameterOverride outlineColor;
 	SerializedParameterOverride sensitivityDepth;
 	SerializedParameterOverride sensitivityNormals;
 	SerializedParameterOverride lumThreshold;
@@ -22,6 +23,7 @@ public class EdgeDetectPostProcessing_Editor<T> : PostProcessEffectEditor<T> whe
 	SerializedParameterOverride edgesOnlyBgColor;
 
 	GUIContent gc_mode = new GUIContent("Mode");
+	GUIContent gc_outlineColor = new GUIContent(" Outline Color");
 	GUIContent gc_sensitivityDepth = new GUIContent(" Depth Sensitivity");
 	GUIContent gc_sensitivityNormals = new GUIContent(" Normals Sensitivity");
 	GUIContent gc_lumThreshold = new GUIContent(" Luminance Threshold");
@@ -36,6 +38,7 @@ public class EdgeDetectPostProcessing_Editor<T> : PostProcessEffectEditor<T> whe
 	public override void OnEnable()
 	{
 		mode = FindParameterOverride(x => x.mode);
+		outlineColor = FindParameterOverride(x => x.outlineColor);
 		sensitivityDepth = FindParameterOverride(x => x.sensitivityDepth);
 		sensitivityNormals = FindParameterOverride(x => x.sensitivityNormals);
 		lumThreshold = FindParameterOverride(x => x.lumThreshold);
@@ -60,6 +63,8 @@ public class EdgeDetectPostProcessing_Editor<T> : PostProcessEffectEditor<T> whe
 			EditorGUILayout.HelpBox("Edge Detection effects that rely on Camera Depth + Normals texture don't work with scriptable render pipelines.", MessageType.Warning);
 			return;
 		}
+
+		PropertyField(outlineColor, gc_outlineColor);
 
 		PropertyField(sampleDist, gc_sampleDist);
 

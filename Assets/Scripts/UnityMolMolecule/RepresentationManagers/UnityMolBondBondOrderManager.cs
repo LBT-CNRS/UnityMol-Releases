@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,35 +27,20 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 using System.Linq;
+using Unity.Mathematics;
 
 namespace UMol {
 public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager {
     private UnityMolRepresentation rep;
     private BondRepresentationBondOrder bondRep;
-    private List<Int3> coordStickTextureList;
-    private List<AtomDuo> flattenBonds;
 
     private bool[] texturesToUpdate;
     private bool[] multiBondTexturesToUpdate;
@@ -84,17 +67,6 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
             else {
                 multiBondTexturesToUpdate = new bool[0];
             }
-
-            coordStickTextureList = new List<Int3>();
-
-            foreach (Int3 i in bondRep.coordStickTexture.Values) {
-                coordStickTextureList.Add(i);
-            }
-
-            flattenBonds = bondRep.selection.bonds.ToList();
-        }
-        else {
-            flattenBonds = new List<AtomDuo>();
         }
         isInit = true;
         isEnabled = true;
@@ -105,27 +77,36 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
         shrink = 0.4f;
     }
 
+    public override void InitRT() {
+    }
+
     public override void Clean() {
+
+        if (bondRep.meshesGO != null) {
+            for (int i = 0; i < bondRep.meshesGO.Count; i++) {
+                GameObject.Destroy(bondRep.meshesGO[i].GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(bondRep.meshesGO[i]);
+            }
+            bondRep.meshesGO.Clear();
+        }
+        if (bondRep.multiBondGO != null) {
+            for (int i = 0; i < bondRep.multiBondGO.Count; i++) {
+                GameObject.Destroy(bondRep.multiBondGO[i].GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(bondRep.multiBondGO[i]);
+            }
+            bondRep.multiBondGO.Clear();
+        }
+
 
         if (bondRep.representationTransform != null) {
             GameObject.Destroy(bondRep.representationTransform.gameObject);
         }
 
-        if (bondRep.meshesGO != null) {
-            bondRep.meshesGO.Clear();
-            bondRep.multiBondGO.Clear();
-        }
         if (bondRep.coordStickTexture != null) {
             bondRep.coordStickTexture.Clear();
         }
         if (bondRep.multiBondCoordStickTexture != null) {
             bondRep.multiBondCoordStickTexture.Clear();
-        }
-        if (coordStickTextureList != null) {
-            coordStickTextureList.Clear();
-        }
-        if (flattenBonds != null) {
-            flattenBonds.Clear();
         }
         if (bondRep.atomToDuo != null) {
             bondRep.atomToDuo.Clear();
@@ -147,8 +128,6 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
         bondRep.coordStickTexture = null;
         bondRep.multiBondCoordStickTexture = null;
         bondRep.multiBondParamTextures = null;
-        coordStickTextureList = null;
-        flattenBonds = null;
         bondRep.atomToDuo = null;
         bondRep.meshesGO = null;
         bondRep.multiBondGO = null;
@@ -156,8 +135,6 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
 
         isInit = false;
         isEnabled = false;
-        // UnityMolMain.getRepresentationManager().UpdateActiveColliders();
-
     }
 
     public void ApplyTextures() {
@@ -213,17 +190,15 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     /// Resets the positions of all atoms
     /// </summary>
     public void ResetPositions() {
+        Vector4 offsetPos = new Vector4(bondRep.offsetPos.x, bondRep.offsetPos.y, bondRep.offsetPos.z, 0.0f);
 
-        AtomDuo key;
         Vector4 atom1Pos = Vector4.zero;
         Vector4 atom2Pos = Vector4.zero;
-        Int3 infoTex;
-        int idBond = 0;
+        int3 infoTex;
 
         UnityMolModel curM = null;
 
-
-        foreach (AtomDuo d in flattenBonds) {
+        foreach (AtomDuo d in bondRep.coordStickTexture.Keys) {
             UnityMolStructure s1 = d.a1.residue.chain.model.structure;
             UnityMolStructure s2 = d.a2.residue.chain.model.structure;
 
@@ -243,11 +218,15 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
             atom1Pos.y = atom1.position.y;
             atom1Pos.z = atom1.position.z;
 
+            atom1Pos += offsetPos;
+
             atom2Pos.x = atom2.position.x;
             atom2Pos.y = atom2.position.y;
             atom2Pos.z = atom2.position.z;
 
-            infoTex = coordStickTextureList[idBond];
+            atom2Pos += offsetPos;
+
+            infoTex = bondRep.coordStickTexture[d];
 
             bondRep.paramTextures[infoTex.x].SetPixel(infoTex.y, 4, atom1Pos);
             bondRep.paramTextures[infoTex.x].SetPixel(infoTex.y, 5, atom2Pos);
@@ -257,10 +236,10 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
             if (bondRep.multiBondCoordStickTexture != null && bondRep.multiBondCoordStickTexture.ContainsKey(d)) {
 
                 if (bondRep.doubleBonded.ContainsKey(d)) {
-                    Vector3 t = BondRepresentationOptihs.computeOffset(bondRep.doubleBonded[d]);
+                    Vector3 t = bondRep.computeOffset(bondRep.doubleBonded[d]);
                     Vector4 offset = new Vector4(t.x, t.y, t.z, 0.0f);
 
-                    Int3 infoTex2 = bondRep.multiBondCoordStickTexture[d];
+                    int3 infoTex2 = bondRep.multiBondCoordStickTexture[d];
                     bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 4, atom1Pos - offset);
                     bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 5, atom2Pos - offset);
 
@@ -269,10 +248,10 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                     multiBondTexturesToUpdate[infoTex2.x] = true;
                 }
                 else if (bondRep.tripleBonded.ContainsKey(d)) {
-                    Vector3 t = BondRepresentationOptihs.computeOffset(bondRep.tripleBonded[d]) * 1.2f;
+                    Vector3 t = bondRep.computeOffset(bondRep.tripleBonded[d]) * 1.2f;
                     Vector4 offset = new Vector4(t.x, t.y, t.z, 0.0f);
 
-                    Int3 infoTex2 = bondRep.multiBondCoordStickTexture[d];
+                    int3 infoTex2 = bondRep.multiBondCoordStickTexture[d];
                     bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 4, atom1Pos - offset);
                     bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 5, atom2Pos - offset);
 
@@ -281,8 +260,6 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                     multiBondTexturesToUpdate[infoTex2.x] = true;
                 }
             }
-
-            idBond++;
         }
 
         ApplyTextures();
@@ -294,16 +271,16 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
         if (!largeBB) {
             if (bondRep.meshesGO != null && bondRep.meshesGO.Count != 0) {
                 for (int i = 0; i < bondRep.meshesGO.Count; i++) {
-                    Bounds b = bondRep.meshesGO[i].GetComponent<MeshFilter>().mesh.bounds;
+                    Bounds b = bondRep.meshesGO[i].GetComponent<MeshFilter>().sharedMesh.bounds;
                     b.size = Vector3.one * 5000.0f;
-                    bondRep.meshesGO[i].GetComponent<MeshFilter>().mesh.bounds = b;
+                    bondRep.meshesGO[i].GetComponent<MeshFilter>().sharedMesh.bounds = b;
                 }
             }
             if (bondRep.multiBondGO != null && bondRep.multiBondGO.Count != 0) {
                 for (int i = 0; i < bondRep.multiBondGO.Count; i++) {
-                    Bounds b = bondRep.multiBondGO[i].GetComponent<MeshFilter>().mesh.bounds;
+                    Bounds b = bondRep.multiBondGO[i].GetComponent<MeshFilter>().sharedMesh.bounds;
                     b.size = Vector3.one * 5000.0f;
-                    bondRep.multiBondGO[i].GetComponent<MeshFilter>().mesh.bounds = b;
+                    bondRep.multiBondGO[i].GetComponent<MeshFilter>().sharedMesh.bounds = b;
                 }
             }
         }
@@ -325,10 +302,10 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     }
 
     public void ShowAtoms(HashSet<UnityMolAtom> atoms, bool show) {
-        foreach (AtomDuo duo in flattenBonds) {
+        foreach (AtomDuo duo in bondRep.coordStickTexture.Keys) {
             UnityMolAtom atom1 = duo.a1;
             UnityMolAtom atom2 = duo.a2;
-            Int3 infoTex = bondRep.coordStickTexture[duo];
+            int3 infoTex = bondRep.coordStickTexture[duo];
 
             if (atoms.Contains(atom1) || atoms.Contains(atom2)) {
                 if (show)
@@ -339,7 +316,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                 texturesToUpdate[infoTex.x] = true;
 
                 if (bondRep.multiBondCoordStickTexture.ContainsKey(duo)) {
-                    Int3 infoTex2 = bondRep.multiBondCoordStickTexture[duo];
+                    int3 infoTex2 = bondRep.multiBondCoordStickTexture[duo];
                     if (show)
                         bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 10, Vector4.one);
                     else
@@ -355,7 +332,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     public override void ShowHydrogens(bool show) {
         HashSet<UnityMolAtom> toHide = new HashSet<UnityMolAtom>();
 
-        foreach (AtomDuo duo in flattenBonds) {
+        foreach (AtomDuo duo in bondRep.coordStickTexture.Keys) {
             UnityMolAtom atom1 = duo.a1;
             UnityMolAtom atom2 = duo.a2;
 
@@ -386,7 +363,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
         AtomDuo invd = new AtomDuo(d.a2, d.a1);
         if (bondRep.atomToDuo.ContainsKey(d.a1)) {
             foreach (AtomDuo d2 in bondRep.atomToDuo[d.a1]) {
-                Int3 infoTex;
+                int3 infoTex;
                 if (d.Equals(d2) || invd.Equals(d2)) {
                     if (invd.Equals(d2)) {
                         infoTex = bondRep.coordStickTexture[invd];
@@ -403,7 +380,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                     }
 
                     if (bondRep.multiBondCoordStickTexture.ContainsKey(d)) {
-                        Int3 infoTex2 = bondRep.multiBondCoordStickTexture[d];
+                        int3 infoTex2 = bondRep.multiBondCoordStickTexture[d];
                         if (show)
                             bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 10, Vector4.one);
                         else
@@ -411,7 +388,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                         multiBondTexturesToUpdate[infoTex2.x] = true;
                     }
                     else if (bondRep.multiBondCoordStickTexture.ContainsKey(invd)) {
-                        Int3 infoTex2 = bondRep.multiBondCoordStickTexture[invd];
+                        int3 infoTex2 = bondRep.multiBondCoordStickTexture[invd];
                         if (show)
                             bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 10, Vector4.one);
                         else
@@ -430,7 +407,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
         if (!found && bondRep.atomToDuo.ContainsKey(d.a2)) {
             foreach (AtomDuo d2 in bondRep.atomToDuo[d.a2]) {
                 if (d2 == d || invd == d2) {
-                    Int3 infoTex;
+                    int3 infoTex;
                     if (invd.Equals(d2)) {
                         infoTex = bondRep.coordStickTexture[invd];
                     }
@@ -444,7 +421,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                         bondRep.paramTextures[infoTex.x].SetPixel(infoTex.y, 10, Vector4.zero);
                     }
                     if (bondRep.multiBondCoordStickTexture.ContainsKey(d2)) {
-                        Int3 infoTex2 = bondRep.multiBondCoordStickTexture[d2];
+                        int3 infoTex2 = bondRep.multiBondCoordStickTexture[d2];
                         if (show)
                             bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 10, Vector4.one);
                         else
@@ -452,7 +429,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                         multiBondTexturesToUpdate[infoTex2.x] = true;
                     }
                     else if (bondRep.multiBondCoordStickTexture.ContainsKey(invd)) {
-                        Int3 infoTex2 = bondRep.multiBondCoordStickTexture[invd];
+                        int3 infoTex2 = bondRep.multiBondCoordStickTexture[invd];
                         if (show)
                             bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 10, Vector4.one);
                         else
@@ -477,10 +454,10 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     public override void ShowSideChains(bool show) {
 
 
-        foreach (AtomDuo duo in flattenBonds) {
+        foreach (AtomDuo duo in bondRep.coordStickTexture.Keys) {
             UnityMolAtom atom1 = duo.a1;
             UnityMolAtom atom2 = duo.a2;
-            Int3 infoTex = bondRep.coordStickTexture[duo];
+            int3 infoTex = bondRep.coordStickTexture[duo];
             if (MDAnalysisSelection.isSideChain(atom1, bondRep.selection.bonds) || MDAnalysisSelection.isSideChain(atom2, bondRep.selection.bonds)) {
                 if (show && !areHydrogensOn && (atom1.type == "H" || atom2.type == "H")) {
                 }
@@ -494,7 +471,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                     }
 
                     if (bondRep.multiBondCoordStickTexture.ContainsKey(duo)) {
-                        Int3 infoTex2 = bondRep.multiBondCoordStickTexture[duo];
+                        int3 infoTex2 = bondRep.multiBondCoordStickTexture[duo];
                         if (show)
                             bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 10, Vector4.one);
                         else
@@ -513,7 +490,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     public override void ShowBackbone(bool show) {
         HashSet<UnityMolAtom> toHide = new HashSet<UnityMolAtom>();
 
-        foreach (AtomDuo duo in flattenBonds) {
+        foreach (AtomDuo duo in bondRep.coordStickTexture.Keys) {
             UnityMolAtom atom1 = duo.a1;
             UnityMolAtom atom2 = duo.a2;
 
@@ -529,7 +506,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
 
     }
 
-    public override void SetColor(Color col, UnityMolSelection sele) {
+    public override void SetColor(Color32 col, UnityMolSelection sele) {
 
         foreach (UnityMolAtom a in sele.atoms) {
             SetColor(col, a, false);
@@ -537,11 +514,11 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
         ApplyTextures();
     }
 
-    public override void SetColor(Color col, UnityMolAtom a) {
+    public override void SetColor(Color32 col, UnityMolAtom a) {
         SetColor(col, a, true);
     }
 
-    public void SetColor(Color col, UnityMolAtom a, bool now = true) {
+    public void SetColor(Color32 col, UnityMolAtom a, bool now = true) {
         if (bondRep.meshesGO.Count == 0 || !bondRep.atomToDuo.ContainsKey(a)) {
             return;
         }
@@ -559,36 +536,36 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
             ApplyTextures();
         }
     }
-    public override void SetColors(Color col, List<UnityMolAtom> atoms) {
+    public override void SetColors(Color32 col, List<UnityMolAtom> atoms) {
         foreach (UnityMolAtom a in atoms) {
             SetColor(col, a, false);
         }
         ApplyTextures();
     }
 
-    public override void SetColors(List<Color> cols, List<UnityMolAtom> atoms) {
+    public override void SetColors(List<Color32> cols, List<UnityMolAtom> atoms) {
         if (atoms.Count != cols.Count) {
             Debug.LogError("Lengths of color list and atom list are different");
             return;
         }
         for (int i = 0; i < atoms.Count; i++) {
             UnityMolAtom a = atoms[i];
-            Color col = cols[i];
+            Color32 col = cols[i];
             SetColor(col, a, false);
         }
         ApplyTextures();
     }
 
-    public void SetColorForAtom(Color col, UnityMolAtom a1, UnityMolAtom a2) {
+    public void SetColorForAtom(Color32 col, UnityMolAtom a1, UnityMolAtom a2) {
         AtomDuo key = new AtomDuo(a1, a2);
         bondRep.colorPerAtom[a1] = col;
-        Int3 infoTex;
+        int3 infoTex;
         if (bondRep.coordStickTexture.TryGetValue(key, out infoTex)) {
             bondRep.paramTextures[infoTex.x].SetPixel(infoTex.y, 2, col);
             texturesToUpdate[infoTex.x] = true;
 
             if (bondRep.multiBondCoordStickTexture != null && bondRep.multiBondCoordStickTexture.ContainsKey(key)) {
-                Int3 infoTex2 = bondRep.multiBondCoordStickTexture[key];
+                int3 infoTex2 = bondRep.multiBondCoordStickTexture[key];
                 bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 2, col);
                 bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y + 1, 2, col);
                 multiBondTexturesToUpdate[infoTex2.x] = true;
@@ -601,7 +578,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
                 texturesToUpdate[infoTex.x] = true;
             }
             if (bondRep.multiBondCoordStickTexture != null && bondRep.multiBondCoordStickTexture.ContainsKey(key)) {
-                Int3 infoTex2 = bondRep.multiBondCoordStickTexture[key];
+                int3 infoTex2 = bondRep.multiBondCoordStickTexture[key];
                 bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 3, col);
                 bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y + 1, 3, col);
                 multiBondTexturesToUpdate[infoTex2.x] = true;
@@ -777,7 +754,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     public void showBond(UnityMolAtom atom1, UnityMolAtom atom2, bool show) {
 
         AtomDuo key = new AtomDuo(atom1, atom2);
-        Int3 infoTex;
+        int3 infoTex;
         if (bondRep.coordStickTexture.TryGetValue(key, out infoTex)) {
             if (show) {
                 bondRep.paramTextures[infoTex.x].SetPixel(infoTex.y, 10, Vector4.one);
@@ -788,7 +765,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
             texturesToUpdate[infoTex.x] = true;
 
             if (bondRep.multiBondCoordStickTexture != null && bondRep.multiBondCoordStickTexture.ContainsKey(key)) {
-                Int3 infoTex2 = bondRep.multiBondCoordStickTexture[key];
+                int3 infoTex2 = bondRep.multiBondCoordStickTexture[key];
                 if (show)
                     bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 10, Vector4.one);
                 else
@@ -801,7 +778,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     public void setScaleBond(UnityMolAtom a1, UnityMolAtom a2, float size) {
 
         AtomDuo key = new AtomDuo(a1, a2);
-        Int3 infoTex;
+        int3 infoTex;
         if (bondRep.coordStickTexture.TryGetValue(key, out infoTex)) {
             Vector4 newSize = bondRep.paramTextures[infoTex.x].GetPixel(infoTex.y, 11);
             newSize.x = size;
@@ -820,15 +797,15 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     }
 
     public void ResetVisibility() {
-        foreach (AtomDuo duo in flattenBonds) {
+        foreach (AtomDuo duo in bondRep.coordStickTexture.Keys) {
             UnityMolAtom atom1 = duo.a1;
             UnityMolAtom atom2 = duo.a2;
-            Int3 infoTex = bondRep.coordStickTexture[duo];
+            int3 infoTex = bondRep.coordStickTexture[duo];
             bondRep.paramTextures[infoTex.x].SetPixel(infoTex.y, 10, Vector4.one);
             texturesToUpdate[infoTex.x] = true;
 
             if (bondRep.multiBondCoordStickTexture != null && bondRep.multiBondCoordStickTexture.ContainsKey(duo)) {
-                Int3 infoTex2 = bondRep.multiBondCoordStickTexture[duo];
+                int3 infoTex2 = bondRep.multiBondCoordStickTexture[duo];
                 bondRep.multiBondParamTextures[infoTex2.x].SetPixel(infoTex2.y, 10, Vector4.one);
                 multiBondTexturesToUpdate[infoTex2.x] = true;
             }
@@ -878,7 +855,10 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     }
 
     public override void ResetSizes() {
-        foreach (UnityMolAtom a in bondRep.selection.bonds.bondsDual.Keys) {
+        UnityMolModel m = bondRep.selection.atoms[0].residue.chain.model;
+
+        foreach (int ida in bondRep.selection.bonds.bonds.Keys) {
+            UnityMolAtom a = m.allAtoms[ida];
             SetScaleForAtom(1.0f, a, false);
         }
         ApplyTextures();
@@ -886,14 +866,18 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     }
 
     public override void ResetColor(UnityMolAtom atom) {
-        SetColor(atom.color, atom);
+        SetColor(atom.color32, atom);
     }
 
     public override void ResetColors() {
-        foreach (UnityMolAtom a in bondRep.selection.bonds.bondsDual.Keys) {
-            SetColor(a.color, a, false);
+        UnityMolModel m = bondRep.selection.atoms[0].residue.chain.model;
+
+        foreach (int ida in bondRep.selection.bonds.bonds.Keys) {
+            UnityMolAtom a = m.allAtoms[ida];
+            SetColor(a.color32, a, false);
         }
         ApplyTextures();
+        bondRep.colorationType = colorType.atom;
     }
 
     public override void HighlightRepresentation() {
@@ -909,6 +893,8 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
     public override void SetMetal(float val) {
         Debug.LogWarning("Cannot change this value for the hyperstick representation");
     }
+    public override void UpdateLike() {
+    }
 
     public override UnityMolRepresentationParameters Save() {
 
@@ -917,16 +903,17 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
         res.repT.bondType = BondType.bondorder;
         res.colorationType = bondRep.colorationType;
 
+        if (bondRep.meshesGO == null || bondRep.meshesGO.Count == 0)
+            return res;
+
         if (res.colorationType == colorType.custom) {
-            int atomNum = 0;
-            res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(bondRep.selection.Count);
+            res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(bondRep.selection.atoms.Count);
             foreach (UnityMolAtom a in bondRep.selection.atoms) {
                 res.colorPerAtom[a] = bondRep.colorPerAtom[a];
             }
 
         }
         else if (res.colorationType == colorType.full) { //Get color of first atom/residue
-            int atomNum = 0;
             foreach (UnityMolAtom a in bondRep.colorPerAtom.Keys) {
                 res.fullColor = bondRep.colorPerAtom[a];
                 break;
@@ -934,6 +921,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
         }
         else if (res.colorationType == colorType.bfactor) {
             res.bfactorStartColor = bondRep.bfactorStartCol;
+            res.bfactorMidColor = bondRep.bfactorMidColor;
             res.bfactorEndColor = bondRep.bfactorEndCol;
         }
         res.smoothness = shininess;
@@ -980,8 +968,14 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
             else if (savedParams.colorationType == colorType.rescharge) {
                 colorByResCharge(bondRep.selection);
             }
+            else if (savedParams.colorationType == colorType.resnum) {
+                colorByResnum(bondRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.resid) {
+                colorByResid(bondRep.selection);
+            }
             else if (savedParams.colorationType == colorType.bfactor) {
-                colorByBfactor(bondRep.selection, savedParams.bfactorStartColor, savedParams.bfactorEndColor);
+                colorByBfactor(bondRep.selection, savedParams.bfactorStartColor, savedParams.bfactorMidColor, savedParams.bfactorEndColor);
             }
 
             // SetSizes(bondRep.selection.atoms, savedParams.HSScale);
@@ -991,7 +985,7 @@ public class UnityMolBondBondOrderManager : UnityMolGenericRepresentationManager
             bondRep.colorationType = savedParams.colorationType;
         }
         else {
-            Debug.LogError("Could not restore representation parameteres");
+            Debug.LogError("Could not restore representation parameters");
         }
     }
 

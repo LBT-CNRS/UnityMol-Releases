@@ -56,7 +56,7 @@
 				// UNITY_TRANSFER_FOG(o,o.vertex);
 				o.wPos = mul(unity_ObjectToWorld, v.vertex);
 				o.color = v.color;
-				o.hide = (v.uv2.x < 0.00001f);
+				o.hide = (v.uv2.x > 1.5f);
 				return o;
 			}
 			

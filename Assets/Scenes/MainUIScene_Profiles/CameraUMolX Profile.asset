@@ -1,5 +1,48 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7233465054307791715
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0606e91266719e3468048be764e49bad, type: 3}
+  m_Name: EdgeDetect_BeforeTransparent
+  m_EditorClassIdentifier: 
+  active: 1
+  enabled:
+    overrideState: 1
+    value: 0
+  mode:
+    overrideState: 1
+    value: 3
+  outlineColor:
+    overrideState: 1
+    value: {r: 0, g: 0, b: 0, a: 1}
+  sensitivityDepth:
+    overrideState: 0
+    value: 1
+  sensitivityNormals:
+    overrideState: 0
+    value: 1
+  lumThreshold:
+    overrideState: 0
+    value: 0.2
+  edgeExp:
+    overrideState: 0
+    value: 1
+  sampleDist:
+    overrideState: 1
+    value: 1
+  edgesOnly:
+    overrideState: 0
+    value: 0
+  edgesOnlyBgColor:
+    overrideState: 0
+    value: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16,8 +59,7 @@ MonoBehaviour:
   - {fileID: 5903464323465990}
   - {fileID: 7329445604466116038}
   - {fileID: 4470057404620508222}
-  - {fileID: 7637294129697256358}
-  - {fileID: 6658618829477144456}
+  - {fileID: -7233465054307791715}
 --- !u!114 &5903464323465990
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -111,7 +153,7 @@ MonoBehaviour:
     value: 0
   mode:
     overrideState: 1
-    value: 2
+    value: 3
   sensitivityDepth:
     overrideState: 0
     value: 1
@@ -125,7 +167,7 @@ MonoBehaviour:
     overrideState: 0
     value: 1
   sampleDist:
-    overrideState: 0
+    overrideState: 1
     value: 1
   edgesOnly:
     overrideState: 0
@@ -170,52 +212,3 @@ MonoBehaviour:
   speedDown:
     overrideState: 0
     value: 1
---- !u!114 &7637294129697256358
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1cb7e9e120078f43bce4f0b1be547a7, type: 3}
-  m_Name: AmbientOcclusion
-  m_EditorClassIdentifier: 
-  active: 0
-  enabled:
-    overrideState: 1
-    value: 1
-  mode:
-    overrideState: 1
-    value: 1
-  intensity:
-    overrideState: 1
-    value: 0.65
-  color:
-    overrideState: 1
-    value: {r: 0, g: 0, b: 0, a: 1}
-  ambientOnly:
-    overrideState: 0
-    value: 1
-  noiseFilterTolerance:
-    overrideState: 0
-    value: 0
-  blurTolerance:
-    overrideState: 0
-    value: -4.6
-  upsampleTolerance:
-    overrideState: 0
-    value: -12
-  thicknessModifier:
-    overrideState: 1
-    value: 1
-  directLightingStrength:
-    overrideState: 0
-    value: 0
-  radius:
-    overrideState: 0
-    value: 0.25
-  quality:
-    overrideState: 0
-    value: 2

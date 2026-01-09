@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,28 +27,15 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 using System.Linq;
+using Unity.Mathematics;
 
 namespace UMol {
 public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
@@ -91,7 +76,9 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 		}
 
 		atomRep = (AtomRepresentationTube) umolRep.atomRep;
-		atomRep.meshGO = atomRep.meshGO;
+
+        if (UnityMolMain.raytracingMode)
+            InitRT();
 
 		isInit = true;
 		isEnabled = true;
@@ -100,23 +87,36 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 		isBackboneOn = true;
 	}
 
+	public override void InitRT() {
+		if (rtos == null) {
+			RaytracedObject rto = atomRep.meshGO.AddComponent<RaytracedObject>();
+			rtos = new List<RaytracedObject>() {rto};
+		}
+	}
+
 	public override void Clean() {
+
+		if (rtos != null) {
+			for (int i = 0; i < rtos.Count; i++) {
+				GameObject.Destroy(rtos[i]);
+			}
+			rtos.Clear();
+		}
+
 		GameObject parent = null;
 		if (atomRep.meshGO != null) {
 			parent = atomRep.meshGO.transform.parent.gameObject;
+			GameObject.Destroy(atomRep.meshGO.GetComponent<MeshFilter>().sharedMesh);
+			GameObject.Destroy(atomRep.meshGO);
 		}
-
-		GameObject.DestroyImmediate(atomRep.meshGO);
 
 		if (parent != null) {
-			GameObject.DestroyImmediate(parent);
+			GameObject.Destroy(parent);
 		}
 
-		atomRep.meshGO = null;
 		atomRep = null;
 		isEnabled = false;
 		isInit = false;
-		// UnityMolMain.getRepresentationManager().UpdateActiveColliders();
 	}
 
 	public override void ShowShadows(bool show) {
@@ -143,51 +143,53 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 	}//Does not really make sense for tube
 
 
-	public override void SetColor(Color col, UnityMolSelection sele) {
+	public override void SetColor(Color32 col, UnityMolSelection sele) {
 		SetColors(col, sele.atoms);
 	}
 
-	public override void SetColor(Color col, UnityMolAtom a) {
+	public override void SetColor(Color32 col, UnityMolAtom a) {
 		try {
-			Color32 newCol = col;
 
 			if (atomRep.atomToMeshVertex.ContainsKey(a)) {
 				foreach (int vid in atomRep.atomToMeshVertex[a]) {
-					atomRep.colors[vid] = newCol;
+					atomRep.colors[vid] = col;
 				}
 				atomRep.curMesh.SetColors(atomRep.colors);
 			}
 		}
 		catch {
-			Debug.LogError("Could not find atom " + a + " in this representation");
+			// Debug.LogError("Could not find atom " + a + " in this representation");
 		}
 	}
-	public override void SetColors(Color col, List<UnityMolAtom> atoms) {
+	public override void SetColors(Color32 col, List<UnityMolAtom> atoms) {
 		try {
-			Color32 newCol = col;
 			foreach (UnityMolAtom a in atoms) {
 				List<int> verts = null;
 				if (atomRep.atomToMeshVertex.TryGetValue(a, out verts)) {
 					foreach (int vid in verts) {
-						atomRep.colors[vid] = newCol;
+						atomRep.colors[vid] = col;
 					}
 				}
 			}
 			atomRep.curMesh.SetColors(atomRep.colors);
+
+			if (rtos != null && rtos.Count > 0) {
+				rtos[0].shouldUpdateMeshColor = true;
+			}
 		}
 		catch (System.Exception e) {
 			Debug.LogError("Failed to set the color of the line representation " + e);
 		}
 	}
 
-	public override void SetColors(List<Color> cols, List<UnityMolAtom> atoms) {
+	public override void SetColors(List<Color32> cols, List<UnityMolAtom> atoms) {
 		if (atoms.Count != cols.Count) {
 			Debug.LogError("Lengths of color list and atom list are different");
 			return;
 		}
 		for (int i = 0; i < atoms.Count; i++) {
 			UnityMolAtom a = atoms[i];
-			Color col = cols[i];
+			Color32 col = cols[i];
 			SetColor(col, a);
 		}
 	}
@@ -198,7 +200,7 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 			return;
 		}
 		atomRep.lineWidth = newWidth;
-		//Recompute the line representation
+		//Recompute the representation
 		updateWithTrajectory();
 	}
 
@@ -241,13 +243,20 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 		//Do not need to clear everything, just recompute the vertex array
 		float lineWidth = atomRep.lineWidth;
 		int idVert = 0;
+		if (atomRep.vertices == null || atomRep.vertices.Count == 0)
+			return;
 
-		foreach (Int2 duo in atomRep.alphaTrace) {
+		foreach (int2 duo in atomRep.alphaTrace) {
 			UnityMolAtom atom1 = atomRep.selection.atoms[duo.x];
 			UnityMolAtom atom2 = atomRep.selection.atoms[duo.y];
 
 			Vector3 start = atom1.position;
 			Vector3 end   = atom2.position;
+
+			if (atomRep.idFrame != -1) {
+				start = atomRep.selection.extractTrajFramePositions[atomRep.idFrame][duo.x];
+				end = atomRep.selection.extractTrajFramePositions[atomRep.idFrame][duo.y];
+			}
 
 			Vector3 normal = Vector3.Cross(start, end);
 			Vector3 side = Vector3.Cross(normal, end - start);
@@ -281,6 +290,16 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 		}
 
 		atomRep.curMesh.SetVertices(atomRep.vertices);
+
+		if (rtos != null && rtos.Count > 0) {
+			GameObject.Destroy(rtos[0]);
+			RaytracingMaterial savedrtMat = rtos[0].rtMat;
+			RaytracedObject rto = atomRep.meshGO.AddComponent<RaytracedObject>();
+			savedrtMat.propertyChanged = true;
+			rto.rtMat = savedrtMat;
+			rtos = new List<RaytracedObject>() {rto};
+		}
+
 	}
 
 	public override void updateWithModel() {
@@ -289,6 +308,16 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 			wasEnabled = atomRep.meshGO.GetComponent<Renderer>().enabled;
 
 		atomRep.recompute();
+
+
+		if (rtos != null && rtos.Count > 0) {
+			GameObject.Destroy(rtos[0]);
+			RaytracingMaterial savedrtMat = rtos[0].rtMat;
+			RaytracedObject rto = atomRep.meshGO.AddComponent<RaytracedObject>();
+			savedrtMat.propertyChanged = true;
+			rto.rtMat = savedrtMat;
+			rtos = new List<RaytracedObject>() {rto};
+		}
 
 		if (!wasEnabled) {
 			atomRep.meshGO.GetComponent<Renderer>().enabled = false;
@@ -318,22 +347,58 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 	}
 
 	public override void ResetColor(UnityMolAtom atom) {
-		SetColor(atom.color, atom);
+		SetColor(atom.color32, atom);
 	}
 	public override void ResetColors() {
 
 		if (atomRep.savedColors.Count == atomRep.colors.Count) {
 			atomRep.curMesh.SetColors(atomRep.savedColors);
 		}
+		atomRep.colorationType = colorType.atom;
 	}
 
 	public override void HighlightRepresentation() {
-
 	}
 
 	public override void DeHighlightRepresentation() {
-
 	}
+	public void HighlightPart(List<UnityMolAtom> atoms) {
+		Vector2[] uvs2 = atomRep.curMesh.uv2;
+		if (uvs2 == null || uvs2.Length == 0) {
+			uvs2 = new Vector2[atomRep.curMesh.vertexCount];
+			for (int i = 0; i < uvs2.Length; i++)
+				uvs2[i] = -Vector2.one;
+		}
+
+		foreach (UnityMolAtom a in atoms) {
+			if (atomRep.atomToMeshVertex.ContainsKey(a)) {
+				foreach (int vid in atomRep.atomToMeshVertex[a]) {
+					uvs2[vid] = Vector2.one;
+				}
+			}
+		}
+		atomRep.curMesh.uv2 = uvs2;
+	}
+
+	public void DehighlightPart(List<UnityMolAtom> atoms) {
+		Vector2[] uvs2 = atomRep.curMesh.uv2;
+
+		if (uvs2 == null || uvs2.Length == 0) {
+			uvs2 = new Vector2[atomRep.curMesh.vertexCount];
+			for (int i = 0; i < uvs2.Length; i++)
+				uvs2[i] = -Vector2.one;
+		}
+		foreach (UnityMolAtom a in atoms) {
+			if (atomRep.atomToMeshVertex.ContainsKey(a)) {
+				foreach (int vid in atomRep.atomToMeshVertex[a]) {
+					uvs2[vid] = -Vector2.one;
+				}
+			}
+		}
+		atomRep.curMesh.uv2 = uvs2;
+	}
+
+
 	public override void SetSmoothness(float val) {
 
 		Material[] mats = atomRep.meshGO.GetComponent<Renderer>().sharedMaterials;
@@ -344,12 +409,112 @@ public class UnityMolTubeManager : UnityMolGenericRepresentationManager {
 		Material[] mats = atomRep.meshGO.GetComponent<Renderer>().sharedMaterials;
 		mats[0].SetFloat("_Metallic", val);
 	}
-	public override UnityMolRepresentationParameters Save(){
+	public override void UpdateLike() {
+	}
+
+	public override UnityMolRepresentationParameters Save() {
 		UnityMolRepresentationParameters res = new UnityMolRepresentationParameters();
+		MeshFilter mf = atomRep.meshGO.GetComponent<MeshFilter>();
+
+		res.repT.atomType = AtomType.trace;
+		res.colorationType = atomRep.colorationType;
+
+		if (res.colorationType == colorType.custom) {
+			int atomNum = 0;
+			res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(atomRep.selection.atoms.Count);
+			foreach (UnityMolAtom a in atomRep.selection.atoms) {
+				if (atomRep.atomToMeshVertex.ContainsKey(a)) {
+					int idVert = atomRep.atomToMeshVertex[a][0];
+					res.colorPerAtom[a] = atomRep.colors[idVert];
+				}
+				atomNum++;
+			}
+		}
+		else if (res.colorationType == colorType.full) { //Get color of first atom/residue
+			res.fullColor = atomRep.colors[0];
+
+		}
+		else if (res.colorationType == colorType.bfactor) {
+			res.bfactorStartColor = atomRep.bfactorStartCol;
+			res.bfactorMidColor = atomRep.bfactorMidColor;
+			res.bfactorEndColor = atomRep.bfactorEndCol;
+		}
+
+		if (atomRep.meshGO != null ) {
+			res.smoothness = atomRep.meshGO.GetComponent<Renderer>().sharedMaterials[0].GetFloat("_Glossiness");
+			res.metal = atomRep.meshGO.GetComponent<Renderer>().sharedMaterials[0].GetFloat("_Metallic");
+			res.shadow = (atomRep.meshGO.GetComponent<Renderer>().shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.On);
+		}
+
+		res.TubeWidth = atomRep.lineWidth;
+
+
 		return res;
 	}
-    public override void Restore(UnityMolRepresentationParameters savedParams){
-        
-    }
+	public override void Restore(UnityMolRepresentationParameters savedParams) {
+
+		if (savedParams.repT.atomType == AtomType.trace) {
+			if (savedParams.colorationType == colorType.full) {
+				SetColor(savedParams.fullColor, atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.custom) {
+				List<Color32> colors = new List<Color32>(atomRep.selection.atoms.Count);
+				List<UnityMolAtom> restoredAtoms = new List<UnityMolAtom>(atomRep.selection.atoms.Count);
+				foreach (UnityMolAtom a in atomRep.selection.atoms) {
+					if (savedParams.colorPerAtom.ContainsKey(a)) {
+						colors.Add(savedParams.colorPerAtom[a]);
+						restoredAtoms.Add(a);
+					}
+				}
+				SetColors(colors, restoredAtoms);
+			}
+			else if (savedParams.colorationType == colorType.atom) {
+				//Do nothing !
+			}
+			else if (savedParams.colorationType == colorType.res) {
+				colorByRes(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.chain) {
+				colorByChain(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.hydro) {
+				colorByHydro(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.seq) {
+				colorBySequence(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.charge) {
+				colorByCharge(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.restype) {
+				colorByResType(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.rescharge) {
+				colorByResCharge(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.resid) {
+				colorByResid(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.resnum) {
+				colorByResnum(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.bfactor) {
+				colorByBfactor(atomRep.selection, savedParams.bfactorStartColor, savedParams.bfactorMidColor, savedParams.bfactorEndColor);
+			}
+
+
+
+			SetMetal(savedParams.metal);
+			SetSmoothness(savedParams.smoothness);
+			ShowShadows(savedParams.shadow);
+			SetWidth(savedParams.TubeWidth);
+
+			atomRep.colorationType = savedParams.colorationType;
+		}
+		else {
+			Debug.LogError("Could not restore representation parameters");
+		}
+	}
+
 }
 }

@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -56,9 +40,10 @@ using System.IO;
 
 using Unity.Collections;
 using Unity.Mathematics;
-using KNN;
-using KNN.Jobs;
 using Unity.Jobs;
+
+using BurstGridSearch;
+
 
 namespace UMol {
 public abstract class ISurfaceRepresentation : AtomRepresentation {
@@ -66,14 +51,22 @@ public abstract class ISurfaceRepresentation : AtomRepresentation {
     public bool isStandardSurface = true;
 
     public List<GameObject> meshesGO;
-    public Dictionary<GameObject, List<Color32>> meshColors;
+    public Dictionary<GameObject, Color32[]> meshColors;
 
-    public Dictionary<UnityMolAtom, GameObject> atomToGo;
-    public Dictionary<UnityMolAtom, List<int>> atomToMesh;
-    public Dictionary<UnityMolAtom, Color32> colorByAtom;
+    public Dictionary<UnityMolChain, GameObject> chainToGo;
+    public Dictionary<UnityMolChain, int> chainToIdSubSel;
+    public Color32[] colorByAtom;
+    public List<int[]> vertToAtom;//Each vertex has an atom id associated, one array for each subselection
 
     public List<UnityMolSelection> subSelections;
     public GameObject newRep;
+    public bool useAO = false;
+    public Material normalMat;
+    public Material transMat;
+    public Material transMatShadow;//Usefull for outline
+    public Material wireMat;
+    public Material currentMat;
+
 
 
     public static List<UnityMolSelection> cutSelection(UnityMolSelection sele) {
@@ -82,7 +75,7 @@ public abstract class ISurfaceRepresentation : AtomRepresentation {
 
         for (int i = 0; i < sele.atoms.Count; i++) {
             UnityMolAtom atom = sele.atoms[i];
-            string segKey = atom.residue.chain.model.structure.uniqueName + "_" +
+            string segKey = atom.residue.chain.model.structure.name + "_" +
                             atom.residue.chain.model.name + "_" +
                             atom.residue.chain.name;
 
@@ -96,23 +89,56 @@ public abstract class ISurfaceRepresentation : AtomRepresentation {
                 segDict[segKey] = curSeg;
             }
         }
+        if (sele.extractTrajFrame) {
+            //Copy extracted positions
+
+            foreach (UnityMolSelection sel in segDict.Values) {
+                List<Vector3[]> partExtratedPos = new List<Vector3[]>();
+
+                for (int i = 0; i < sele.extractTrajFrameIds.Count; i++) {
+                    Vector3[] tmp = new Vector3[sel.atoms.Count];
+                    int ida = 0;
+                    foreach (UnityMolAtom a in sel.atoms) {
+                        tmp[ida++] = sele.extractTrajFramePositions[i][sele.atomToIdInSel[a]];
+                    }
+                    partExtratedPos.Add(tmp);
+                }
+
+                sel.updateRepWithTraj = false;
+                sel.extractTrajFrame = true;
+                sel.extractTrajFrameIds =  sele.extractTrajFrameIds;
+                sel.extractTrajFramePositions = partExtratedPos;
+            }
+
+        }
 
         return res;
     }
 
-    public virtual void Clear() {
-        foreach (GameObject go in meshesGO) {
-            GameObject.DestroyImmediate(go);
+    public virtual void Clear() {//Warning: it does not destroy the materials and colorByAtom/meshColors are not cleared
+        if (meshesGO != null) {
+            foreach (GameObject go in meshesGO) {
+                GameObject.Destroy(go.GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(go);
+            }
+            meshesGO.Clear();
         }
-        meshesGO.Clear();
-        meshColors.Clear();
-        atomToGo.Clear();
-        atomToMesh.Clear();
+        if (chainToGo != null)
+            chainToGo.Clear();
+        if (chainToIdSubSel != null)
+            chainToIdSubSel.Clear();
+        // meshColors.Clear();
+        //colorByAtom.Clear();
     }
     public virtual int[] computeNearestVertexPerAtom(GameObject gomesh, UnityMolSelection sele, bool removeHETWater = true) {
         UnityMolSelection newSel = null;
+
+        if (sele.Count == 0) {
+            return null;
+        }
+
         if (removeHETWater) {
-            List<UnityMolAtom> atoms = new List<UnityMolAtom>(sele.Count);
+            List<UnityMolAtom> atoms = new List<UnityMolAtom>(sele.atoms.Count);
             foreach (UnityMolAtom a in sele.atoms) {
                 if (!a.isHET && !WaterSelection.waterResidues.Contains(a.residue.name, StringComparer.OrdinalIgnoreCase)) {
                     atoms.Add(a);
@@ -126,124 +152,43 @@ public abstract class ISurfaceRepresentation : AtomRepresentation {
 
         Vector3[] verts = gomesh.GetComponent<MeshFilter>().sharedMesh.vertices;
 
-
-#if True // The fast C# jobs implementation
-
-        if(verts.Length < 3){
+        if (verts.Length < 3 ) {
             return null;
         }
-        var allAtoms = new NativeArray<float3>(newSel.atoms.Count, Allocator.Persistent);
-        var allVerts = new NativeArray<float3>(verts.Length, Allocator.Persistent);
-        for (int i = 0; i < newSel.atoms.Count; i++) {
-            allAtoms[i] = newSel.atoms[i].position;
-        }
-        for (int i = 0; i < verts.Length; i++) {
-            allVerts[i] = verts[i];
-        }
 
-        int kNeighbours = 1;
-        //Create KDTree
-        var knnContainer = new KnnContainer(allAtoms, false, Allocator.TempJob);
-        var queryPositions = new NativeArray<float3>(allVerts, Allocator.TempJob);
-        var results = new NativeArray<int>(verts.Length * kNeighbours, Allocator.TempJob);
-
-        var rebuildJob = new KnnRebuildJob(knnContainer);
-        rebuildJob.Schedule().Complete();
-
-        var batchQueryJob = new QueryKNearestBatchJob(knnContainer, queryPositions, results);
-        batchQueryJob.ScheduleBatch(queryPositions.Length, queryPositions.Length / 32).Complete();
+        NativeArray<int> result = sele.structures[0].spatialSearch.SearchClosestPoint(verts);
 
         int[] idPerVer = new int[verts.Length];
         for (int i = 0; i < verts.Length; i++) {
-            int atomId = results[i];
+            int atomId = result[i];
             if (atomId >= 0 && atomId < newSel.atoms.Count) {
-                addToDicCorres(newSel.atoms[atomId], i);
+                idPerVer[i] = atomId;
             }
-            else {
-                atomId = -1;
-            }
-            idPerVer[i] = atomId;
         }
-
-        knnContainer.Dispose();
-        queryPositions.Dispose();
-        results.Dispose();
-        allVerts.Dispose();
-        allAtoms.Dispose();
-
+        result.Dispose();
         return idPerVer;
-
-#else // Standard C# KDTree implementation => SLOW
-
-        KDTree kdtree = KDTree.MakeFromUnityMolAtoms(newSel.atoms);
-
-        int[] idPerVer = new int[verts.Length];
-        for (int i = 0; i < verts.Length; i++) {
-            int atomId = kdtree.FindNearest(verts[i]);
-            if (atomId >= 0 && atomId < newSel.atoms.Count) {
-                addToDicCorres(newSel.atoms[atomId], i);
-            }
-            else {
-                atomId = -1;
-            }
-            idPerVer[i] = atomId;
-        }
-        return idPerVer;
-#endif
-    }
-    
-    public virtual Dictionary<UnityMolAtom, List<int>> computeNearestVertexPerAtomCustom(GameObject gomesh, UnityMolSelection sele) {
-        KDTree kdtree = KDTree.MakeFromUnityMolAtoms(sele.atoms);
-        Dictionary<UnityMolAtom, List<int>> res = new Dictionary<UnityMolAtom, List<int>>();
-
-        Vector3[] verts = gomesh.GetComponent<MeshFilter>().sharedMesh.vertices;
-        for (int i = 0; i < verts.Length; i++) {
-            int atomId = kdtree.FindNearest(verts[i]);
-            if (atomId >= 0 && atomId < sele.atoms.Count) {
-                addToDicCorres(sele.atoms[atomId], i, res);
-            }
-        }
-        return res;
-    }
-    public virtual void addToDicCorres(UnityMolAtom a, int i) {
-        List<int> res = null;
-        if (atomToMesh.TryGetValue(a, out res)) {
-            res.Add(i);
-        }
-        else {
-            res = new List<int>();
-            res.Add(i);
-            atomToMesh.Add(a, res);
-        }
-    }
-    public static void addToDicCorres(UnityMolAtom a, int i, Dictionary<UnityMolAtom, List<int>> customDic) {
-        List<int> res = null;
-        if (customDic.TryGetValue(a, out res)) {
-            res.Add(i);
-        }
-        else {
-            res = new List<int>();
-            res.Add(i);
-            customDic.Add(a, res);
-        }
     }
 
     public void getMeshColors() {
         meshColors.Clear();
+        Color32 white = Color.white;
 
         foreach (GameObject go in meshesGO) {
             Mesh m = go.GetComponent<MeshFilter>().sharedMesh;
             Color32[] tmpArrayColor = m.colors32;
             if (tmpArrayColor == null || tmpArrayColor.Length == 0) {
-                tmpArrayColor = new Color32[m.vertices.Length];
+                tmpArrayColor = new Color32[m.vertexCount];
+                for (int i = 0; i < m.vertexCount; i++) {
+                    tmpArrayColor[i] = white;
+                }
             }
-            meshColors[go] = tmpArrayColor.ToList();
+            meshColors[go] = tmpArrayColor;
         }
     }
     // public void getMeshColorsPerAtom() {
     //     //Warning: This function expects that getMeshColors() was called before!
     //     if (colorByAtom == null) {
-    //         colorByAtom = new Color32[selection.Count];
+    //         colorByAtom = new Color32[selection.atoms.Count];
     //     }
 
 
@@ -266,29 +211,19 @@ public abstract class ISurfaceRepresentation : AtomRepresentation {
     // }
 
     public void restoreColorsPerAtom() {
-        if (colorByAtom != null && atomToMesh != null && atomToGo != null) {
+        if (colorByAtom != null && chainToGo != null) {
+            int offset = 0;
+            for (int i = 0; i < meshesGO.Count; i++) {
+                Color32[] cols = meshColors[meshesGO[i]];
+                int[] vtoa = vertToAtom[i];
+                for (int v = 0; v < cols.Length; v++) {
+                    int idA = vtoa[v];
 
-            for (int idA = 0; idA < selection.Count; idA++) {
-                UnityMolAtom a = selection.atoms[idA];
-                Color32 col = colorByAtom[a];
-
-                List<int> listVertId;
-                // Color32 col = colorByAtom[idA];
-
-                if (atomToMesh.TryGetValue(a, out listVertId)) {
-                    GameObject curGo = atomToGo[a];
-
-                    List<Color32> colors = meshColors[curGo];
-
-
-                    foreach (int c in listVertId) {
-                        if (c >= 0 && c < colors.Count) {
-                            Color32 tmp = colors[c];
-                            col.a = tmp.a;
-                            colors[c] = col;
-                        }
+                    if (idA >= 0 && idA + offset < colorByAtom.Length) {
+                        cols[v] = colorByAtom[idA + offset];
                     }
                 }
+                offset += subSelections[i].Count;
             }
             foreach (GameObject go in meshesGO) {
                 go.GetComponent<MeshFilter>().sharedMesh.SetColors(meshColors[go]);
@@ -296,7 +231,6 @@ public abstract class ISurfaceRepresentation : AtomRepresentation {
         }
     }
 
-
-    public abstract void recompute();
+    public abstract void recompute(bool isTraj = false);
 }
 }

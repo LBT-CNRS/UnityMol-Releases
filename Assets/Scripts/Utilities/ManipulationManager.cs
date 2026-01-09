@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR;
@@ -59,11 +43,16 @@ using System.Linq;
 namespace UMol {
 
 public class ManipulationManager : MonoBehaviour {
+    public delegate void TourModified();
+    public static event TourModified OnTourModified;
 
     public Transform currentTransform;
 
-    public float moveSpeed = 5.0f;
-    public float scrollSpeed = 5.0f;
+    public int currentTourSel = 0;
+    public List<string> tourSelections = new List<string>();
+
+    public float moveSpeed = 1.0f;
+    public float scrollSpeed = 1.0f;
 
     public float speedX = 1.0f;
     public float speedY = 1.0f;
@@ -73,24 +62,67 @@ public class ManipulationManager : MonoBehaviour {
     public bool rotateY = false;
     public bool rotateZ = false;
 
+    public bool isRotating {
+        get {
+            return rotateX | rotateY | rotateZ;
+        }
+    }
+
     public Vector3 currentCenterPosition = Vector3.zero;
 
     public bool disableMouseInVR = true;
+    public bool ActivateMouse = true;
 
     private Transform loadedMolPar;
     private MouseOverSelection mouseSel;
+    private Camera mainCam;
+    private Transform translatingT;
+    private Transform rotatingT;
+    private Vector3 clickedRotationCenter;
+    private Coroutine moveCoroutine;
+    private Coroutine tourCoroutine;
+
+    private bool mouseClickedOnUI = false;
+    bool curCenter = false;
+
+    public string followSelection = "";
+
+
 
     void Start() {
         mouseSel = GetComponent<MouseOverSelection>();
+        // default mouse movement on Mac is very slow, make it faster if we detect we run on a Mac
+        #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+        moveSpeed = 6.0f * moveSpeed;
+        #endif
     }
 
+    void OnEnable() {
+        if (mainCam == null)
+            updateMainCamRef();
+        UnityMolSelectionManager.OnSelectionDeleted += checkTourSelections;
+        UnityMolSelectionManager.OnSelectionModified += checkTourSelections;
+    }
+
+    void OnDisable() {
+        UnityMolSelectionManager.OnSelectionDeleted -= checkTourSelections;
+        UnityMolSelectionManager.OnSelectionModified -= checkTourSelections;
+    }
+
+    public void updateMainCamRef() {
+        mainCam = Camera.main;
+    }
 
     public void resetPosition() {
-        currentTransform.position = Vector3.zero;
+        stopCurrentMovements();
+        if (currentTransform != null)
+            currentTransform.position = Vector3.zero;
         UnityMolMain.getCustomRaycast().needsUpdatePos = true;
     }
     public void resetRotation() {
-        currentTransform.rotation = Quaternion.identity;
+        stopCurrentMovements();
+        if (currentTransform != null)
+            currentTransform.rotation = Quaternion.identity;
         UnityMolMain.getCustomRaycast().needsUpdatePos = true;
     }
     public void setSelectedOject(Transform seleT) {
@@ -98,143 +130,114 @@ public class ManipulationManager : MonoBehaviour {
     }
 
     public void centerOnStructure(UnityMolStructure s, bool lerp) {
-
-        if (lerp) {
-            centerOnStructureLerp(s);
-        }
-        else {
-            Transform tpar = UnityMolMain.getRepresentationParent().transform;
-            Vector3 bary = s.currentModel.centerOfGravity;
-            Transform molPar = tpar.Find(s.ToSelectionName());
-            Vector3 worldBary = molPar.TransformPoint(bary);
-            if (!UnityMolMain.inVR()) {
-                tpar.Translate(-worldBary, Space.World);
-                setRotationCenter(molPar.TransformPoint(bary));
-            }
-            else {
-                tpar.Translate(-worldBary, Space.World);
-
-                Transform head = VRTK.VRTK_DeviceFinder.HeadsetCamera();
-
-                if (head != null) {
-                    Vector3 targetPos = head.position + head.forward;
-                    tpar.Translate(targetPos, Space.World);
-                }
-                setRotationCenter(molPar.TransformPoint(bary));
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
+        UnityMolSelection sel = s.ToSelection();
+        centerOnSelection(sel, lerp);
     }
 
-    public void centerOnStructureLerp(UnityMolStructure s) {
-        Transform tpar = UnityMolMain.getRepresentationParent().transform;
-        Vector3 bary = s.currentModel.centerOfGravity;
-        Transform molPar = tpar.Find(s.ToSelectionName());
-        StartCoroutine(delayedCenterOnStructure(tpar, bary, molPar));
-    }
     public void setRotationCenter(Vector3 pos) {
         currentCenterPosition = pos;
     }
 
-    IEnumerator delayedCenterOnStructure(Transform tpar, Vector3 bary, Transform molPar) {
-        //End of frame
-        yield return 0;
-
-
-
-        Vector3 worldBary = molPar.TransformPoint(bary);
-
-        Vector3 savedPos = tpar.position;
-        tpar.Translate(-worldBary, Space.World);
-
-
-        if (UnityMolMain.inVR()) {
-            Transform head = VRTK.VRTK_DeviceFinder.HeadsetCamera();
-            if (head != null) {
-                Vector3 headTarget = head.position + head.forward;
-                tpar.Translate(headTarget, Space.World);
-            }
+    public void stopCurrentMovements() {
+        if (moveCoroutine != null && !curCenter) {
+            StopCoroutine(moveCoroutine);
+            moveCoroutine = null;
         }
-
-        Vector3 targetPos = tpar.position;
-        tpar.position = savedPos;
-
-        int steps = 200;
-        for (int i = 1; i < steps / 4; i++) {
-            float tt = i / (float)steps;
-            tpar.position = Vector3.Lerp(tpar.position, targetPos, tt);
-            yield return 0;
-        }
-
-        setRotationCenter(molPar.TransformPoint(bary));
-
-        UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-
     }
 
+    ///Fit the selection in the camera field of view if distance is negative, otherwise the molecule will be placed at "distance" from the camera
+    //https://i.imgur.com/xz0erbV.png from https://forum.unity.com/threads/fit-object-exactly-into-perspective-cameras-field-of-view-focus-the-object.496472/
+    //Compute the "radius" of the sphere encompassing the selection to make it match with the camera FOV
+    public void centerOnSelection(UnityMolSelection sel, bool lerp, float distance = -1.0f, float duration = 0.25f) {
+        stopCurrentMovements();
 
-    //Center on selection
-    public void centerOnSelection(UnityMolSelection sel, bool lerp, float distance = -1.0f) {
-
-        if (lerp) {
-            centerOnSelectionLerp(sel, distance);
+        if (lerp && duration > 0.0f) {
+            centerOnSelectionLerp(sel, distance, duration);
         }
         else {
             Transform tpar = UnityMolMain.getRepresentationParent().transform;
-            Vector3 bary = computeCenterOfGravitySel(sel);
             Transform molPar = getSelectionParent(tpar, sel);
-            Vector3 worldBary = molPar.TransformPoint(bary);
-            if (!UnityMolMain.inVR()) {
-                tpar.Translate(-worldBary, Space.World);
-                if (distance > 0.0f) {
-                    float dist = Vector3.Distance(transform.position, tpar.position);
-                    tpar.Translate(new Vector3(0.0f, 0.0f, - dist + distance), Space.World);
-                }
 
-                // tpar.Translate(new Vector3(0.0f, 0.0f, -distance) , Space.World);
-                setRotationCenter(molPar.TransformPoint(bary));
+            float h = distance;
+            if (distance <= 0.0) {//If the distance was not specified
+
+                Vector3 wMinP = molPar.TransformPoint(sel.minPos);
+                Vector3 wMaxP = molPar.TransformPoint(sel.maxPos);
+
+                float r = Vector3.Distance(wMinP, wMaxP) / 2.0f;//Compute world space sphere radius encompassing the selection
+                if (UnityMolMain.inVR()) {//Distance should be at least 0.3 in VR otherwise the molecule is too close
+                    r = Mathf.Max(0.3f, r);
+                }
+                h = r / Mathf.Sin(Mathf.Deg2Rad * mainCam.fieldOfView / 2.0f);//Compute the distance between the camera and the center of this sphere
+            }
+
+            Vector3 bary = computeCentroidSel(sel);
+            Vector3 worldBary = molPar.TransformPoint(bary);
+            tpar.Translate(-worldBary, Space.World);//Move the parent to 0,0,0
+
+            float dist = Vector3.Distance(mainCam.transform.position, molPar.TransformPoint(bary));//Get the new distance between the selection barycenter and the camera
+
+            if (!UnityMolMain.inVR()) {
+                tpar.Translate(new Vector3(0.0f, 0.0f, -dist + h), Space.World);
             }
             else {
-                tpar.Translate(-worldBary, Space.World);
-
-                Transform head = VRTK.VRTK_DeviceFinder.HeadsetCamera();
-
+                Transform head = mainCam.transform;
                 if (head != null) {
-                    Vector3 targetPos = head.position + (head.forward * distance);
-                    tpar.Translate(targetPos, Space.World);
+                    Vector3 headTarget = head.position + (head.forward * h);
+                    tpar.Translate(headTarget, Space.World);
                 }
-                setRotationCenter(molPar.TransformPoint(bary));
-                UnityMolMain.getCustomRaycast().needsUpdatePos = true;
             }
 
+            setRotationCenter(molPar.TransformPoint(bary));
+            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
         }
     }
 
-    public void centerOnSelectionLerp(UnityMolSelection sel, float distance) {
+    private void centerOnSelectionLerp(UnityMolSelection sel, float distance, float duration) {
         Transform tpar = UnityMolMain.getRepresentationParent().transform;
-        Vector3 bary = computeCenterOfGravitySel(sel);
+        Vector3 bary = computeCentroidSel(sel);
         Transform molPar = getSelectionParent(tpar, sel);
-        StartCoroutine(delayedCenterOnSelection(tpar, bary, molPar, distance));
+        curCenter = true;//Set this to true this frame to avoid interupting the movement
+
+        moveCoroutine = StartCoroutine(delayedCenterOnSelection(sel, tpar, bary, molPar, distance, duration));
     }
 
-    IEnumerator delayedCenterOnSelection(Transform tpar, Vector3 bary, Transform molPar, float distance) {
+    IEnumerator delayedCenterOnSelection(UnityMolSelection sel, Transform tpar, Vector3 bary, Transform molPar, float distance, float duration) {
         //End of frame
         yield return 0;
 
+        if (molPar == null) {
+            molPar = getSelectionParent(tpar, sel);
+        }
+        if (molPar == null)//Something went really wrong !
+            yield break;
         Vector3 worldBary = molPar.TransformPoint(bary);
 
         Vector3 savedPos = tpar.position;
         tpar.Translate(-worldBary, Space.World);
-        if (distance > 0.0f) {
-            float dist = Vector3.Distance(transform.position, tpar.position);
-            tpar.Translate(new Vector3(0.0f, 0.0f, - dist + distance), Space.World);
+
+        float dist = Vector3.Distance(mainCam.transform.position, molPar.TransformPoint(bary));
+
+        float h = distance;
+        if (distance <= 0.0f) {//If the distance was not specified
+
+            Vector3 wMinP = molPar.TransformPoint(sel.minPos);
+            Vector3 wMaxP = molPar.TransformPoint(sel.maxPos);
+
+            float r = Vector3.Distance(wMinP, wMaxP) / 2.0f;//Compute world space sphere radius encompassing the selection
+            if (UnityMolMain.inVR()) {//Distance should be at least 0.3 in VR otherwise the molecule is too close
+                r = Mathf.Max(0.3f, r);
+            }
+            h = r / Mathf.Sin(Mathf.Deg2Rad * mainCam.fieldOfView / 2.0f);//Compute the distance between the camera and the center of this sphere
         }
 
-
-        if (UnityMolMain.inVR()) {
-            Transform head = VRTK.VRTK_DeviceFinder.HeadsetCamera();
+        if (!UnityMolMain.inVR()) {
+            tpar.Translate(new Vector3(0.0f, 0.0f, -dist + h), Space.World);
+        }
+        else {
+            Transform head = mainCam.transform;
             if (head != null) {
-                Vector3 headTarget = head.position + head.forward;
+                Vector3 headTarget = head.position + (head.forward * h);
                 tpar.Translate(headTarget, Space.World);
             }
         }
@@ -242,18 +245,28 @@ public class ManipulationManager : MonoBehaviour {
         Vector3 targetPos = tpar.position;
         tpar.position = savedPos;
 
-        int steps = 200;
-        for (int i = 1; i < steps / 4; i++) {
-            float tt = i / (float)steps;
-            tpar.position = Vector3.Lerp(tpar.position, targetPos, tt);
+        float timeNow = Time.realtimeSinceStartup;
+
+        float inversed = 1.0f / duration;
+        int i = 0;
+        for (float step = 0.0f; step < 1.0f; step += Time.deltaTime * inversed) {
+            tpar.position = Vector3.Lerp(savedPos, targetPos, step);
+            //Set the rotation center before => avoid problems when stopping coroutine
+            setRotationCenter(molPar.TransformPoint(bary));
+
+            curCenter = false;
+            if (Time.realtimeSinceStartup - timeNow < 0.1f)//less than 100 ms that we started center on selection = don't interupt it
+                curCenter = true;//Set this to true this frame to avoid interupting the movement
+            i++;
+            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
             yield return 0;
         }
 
-        setRotationCenter(molPar.TransformPoint(bary));
         UnityMolMain.getCustomRaycast().needsUpdatePos = true;
     }
 
     public void emulateLookAtPOV(UnityMolSelection sel, Vector3 pov, Vector3 targetPos, bool lerp = false) {
+        stopCurrentMovements();
         Transform tpar = UnityMolMain.getRepresentationParent().transform;
         Transform molPar = getSelectionParent(tpar, sel);
         Vector3 localTarget = molPar.InverseTransformPoint(targetPos);
@@ -286,19 +299,14 @@ public class ManipulationManager : MonoBehaviour {
 
             tpar.RotateAround(molPar.TransformPoint(localTarget), axis, angle);
 
-
-        }
-        else {
-
         }
 
         setRotationCenter(molPar.TransformPoint(localTarget));
-        // Debug.Log("New current center = " + currentCenterPosition.ToString("F4"));
         UnityMolMain.getCustomRaycast().needsUpdatePos = true;
     }
 
 
-    public static Vector3 computeCenterOfGravitySel(UnityMolSelection sel) {
+    public static Vector3 computeCentroidSel(UnityMolSelection sel) {
         Vector3 pos = Vector3.zero;
         foreach (UnityMolAtom a in sel.atoms) {
             pos += a.position;
@@ -306,6 +314,7 @@ public class ManipulationManager : MonoBehaviour {
         pos /= sel.atoms.Count;
         return pos;
     }
+
     Transform getSelectionParent(Transform allParent, UnityMolSelection sel) {
         if (sel.structures.Count == 1) {
             return allParent.Find(sel.structures[0].ToSelectionName());
@@ -316,97 +325,231 @@ public class ManipulationManager : MonoBehaviour {
         return null;
     }
 
+    public UnityMolAtom getAtomPointed() {
+        if (mainCam == null)
+            updateMainCamRef();
+        if (mainCam == null)
+            return null;
+        Ray ray = mainCam.ScreenPointToRay(Input.mousePosition); // Create the ray from screen to infinite
+        Vector3 dummy = Vector3.zero;
+        bool dummy2 = false;
+        CustomRaycastBurst raycaster = UnityMolMain.getCustomRaycast();
+        UnityMolAtom a = raycaster.customRaycastAtomBurst(ray.origin, ray.direction, ref dummy, ref dummy2, true);
+
+        return a;
+    }
+
+    public void RotateAroundCentroid(float angle, int axis) {
+
+        Vector3 vecAxis = loadedMolPar.right;
+        if (axis == 1) //Y
+            vecAxis = loadedMolPar.up;
+        else if (axis == 2) //Z
+            vecAxis = loadedMolPar.forward;
+
+        foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
+            Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.name].transform;
+            t.RotateAround(t.TransformPoint(s.currentModel.centroid), vecAxis, angle);
+        }
+        UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+    }
+
+    public void ZoomInOut(float dist) {
+        if (mainCam == null)
+            updateMainCamRef();
+        if (mainCam == null)
+            return;
+
+        currentTransform.position += (mainCam.transform.forward * dist);
+        currentCenterPosition += (mainCam.transform.forward * dist);
+        UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+    }
+
+    #region Tour
+    public void checkTourSelections() {
+        if (tourSelections.Count != 0) {
+            if (tourCoroutine != null)
+                StopCoroutine(tourCoroutine);
+            var selM = UnityMolMain.getSelectionManager();
+            List<string> newTourSel = new List<string>();
+            foreach (string s in tourSelections) {
+                if (selM.selections.ContainsKey(s)) {
+                    newTourSel.Add(s);
+                }
+            }
+            if (newTourSel.Count != tourSelections.Count) {
+                tourSelections = newTourSel;
+                if (OnTourModified != null)
+                    OnTourModified();
+            }
+        }
+    }
+
+    public void tourPrevious(float duration = 0.75f) {
+        currentTourSel--;
+        if (currentTourSel >= tourSelections.Count || currentTourSel < 0) {
+            currentTourSel = tourSelections.Count - 1;
+        }
+        var selM = UnityMolMain.getSelectionManager();
+        if (tourSelections.Count != 0 && selM.selections.ContainsKey(tourSelections[currentTourSel])) {
+            centerOnSelection(selM.selections[tourSelections[currentTourSel]], true, -1, duration);
+        }
+    }
+
+    public void tourNext(float duration = 0.75f) {
+        currentTourSel++;
+        if (currentTourSel >= tourSelections.Count) {
+            currentTourSel = 0;
+        }
+        var selM = UnityMolMain.getSelectionManager();
+        if (tourSelections.Count != 0 && selM.selections.ContainsKey(tourSelections[currentTourSel])) {
+            centerOnSelection(selM.selections[tourSelections[currentTourSel]], true, -1, duration);
+        }
+    }
+
+    public void addTour(UnityMolSelection sel) {
+        tourSelections.Add(sel.name);
+        if (OnTourModified != null)
+            OnTourModified();
+    }
+    public void clearTour() {
+        if (tourCoroutine != null)
+            StopCoroutine(tourCoroutine);
+        tourSelections.Clear();
+        resetTour();
+        if (OnTourModified != null)
+            OnTourModified();
+    }
+    ///Remove the last occurence of the selection in tourSelections
+    public void removeFromTour(UnityMolSelection sel) {
+        for (int i = tourSelections.Count; i >= 0; i--) {
+            if (tourSelections[i] == sel.name) {
+                tourSelections.RemoveAt(i);
+                resetTour();
+                if (OnTourModified != null)
+                    OnTourModified();
+                break;
+            }
+        }
+        if (tourCoroutine != null)
+            StopCoroutine(tourCoroutine);
+    }
+    public void removeFromTour(int id) {
+        if (id >= 0 && id < tourSelections.Count) {
+            tourSelections.RemoveAt(id);
+            if (OnTourModified != null)
+                OnTourModified();
+            if (tourCoroutine != null)
+                StopCoroutine(tourCoroutine);
+        }
+    }
+    public void resetTour() {
+        currentTourSel = 0;
+        if (tourCoroutine != null)
+            StopCoroutine(tourCoroutine);
+    }
+    public void startTour(float stopTime = 2.0f, float durationPerSel = 0.75f) {
+        tourCoroutine = StartCoroutine(doTour(stopTime, durationPerSel));
+    }
+
+    IEnumerator doTour(float stopTime, float durationTransi) {
+        if (tourSelections.Count == 0)
+            yield break;
+        if (currentTourSel == tourSelections.Count - 1)
+            resetTour();
+        var selM = UnityMolMain.getSelectionManager();
+        for (int i = currentTourSel; i < tourSelections.Count; i++) {
+            if (selM.selections.ContainsKey(tourSelections[i])) {
+                yield return new WaitForSeconds(stopTime);
+                centerOnSelection(selM.selections[tourSelections[i]], true, -1, durationTransi);
+                currentTourSel = i;
+                yield return new WaitForSeconds(durationTransi);
+            }
+        }
+    }
+    #endregion
+
+    #region depthcueing
+
+    float depthcueInitP;
+    float depthcueInitV;
+    public bool depthcueUpdate = true;
+
+    public void initFollowDepthCueing() {
+        if (loadedMolPar == null)
+            loadedMolPar = UnityMolMain.getRepresentationParent().transform;
+
+        depthcueInitP = loadedMolPar.position.z;
+        depthcueInitV = UnityMolMain.fogStart;
+    }
+
+    #endregion
 
     void Update ()
     {
 
+        if (mainCam == null)
+            updateMainCamRef();
+
+        bool shiftPressed = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+
         if (loadedMolPar == null) {
             loadedMolPar = UnityMolMain.getRepresentationParent().transform;
         }
+        if (EventSystem.current == null) {
+            gameObject.AddComponent<EventSystem>();
+        }
+
         GameObject curUIInput = EventSystem.current.currentSelectedGameObject;
 
-        if (rotateX) {
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), loadedMolPar.right, speedX);
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+        if ((Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) {
+            mouseClickedOnUI = true;
         }
-        if (rotateY) {
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), loadedMolPar.up, speedY);
+        if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1) || Input.GetMouseButtonDown(2))
+            mouseClickedOnUI = false;
+
+        //Depth cueing update
+        if (depthcueUpdate && UnityMolMain.isFogOn) {
+            float delta = loadedMolPar.position.z - depthcueInitP;
+            float dc = depthcueInitV + (delta / UnityMolMain.fogDensity);
+            if (dc != UnityMolMain.fogStart) {
+                UMol.API.APIPython.setDepthCueingStart(dc);
             }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
-        if (rotateZ) {
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), loadedMolPar.forward, speedZ);
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
-        if(curUIInput == null && Input.GetButton("RotationXLeft")){
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), loadedMolPar.right, speedX);
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
-        if(curUIInput == null && Input.GetButton("RotationXRight")){
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), -loadedMolPar.right, speedX);
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
-        if(curUIInput == null && Input.GetButton("RotationYLeft")){
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), loadedMolPar.up, speedY);
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
-        if(curUIInput == null && Input.GetButton("RotationYRight")){
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), -loadedMolPar.up, speedY);
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
-        if(curUIInput == null && Input.GetButton("RotationZLeft")){
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), loadedMolPar.forward, speedZ);
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
-        if(curUIInput == null && Input.GetButton("RotationZRight")){
-            foreach (UnityMolStructure s in UnityMolMain.getStructureManager().loadedStructures) {
-                Transform t = UnityMolMain.getStructureManager().structureToGameObject[s.uniqueName].transform;
-                t.RotateAround(t.TransformPoint(s.currentModel.centerOfGravity), -loadedMolPar.forward, speedZ);
-            }
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
         }
 
-        if(curUIInput == null && Input.GetButton("ZoomIn")){
-            Vector3 pos = currentTransform.position;
-            float val = moveSpeed * 0.1f;
-            pos.z += val;
-            currentTransform.position = pos;
-            currentCenterPosition.z += val;
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+        if (rotateX) {
+            RotateAroundCentroid(speedX, 0);
         }
-        if(curUIInput == null && Input.GetButton("ZoomOut")){
-            Vector3 pos = currentTransform.position;
-            float val = moveSpeed * 0.1f;
-            pos.z -= val;
-            currentTransform.position = pos;
-            currentCenterPosition.z -= val;
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+        if (rotateY) {
+            RotateAroundCentroid(speedY, 1);
+        }
+        if (rotateZ) {
+            RotateAroundCentroid(speedZ, 2);
+        }
+        if (curUIInput == null && Input.GetButton("RotationXLeft")) {
+            RotateAroundCentroid(speedX, 0);
+        }
+        if (curUIInput == null && Input.GetButton("RotationXRight")) {
+            RotateAroundCentroid(-speedX, 0);
+        }
+        if (curUIInput == null && Input.GetButton("RotationYLeft")) {
+            RotateAroundCentroid(speedY, 1);
+        }
+        if (curUIInput == null && Input.GetButton("RotationYRight")) {
+            RotateAroundCentroid(-speedY, 1);
+        }
+        if (curUIInput == null && Input.GetButton("RotationZLeft")) {
+            RotateAroundCentroid(speedZ, 2);
+        }
+        if (curUIInput == null && Input.GetButton("RotationZRight")) {
+            RotateAroundCentroid(-speedZ, 2);
         }
 
         if (disableMouseInVR && UnityMolMain.inVR()) {
+            return;
+        }
+
+        if (!ActivateMouse) {
             return;
         }
         if (currentTransform == null)
@@ -415,45 +558,134 @@ public class ManipulationManager : MonoBehaviour {
         if (currentTransform == null)
             return;
 
-        if (Input.GetMouseButton(0) && !(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))) {
+        if (curUIInput == null && Input.GetButton("ZoomIn")) {
+            stopCurrentMovements();
+            ZoomInOut(moveSpeed * 0.1f);
+        }
+        if (curUIInput == null && Input.GetButton("ZoomOut")) {
+            stopCurrentMovements();
+            ZoomInOut(-moveSpeed * 0.1f);
+        }
+
+        var selM = UnityMolMain.getSelectionManager();
+        if (!UnityMolMain.inVR() && !string.IsNullOrEmpty(followSelection) && selM.selections.ContainsKey(followSelection)) {
+            centerOnSelection(selM.selections[followSelection], false);
+        }
+
+
+        //Translating only one molecule
+        if (translatingT != null) {
+            if (Input.GetMouseButtonUp(0) || Input.GetButtonUp("TranslateClicked")) {
+                translatingT = null;
+            }
+            else {
+                stopCurrentMovements();
+                translatingT.Translate(transform.up * Input.GetAxis("Mouse Y")*moveSpeed * 0.05f, Space.World);
+                translatingT.Translate(transform.right * Input.GetAxis("Mouse X")*moveSpeed * 0.05f, Space.World);
+                //update currentCenterPosition ?
+
+                UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+                return;
+            }
+        }
+        //Clicked with translate
+        else if (curUIInput == null && Input.GetButton("TranslateClicked") &&
+                 Input.GetMouseButtonDown(0) && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) {
+            UnityMolAtom a = getAtomPointed();
+            if (a != null) {
+                GameObject sgo = UnityMolMain.getStructureManager().GetStructureGameObject(a.residue.chain.model.structure.name);
+                translatingT = sgo.transform;
+            }
+        }
+
+        //Rotating only one molecule
+        if (rotatingT != null) {
+            if (Input.GetMouseButtonUp(0) || Input.GetButtonUp("RotateClicked")) {
+                rotatingT = null;
+            }
+            else {
+                stopCurrentMovements();
+                rotatingT.RotateAround(clickedRotationCenter, transform.up, -Input.GetAxis("Mouse X")*moveSpeed);
+                rotatingT.RotateAround(clickedRotationCenter, transform.right, Input.GetAxis("Mouse Y")*moveSpeed);
+                UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+                return;
+            }
+        }
+        //Clicked with rotate
+        else if (curUIInput == null && Input.GetButton("RotateClicked") &&
+                 Input.GetMouseButtonDown(0) && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) {
+            UnityMolAtom a = getAtomPointed();
+            if (a != null) {
+                UnityMolStructure s = a.residue.chain.model.structure;
+                GameObject sgo = UnityMolMain.getStructureManager().GetStructureGameObject(s.name);
+                rotatingT = sgo.transform;
+
+                //Get rotation center of the molecule:
+                Transform tpar = UnityMolMain.getRepresentationParent().transform;
+                Vector3 worldBary = rotatingT.TransformPoint(s.currentModel.centroid);
+                clickedRotationCenter = worldBary;
+            }
+        }
+
+        //Rotation
+        if (!shiftPressed && !mouseClickedOnUI && Input.GetMouseButton(0) && !(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))) {
             if (!UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) {
                 if (mouseSel == null || !mouseSel.duringIMD) {
-                    currentTransform.RotateAround(currentCenterPosition, Vector3.up, -Input.GetAxis("Mouse X")*moveSpeed);
-                    currentTransform.RotateAround(currentCenterPosition, Vector3.right, Input.GetAxis("Mouse Y")*moveSpeed);
+                    stopCurrentMovements();
+                    // currentTransform.RotateAround(currentCenterPosition, transform.up, -Input.GetAxis("Mouse X")*moveSpeed);
+                    // currentTransform.RotateAround(currentCenterPosition, transform.right, Input.GetAxis("Mouse Y")*moveSpeed);
+                    currentTransform.RotateAround(currentCenterPosition, mainCam.transform.up, -Input.GetAxis("Mouse X")*moveSpeed);
+                    currentTransform.RotateAround(currentCenterPosition, mainCam.transform.right, Input.GetAxis("Mouse Y")*moveSpeed);
                     UnityMolMain.getCustomRaycast().needsUpdatePos = true;
                 }
             }
         }
-        if (Input.GetMouseButton(1) && !(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))) {
-            Vector3 pos = currentTransform.position;
-            float val = -Input.GetAxis("Mouse Y") * moveSpeed * 0.5f;
-            pos.z += val;
-            currentTransform.position = pos;
-            currentCenterPosition.z += val;
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
-        if (Input.GetMouseButton(2) && !(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))) {
-            currentTransform.Translate(Vector3.up * Input.GetAxis("Mouse Y")*moveSpeed * 0.05f, Space.World);
-            currentTransform.Translate(Vector3.right * Input.GetAxis("Mouse X")*moveSpeed * 0.05f, Space.World);
-            currentCenterPosition.x += Input.GetAxis("Mouse X") * moveSpeed * 0.05f;
-            currentCenterPosition.y += Input.GetAxis("Mouse Y") * moveSpeed * 0.05f;
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
-        }
 
+        //Depth
+        if (!mouseClickedOnUI && Input.GetMouseButton(1) && !(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))) {
+            stopCurrentMovements();
+            if (mainCam.orthographic) {
+                float prev = mainCam.orthographicSize;
+                API.APIPython.setCameraOrthoSize(prev + -Input.GetAxis("Mouse Y"));
+            }
+            else
+                ZoomInOut(-Input.GetAxis("Mouse Y") * moveSpeed * 0.5f);
+        }
+        //Translation
+        if (!mouseClickedOnUI && Input.GetMouseButton(2) && !(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))) {
+            stopCurrentMovements();
+
+            Vector3 before = currentTransform.position;
+            currentTransform.Translate(mainCam.transform.up * Input.GetAxis("Mouse Y")*moveSpeed * 0.05f, Space.World);
+            currentTransform.Translate(mainCam.transform.right * Input.GetAxis("Mouse X")*moveSpeed * 0.05f, Space.World);
+
+            // currentTransform.Translate(transform.up * Input.GetAxis("Mouse Y")*moveSpeed * 0.05f, Space.World);
+            // currentTransform.Translate(transform.right * Input.GetAxis("Mouse X")*moveSpeed * 0.05f, Space.World);
+            currentCenterPosition += currentTransform.position - before;
+
+            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+        }
+        //Depth with scroll
         float scroll = -Input.GetAxis("Mouse ScrollWheel") * scrollSpeed;
         if (scroll != 0.0f && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) {
-            Vector3 pos = currentTransform.position;
-            pos.z += scroll * moveSpeed;
-            currentTransform.position = pos;
-            currentCenterPosition.z += scroll * moveSpeed;
-            UnityMolMain.getCustomRaycast().needsUpdatePos = true;
+            stopCurrentMovements();
+            if (mainCam.orthographic) {
+                float prev = mainCam.orthographicSize;
+                API.APIPython.setCameraOrthoSize(prev + scroll);
+            }
+            else
+                ZoomInOut(scroll * moveSpeed);
         }
 
-        if (Input.GetKeyDown(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.R)) {
+        if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.R)) {
             resetPosition();
             resetRotation();
+            setRotationCenter(Vector3.zero);
         }
 
+        if (curUIInput == null && Input.GetKey(KeyCode.F) && UnityMolMain.getSelectionManager().currentSelection != null) {
+            centerOnSelection(UnityMolMain.getSelectionManager().currentSelection, true);
+        }
     }
 }
 }

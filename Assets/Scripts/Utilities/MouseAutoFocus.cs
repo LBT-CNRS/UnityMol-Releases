@@ -1,20 +1,18 @@
-/*
+﻿/*
     ================================================================================
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -64,6 +48,8 @@ public class MouseAutoFocus : MonoBehaviour {
     [SerializeField]
     private DepthOfField DOF;
 
+    private UnityMolAtom curA = null;
+
     public void Init() {
         if (GetComponent<PostProcessVolume>() != null) {
             postpV = GetComponent<PostProcessVolume>();
@@ -77,41 +63,64 @@ public class MouseAutoFocus : MonoBehaviour {
 
     void Update() {
         if (Input.GetMouseButtonDown(0) && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject() ) { //Mouse clicked
+            curA = null;
             if (postpV != null && mos != null) {
 
-                UnityMolAtom a = mos.getAtomPointed();
+                Vector3 p = Vector3.zero;
+                bool isExtrAtom = false;
+                UnityMolAtom a = mos.getAtomPointed(true, ref p, ref isExtrAtom);
 
                 if (a != null) {
-                    Vector3 p = a.curWorldPosition;
-
-                    FloatParameter newFocusDistance = new FloatParameter { value = Vector3.Distance(GetComponent<Camera>().transform.position, p) };
-
-                    DOF.focusDistance.value = newFocusDistance;
+                    curA = a;
+                    if (UnityMolMain.isDOFOn)
+                        API.APIPython.setDOFFocusDistance(Vector3.Distance(GetComponent<Camera>().transform.position, p));
                 }
-                // else {
-                //  DOF.enabled.value = false;
-                //  DOF.focusDistance.value = 200f;
-                // }
-
             }
+        }
+        if (curA != null && UnityMolMain.isDOFOn) {
+            API.APIPython.setDOFFocusDistance(Vector3.Distance(GetComponent<Camera>().transform.position, curA.curWorldPosition));
         }
     }
     public void disableDOF() {
+        curA = null;
         if (postpV != null) {
             DOF.enabled.value = false;
+            UnityMolMain.isDOFOn = false;
         }
         if (mos != null) {
             mos.tempDisable = false;
         }
     }
     public void enableDOF() {
+        curA = null;
         if (postpV != null) {
             DOF.enabled.value = true;
+            UnityMolMain.isDOFOn = true;
         }
         if (mos != null) {
             mos.tempDisable = true;
         }
     }
+
+    public float getFocusDistance() {
+        if (postpV == null) {
+            Init();
+        }
+        if (postpV != null) {
+            return DOF.focusDistance.value;
+        }
+        return -1.0f;
+    }
+    public void setFocusDistance(float v) {
+        if (postpV == null) {
+            Init();
+        }
+        if (postpV != null) {
+            FloatParameter newFocusDistance = new FloatParameter { value = v };
+            DOF.focusDistance.value = newFocusDistance;
+        }
+    }
+
     public void setAperture(float v) {
         if (postpV == null) {
             Init();

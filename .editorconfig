@@ -1,0 +1,128 @@
+
+# UnityMol Naming Conventions and Coding Styles
+# Taken from: https://github.com/thomasjacobsen-unity/Unity-Code-Style-Guide
+
+# For a complete list of keywords see:
+# https://kent-boogaart.com/blog/editorconfig-reference-for-c-developers
+
+# Remove the line below if you want to inherit .editorconfig settings from higher directory
+root = true
+
+# All files
+[*]
+indent_style = space
+indent_size = 4
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+# Default severity for analyzer diagnostics
+dotnet_analyzer_diagnostic.category-Style.severity = warning
+dotnet_analyzer_diagnostic.category-Naming.severity = warning
+dotnet_analyzer_diagnostic.category-CodeQuality.severity = warning
+
+
+#### .NET Coding Conventions ####
+[*.cs]
+
+dotnet_style_prefer_compound_assignment = false
+dotnet_style_prefer_conditional_expression_over_assignment = false
+dotnet_style_prefer_conditional_expression_over_return = false
+
+# Sort using and Import directives with System.* appearing first
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+#### C# Coding Conventions ####
+[*.cs]
+
+#### C# Formatting options ####
+dotnet_diagnostic.IDE0055.severity = suggestion #Prevent warnings on namespaces not indented
+# IDE0055 options (Formatting)
+# Looks like those options doesn't support :<severity>
+csharp_new_line_before_open_brace = none
+csharp_new_line_before_catch = false
+csharp_new_line_before_else = false
+csharp_new_line_before_finally = false
+csharp_new_line_before_members_in_anonymous_types = false
+csharp_new_line_before_members_in_object_initializers = false
+
+csharp_space_before_colon_in_inheritance_clause = false
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_parentheses = false
+
+# Others
+csharp_prefer_braces = true:warning
+csharp_style_inlined_variable_declaration = false
+csharp_style_unused_value_expression_statement_preference = discard_variable
+
+#### Naming styles ####
+[*.cs]
+
+dotnet_diagnostic.IDE1006.severity = warning
+
+# Public symbols are PascalCase
+dotnet_naming_rule.public_symbols_should_be_pascalcase.severity = warning
+dotnet_naming_rule.public_symbols_should_be_pascalcase.symbols = public_symbols
+dotnet_naming_rule.public_symbols_should_be_pascalcase.style = pascalcase
+
+dotnet_naming_symbols.public_symbols.applicable_kinds = field, method, property, event, delegate, enum
+dotnet_naming_symbols.public_symbols.applicable_accessibilities = public, internal, protected, protected_internal
+
+# Private symbols are camelCase
+dotnet_naming_rule.private_symbols_should_be_camelcase.severity = warning
+dotnet_naming_rule.private_symbols_should_be_camelcase.symbols = private_symbols
+dotnet_naming_rule.private_symbols_should_be_camelcase.style = camelcase
+
+dotnet_naming_symbols.private_symbols.applicable_kinds = field, method, property, event, delegate, enum
+dotnet_naming_symbols.private_symbols.applicable_accessibilities = private, private_protected
+
+# Private fields are _camelCase
+dotnet_naming_rule.private_fields_should_be__camelcase.severity = warning
+dotnet_naming_rule.private_fields_should_be__camelcase.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be__camelcase.style = _camelcase
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+# Class should always be PascalCase
+dotnet_naming_rule.class_should_be_pascalcase.severity = warning
+dotnet_naming_rule.class_should_be_pascalcase.symbols = class_symbol
+dotnet_naming_rule.class_should_be_pascalcase.style = pascalcase
+
+dotnet_naming_symbols.class_symbol.applicable_kinds = class
+dotnet_naming_symbols.class_symbol.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
+
+#Interface are PascalCase and start with an "I"
+dotnet_naming_rule.interface_should_be_pascalcase.severity = warning
+dotnet_naming_rule.interface_should_be_pascalcase.symbols = interface_symbol
+dotnet_naming_rule.interface_should_be_pascalcase.style = ipascalcase
+
+dotnet_naming_symbols.interface_symbol.applicable_kinds = interface
+dotnet_naming_symbols.interface_symbol.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
+
+
+# Naming styles
+
+dotnet_naming_style.pascalcase.required_prefix =
+dotnet_naming_style.pascalcase.required_suffix =
+dotnet_naming_style.pascalcase.word_separator =
+dotnet_naming_style.pascalcase.capitalization = pascal_case
+
+dotnet_naming_style.camelcase.required_prefix =
+dotnet_naming_style.camelcase.required_suffix =
+dotnet_naming_style.camelcase.word_separator =
+dotnet_naming_style.camelcase.capitalization = camel_case
+
+dotnet_naming_style._camelcase.required_prefix =
+dotnet_naming_style._camelcase.required_suffix =
+dotnet_naming_style._camelcase.word_separator =
+dotnet_naming_style._camelcase.capitalization = camel_case
+
+dotnet_naming_style.ipascalcase.required_prefix = I
+dotnet_naming_style.ipascalcase.required_suffix =
+dotnet_naming_style.ipascalcase.word_separator =
+dotnet_naming_style.ipascalcase.capitalization = pascal_case

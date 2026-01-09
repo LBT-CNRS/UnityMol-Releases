@@ -7,6 +7,11 @@ Shader "Point Cloud/Disk"
     {
         _Tint("Tint", Color) = (0.5, 0.5, 0.5, 1)
         _PointSize("Point Size", Float) = 0.01
+
+        [Toggle] _UseFog ("Enable fog", Float) = 0.0
+        _FogStart ("Fog start", Float) = 0.0
+        _FogDensity ("Fog density", Float) = 0.5
+
     }
     SubShader
     {

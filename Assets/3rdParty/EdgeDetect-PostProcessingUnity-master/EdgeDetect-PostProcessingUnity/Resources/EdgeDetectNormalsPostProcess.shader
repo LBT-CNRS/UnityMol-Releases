@@ -49,6 +49,7 @@ Shader "Hidden/EdgeDetect-PostProcess"
 		half4 _Sensitivity; 
 		half4 _BgColor;
 		half _BgFade;
+		half4 _OutlineColor;
 		half _SampleDistance;
 		float _Exponent;
 		float _Threshold;
@@ -248,7 +249,9 @@ Shader "Hidden/EdgeDetect-PostProcess"
 			float Sobel = sqrt(SobelX * SobelX + SobelY * SobelY);
 
 			Sobel = 1.0-pow(saturate(Sobel), _Exponent);
-			return Sobel * lerp(color, _BgColor, _BgFade);
+			float4 col = Sobel * lerp(color, _BgColor, _BgFade);
+			col += (Sobel < 0.01f) * _OutlineColor;
+			return col;
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------------

@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,32 +27,15 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections;
 using System.Text;
 using System.Collections.Generic;
-using UnityEngine.XR;
-
-using VRTK;
 
 namespace UMol {
 
@@ -68,40 +49,23 @@ public class AtomRepresentationSugarRibbons : AtomRepresentation {
     private string structureName;
     private GameObject newRep;
 
-    public AtomRepresentationSugarRibbons(string structName, UnityMolSelection sel, bool planes = true) {
+    public AtomRepresentationSugarRibbons(int idF, string structName, UnityMolSelection sel, bool planes = true) {
 
         colorationType = colorType.atom;
         meshesGO = new List<GameObject>();
 
-        ribbonMat = new Material(Shader.Find("Custom/SurfaceVertexColor"));
-        ribbonMatPlane = new Material(Shader.Find("Custom/SurfaceVertexColorTransparent"));
+        if (ribbonMat == null)
+            ribbonMat = new Material(Shader.Find("Custom/SurfaceVertexColor"));
+        if (ribbonMatPlane == null)
+            ribbonMatPlane = new Material(Shader.Find("Custom/SurfaceVertexColorTransparent"));
         ribbonMatPlane.color = new Color(1.0f, 1.0f, 1.0f, 0.5f);
 
         structureName = structName;
         selection = sel;
         createPlanes = planes;
+        idFrame = idF;
 
-        GameObject loadedMolGO = UnityMolMain.getRepresentationParent();
-
-        representationParent = loadedMolGO.transform.Find(structName);
-        if (UnityMolMain.inVR() && representationParent == null) {
-
-            Transform clref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.LeftController);
-            Transform crref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.RightController);
-            if (clref != null) {
-                representationParent = clref.Find(structName);
-            }
-            if (representationParent == null && crref != null) {
-                representationParent = crref.Find(structName);
-            }
-        }
-        if (representationParent == null) {
-            representationParent = (new GameObject(structName).transform);
-            representationParent.parent = loadedMolGO.transform;
-            representationParent.localPosition = Vector3.zero;
-            representationParent.localRotation = Quaternion.identity;
-            representationParent.localScale = Vector3.one;
-        }
+        representationParent = UnityMolMain.getRepStructureParent(structName).transform;
 
         newRep = new GameObject("AtomSugarRibbonsRepresentation");
         newRep.transform.parent = representationParent;
@@ -113,20 +77,21 @@ public class AtomRepresentationSugarRibbons : AtomRepresentation {
         newRep.transform.localRotation = Quaternion.identity;
         newRep.transform.localScale = Vector3.one;
 
-        nbAtoms = selection.Count;
+        nbAtoms = selection.atoms.Count;
     }
 
     public void displaySugarRibbonsMesh(string structName, Transform repParent, float ribbonThick = 0.2f,
                                         float ribbonHeight = 0.35f, bool isTraj = false) {
 
-        List<Mesh> meshes = SugarRibbons.createSugarRibbons(selection, ref atomToVertBB, ribbonThick, ribbonHeight, createPlanes);
+        List<Mesh> meshes = SugarRibbons.createSugarRibbons(selection, idFrame,
+                            ref atomToVertBB, ribbonThick, ribbonHeight, createPlanes);
 
         if (meshes.Count == 2) {
 
             GameObject goPlane = new GameObject(structName + "_SugarRibbonsPlanesMesh");
             MeshFilter mfp = goPlane.AddComponent<MeshFilter>();
 
-            mfp.mesh = meshes[0];
+            mfp.sharedMesh = meshes[0];
             goPlane.AddComponent<MeshRenderer>().sharedMaterial = ribbonMatPlane;
             goPlane.transform.parent = repParent;
             goPlane.transform.localRotation = Quaternion.identity;
@@ -138,7 +103,7 @@ public class AtomRepresentationSugarRibbons : AtomRepresentation {
             GameObject go = new GameObject(structName + "_SugarRibbonsMesh");
             MeshFilter mf = go.AddComponent<MeshFilter>();
 
-            mf.mesh = meshes[1];
+            mf.sharedMesh = meshes[1];
             go.AddComponent<MeshRenderer>().sharedMaterial = ribbonMat;
             go.transform.parent = repParent;
             go.transform.localRotation = Quaternion.identity;
@@ -149,19 +114,31 @@ public class AtomRepresentationSugarRibbons : AtomRepresentation {
         }
     }
 
-    public void Clear() {
-        foreach (GameObject go in meshesGO) {
-            GameObject.Destroy(go);
-        }
-        meshesGO.Clear();
-        atomToVertBB.Clear();
-    }
-
     public void recompute(bool isNewModel = false) {
 
+        if (meshesGO != null) {
+            for (int i = 0; i < meshesGO.Count; i++) {
+                GameObject.Destroy(meshesGO[i].GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(meshesGO[i]);
+            }
+            meshesGO.Clear();
+        }
+
+        displaySugarRibbonsMesh(structureName, newRep.transform);
+
     }
-    public override void Clean(){
-        Clear();
+    public override void Clean() {
+
+        if (meshesGO != null) {
+            for (int i = 0; i < meshesGO.Count; i++) {
+                GameObject.Destroy(meshesGO[i].GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(meshesGO[i]);
+            }
+            meshesGO.Clear();
+        }
+        GameObject.Destroy(ribbonMat);
+        GameObject.Destroy(ribbonMatPlane);
+        atomToVertBB.Clear();
     }
 }
 }

@@ -5,13 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/MainUIScene.unity
-    guid: 672f9338c997cb74ea1e235608dfee4a
+    guid: 4a7d4dff89fe5a047b1df4cdf2a07d32
   - enabled: 0
-    path: 
-    guid: 00000000000000000000000000000000
-  - enabled: 0
-    path: 
-    guid: 00000000000000000000000000000000
-  m_configObjects: {}
+    path: Assets/Scenes/MainScene_VR_Desktop_VIU.unity
+    guid: 4ff6f5a6d29e6e14f9f93a763441f7d4
+  m_configObjects:
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: b9625027289d46f4cbfb98c330f117ed,
+      type: 2}

@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -79,6 +63,11 @@ public abstract class UnityMolGenericRepresentationManager {
 	/// </summary>
 	public bool isBackboneOn = true;
 
+	/// <summary>
+	/// List of RaytracedObject script
+	/// </summary>
+	public List<RaytracedObject> rtos;
+
 
 	/// <summary>
 	/// Disables the renderers for all objects managed by the instance of the manager.
@@ -95,6 +84,8 @@ public abstract class UnityMolGenericRepresentationManager {
 	/// </summary>
 	public abstract void Init(SubRepresentation rep);
 
+	public abstract void InitRT();
+
 	public abstract void Clean();
 
 	public abstract void ShowShadows(bool show);
@@ -105,13 +96,13 @@ public abstract class UnityMolGenericRepresentationManager {
 
 	public abstract void ShowBackbone(bool show);
 
-	public abstract void SetColor(Color col, UnityMolSelection sele);
+	public abstract void SetColor(Color32 col, UnityMolSelection sele);
 
-	public abstract void SetColors(Color col, List<UnityMolAtom> atoms);
+	public abstract void SetColors(Color32 col, List<UnityMolAtom> atoms);
 
-	public abstract void SetColors(List<Color> cols, List<UnityMolAtom> atoms);
+	public abstract void SetColors(List<Color32> cols, List<UnityMolAtom> atoms);
 
-	public abstract void SetColor(Color col, UnityMolAtom atom);
+	public abstract void SetColor(Color32 col, UnityMolAtom atom);
 
 	public abstract void SetDepthCueingStart(float v);
 
@@ -145,18 +136,66 @@ public abstract class UnityMolGenericRepresentationManager {
 
 	public abstract void DeHighlightRepresentation();
 
+	// public abstract void HighlightPart(List<UnityMolAtom> atoms);
+
+	// public abstract void DehighlightPart(List<UnityMolAtom> atoms);
+
 	public abstract void SetSmoothness(float val);
 
 	public abstract void SetMetal(float val);
+
+	public abstract void UpdateLike();
+
+
+
+	public void SetRTMaterialType(int t) {
+        if(rtos == null || rtos.Count == 0){
+			return;
+		}
+        foreach(RaytracedObject rto in rtos){
+			rto.changeMaterialType(t);
+        }
+	}
+	public int GetRTMaterialType(){
+        if(rtos == null || rtos.Count == 0){
+			return -1;
+		}
+        foreach(RaytracedObject rto in rtos){
+			return rto.RTMatToType();
+		}
+		return -1;
+	}
+	public void SetRTMaterialProperty(string n, object val) {
+        if(rtos == null || rtos.Count == 0)
+            return;
+        foreach(RaytracedObject rto in rtos){
+            rto.rtMat.setRTMatProperty(n, val);
+        }
+	}
+
+	public void SetRTMaterial(RaytracingMaterial material){
+        foreach(RaytracedObject rto in rtos){
+			rto.rtMat = material;
+		}
+	}
 
 	public abstract UnityMolRepresentationParameters Save();
 
 	public abstract void Restore(UnityMolRepresentationParameters savedParams);
 
+	public void colorByAtom(UnityMolSelection sel) {
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
+
+		foreach (UnityMolAtom a in sel.atoms) {
+			colors.Add(a.color32);
+		}
+		SetColors(colors, sel.atoms);
+	}
+
 	public void colorByChain(UnityMolSelection sel) {
 		//Copied from UnityMolRepresentation
 		//TODO: reorganize code to avoid duplicates
-		Dictionary<UnityMolChain, Color> chainCol = new Dictionary<UnityMolChain, Color>();
+		Dictionary<UnityMolChain, Color32> chainCol = new Dictionary<UnityMolChain, Color32>();
 		int cptColor = 0;
 		foreach (UnityMolAtom a in sel.atoms) {
 			if (!chainCol.ContainsKey(a.residue.chain)) {
@@ -173,7 +212,7 @@ public abstract class UnityMolGenericRepresentationManager {
 	public void colorByRes(UnityMolSelection sel) {
 		//Copied from UnityMolRepresentation
 		//TODO: reorganize code to avoid duplicates
-		List<Color> colors = new List<Color>(sel.Count);
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
 
 		foreach (UnityMolAtom a in sel.atoms) {
 			colors.Add(UnityMolMain.atomColors.getColorForResidue(a.residue));
@@ -184,11 +223,11 @@ public abstract class UnityMolGenericRepresentationManager {
 	public void colorByHydro(UnityMolSelection sel) {
 		//Copied from UnityMolRepresentation
 		//TODO: reorganize code to avoid duplicates
-		List<Color> colors = new List<Color>(sel.Count);
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
 
 		foreach (UnityMolAtom a in sel.atoms) {
 			float hydro = a.residue.kdHydro;
-			Color col = UnityMolRepresentation.hydroToColor(hydro, -4.5f, 4.5f);
+			Color32 col = UnityMolRepresentation.hydroToColor(hydro, -4.5f, 4.5f);
 			colors.Add(col);
 		}
 		SetColors(colors, sel.atoms);
@@ -199,27 +238,27 @@ public abstract class UnityMolGenericRepresentationManager {
 		Dictionary<UnityMolResidue, int> residuesOfS = new Dictionary<UnityMolResidue, int>();
 		Dictionary<string, int> nbResPerS = new Dictionary<string, int>();
 		foreach (UnityMolStructure s in sel.structures) {
-			if (!nbResPerS.ContainsKey(s.uniqueName)) {
-				nbResPerS[s.uniqueName] = 0;
+			if (!nbResPerS.ContainsKey(s.name)) {
+				nbResPerS[s.name] = 0;
 			}
 		}
 		foreach (UnityMolAtom a in sel.atoms) {
 			if (!residuesOfS.ContainsKey(a.residue)) {
-				residuesOfS[a.residue] = nbResPerS[a.residue.chain.model.structure.uniqueName];
-				nbResPerS[a.residue.chain.model.structure.uniqueName]++;
+				residuesOfS[a.residue] = nbResPerS[a.residue.chain.model.structure.name];
+				nbResPerS[a.residue.chain.model.structure.name]++;
 			}
 		}
 
 
-		Dictionary<UnityMolResidue, Color> resCol =
-		    new Dictionary<UnityMolResidue, Color>(new LightResidueComparer());
+		Dictionary<UnityMolResidue, Color32> resCol =
+		    new Dictionary<UnityMolResidue, Color32>(new LightResidueComparer());
 
-		List<Color> colors = new List<Color>(sel.Count);
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
 
 		foreach (UnityMolAtom a in sel.atoms) {
 			if (!resCol.ContainsKey(a.residue)) {
 				UnityMolStructure s = a.residue.chain.model.structure;
-				int nbRes = nbResPerS[s.uniqueName];
+				int nbRes = nbResPerS[s.name];
 				int idResPerS = residuesOfS[a.residue];
 
 				resCol[a.residue] = UnityMolRepresentation.rainbowColor(idResPerS / (float) nbRes);
@@ -232,7 +271,7 @@ public abstract class UnityMolGenericRepresentationManager {
 	public void colorByCharge(UnityMolSelection sel) {
 		//Copied from UnityMolRepresentation
 		//TODO: reorganize code to avoid duplicates
-		List<Color> colors = new List<Color>(sel.Count);
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
 
 		foreach (UnityMolAtom a in sel.atoms) {
 			colors.Add(UnityMolMain.atomColors.getColorReschargeForResidue(a.residue));
@@ -242,7 +281,7 @@ public abstract class UnityMolGenericRepresentationManager {
 	public void colorByResType(UnityMolSelection sel) {
 		//Copied from UnityMolRepresentation
 		//TODO: reorganize code to avoid duplicates
-		List<Color> colors = new List<Color>(sel.Count);
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
 
 		foreach (UnityMolAtom a in sel.atoms) {
 			colors.Add(UnityMolMain.atomColors.getColorRestypeForResidue(a.residue));
@@ -252,33 +291,83 @@ public abstract class UnityMolGenericRepresentationManager {
 	public void colorByResCharge(UnityMolSelection sel) {
 		//Copied from UnityMolRepresentation
 		//TODO: reorganize code to avoid duplicates
-		List<Color> colors = new List<Color>(sel.Count);
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
 
 		foreach (UnityMolAtom a in sel.atoms) {
 			colors.Add(UnityMolMain.atomColors.getColorReschargeForResidue(a.residue));
 		}
 		SetColors(colors, sel.atoms);
 	}
-	public void colorByBfactor(UnityMolSelection sel, Color startCol, Color endCol) {
+
+
+	public void colorByResid(UnityMolSelection sel) {
 		//Copied from UnityMolRepresentation
 		//TODO: reorganize code to avoid duplicates
-		List<Color> colors = new List<Color>(sel.Count);
 
-
-		float minBfac = sel.atoms[0].bfactor;
-		float maxBfac = sel.atoms[0].bfactor;
-		foreach (UnityMolAtom a in sel.atoms) {
-			minBfac = Mathf.Min(a.bfactor, minBfac);
-			maxBfac = Mathf.Max(a.bfactor, maxBfac);
-		}
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
 
 		foreach (UnityMolAtom a in sel.atoms) {
-			colors.Add(UnityMolRepresentation.bfactorToColorNorm(a.bfactor, startCol, endCol, minBfac, maxBfac));
+			colors.Add(UnityMolMain.atomColors.getColorFromPalette(a.residue.id));
 		}
 		SetColors(colors, sel.atoms);
 	}
 
+	public void colorByResnum(UnityMolSelection sel) {
+		//Copied from UnityMolRepresentation
+		//TODO: reorganize code to avoid duplicates
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
 
+		foreach (UnityMolAtom a in sel.atoms) {
+			colors.Add(UnityMolMain.atomColors.getColorFromPalette(a.residue.resnum));
+		}
+
+		SetColors(colors, sel.atoms);
+	}
+
+	public void colorByBfactor(UnityMolSelection sel, Color startCol, Color midCol, Color endCol) {
+		//Copied from UnityMolRepresentation
+		//TODO: reorganize code to avoid duplicates
+		List<Color32> colors = new List<Color32>(sel.atoms.Count);
+
+		bool containsCA = false;
+		foreach (UnityMolAtom a in sel.atoms) {
+			if (a.name == "CA" && a.type == "C") {
+				containsCA = true;
+			}
+		}
+
+		float minBfac = sel.atoms[0].bfactor;
+		float maxBfac = sel.atoms[0].bfactor;
+		foreach (UnityMolAtom a in sel.atoms) {
+			if (containsCA) { //Uses only CA for proteins
+				if (a.type == "C" && a.name == "CA") {
+					minBfac = Mathf.Min(a.bfactor, minBfac);
+					maxBfac = Mathf.Max(a.bfactor, maxBfac);
+				}
+			}
+			else {
+				minBfac = Mathf.Min(a.bfactor, minBfac);
+				maxBfac = Mathf.Max(a.bfactor, maxBfac);
+			}
+		}
+
+		if (!containsCA) {
+			foreach (UnityMolAtom a in sel.atoms) {
+				colors.Add(UnityMolRepresentation.bfactorToColorNorm(a.bfactor, startCol, midCol, endCol, minBfac, maxBfac));
+			}
+		}
+		else {
+			foreach (UnityMolAtom a in sel.atoms) {
+				if (a.residue.atoms.ContainsKey("CA")) {
+					float bf = a.residue.atoms["CA"].bfactor;
+					colors.Add(UnityMolRepresentation.bfactorToColorNorm(bf, startCol, midCol, endCol, minBfac, maxBfac));
+				}
+				else
+					colors.Add(UnityMolRepresentation.bfactorToColorNorm(a.bfactor, startCol, midCol, endCol, minBfac, maxBfac));
+			}
+		}
+		SetColors(colors, sel.atoms);
+	}
 
 }
 }

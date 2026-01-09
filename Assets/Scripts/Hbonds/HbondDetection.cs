@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,33 +27,19 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 using Unity.Collections;
 using Unity.Mathematics;
-using KNN;
-using KNN.Jobs;
-using Unity.Jobs;
+// using Unity.Jobs;
+
+using BurstGridSearch;
 
 namespace UMol {
 public class HbondDetection {
@@ -68,14 +52,14 @@ public class HbondDetection {
     public static List<string> listAcceptors = new List<string> {"O", "N"};
     public static Dictionary<string, int> maxBonded = new Dictionary<string, int> { {"O", 2}, {"N", 3}};
 
-    public static UnityMolBonds DetectHydrogenBonds(UnityMolSelection selec) {
+    public static UnityMolBonds DetectHydrogenBonds(UnityMolSelection selec, int idF, Dictionary<UnityMolAtom, int> atomToIdInSel) {
 
         UnityMolBonds customChemBonds = getCustomChemBonds(selec);
         if (customChemBonds.Count != 0) {
             return customChemBonds;
         }
-        // return DetectHydrogenBonds_Avogadro(selec);
-        return DetectHydrogenBonds_Shrodinger(selec);
+        // return DetectHydrogenBonds_Avogadro(selec, idF, atomToIdInSel);
+        return DetectHydrogenBonds_Shrodinger(selec, idF, atomToIdInSel);
     }
 
     public static UnityMolBonds getCustomChemBonds(UnityMolSelection selec) {
@@ -86,7 +70,7 @@ public class HbondDetection {
         foreach (UnityMolAtom a in selec.atoms) {
             UnityMolModel curModel = a.residue.chain.model;
             if (curModel.customChemBonds.Count != 0) {
-                foreach (Int2 pair in curModel.customChemBonds) {
+                foreach (int2 pair in curModel.customChemBonds) {
                     UnityMolAtom a1 = curModel.getAtomWithID(pair.x);
                     UnityMolAtom a2 = curModel.getAtomWithID(pair.y);
                     if (a1 != null && a2 != null) {
@@ -105,48 +89,51 @@ public class HbondDetection {
         return bonds;
     }
 
-    public static UnityMolBonds DetectHydrogenBonds_Avogadro(UnityMolSelection selec) {
+public static UnityMolBonds DetectHydrogenBonds_Avogadro(UnityMolSelection selec, int idFrame, Dictionary<UnityMolAtom, int> atomToIdInSel) {
         //From https://github.com/cryos/avogadro/blob/2a98712f24506d023aa4b84c984136a913017e81/libavogadro/src/protein.cpp
         UnityMolBonds bonds = new UnityMolBonds();
 
-        if(selec.Count == 0){
+        if (selec.atoms.Count == 0) {
             return bonds;
         }
 
         Transform loadedMol = UnityMolMain.getRepresentationParent().transform;
+        Transform sParent = UnityMolMain.getStructureManager().GetStructureGameObject(
+                                selec.structures[0].name).transform;
+
 
         var allAtoms = new NativeArray<float3>(selec.atoms.Count, Allocator.Persistent);
 
         int id = 0;
-        //Transform points in the framework of the loadedMolecules transform
+        //Transform points in the loadedMolecules transform space
         foreach (UnityMolAtom a in selec.atoms) {
-            allAtoms[id++] = loadedMol.InverseTransformPoint(a.curWorldPosition);
+            allAtoms[id] = loadedMol.InverseTransformPoint(a.curWorldPosition);
+            if (selec.extractTrajFrame) {
+                Vector3 wPos = sParent.TransformPoint(selec.extractTrajFramePositions[idFrame][id]);
+                allAtoms[id] = loadedMol.InverseTransformPoint(wPos);
+            }
+            id++;
         }
 
-        //Arbitrary number that should be enough to find all atoms in the neighboorDistance
-        int kNeighbours = 15;
 
-        //Create KDTree
-        KnnContainer knnContainer = new KnnContainer(allAtoms, false, Allocator.TempJob);
-        NativeArray<float3> queryPositions = new NativeArray<float3>(allAtoms.Length, Allocator.TempJob);
-        NativeArray<int> results = new NativeArray<int>(selec.atoms.Count * kNeighbours, Allocator.TempJob);
+        GridSearchBurst gsb = new GridSearchBurst(2.289f);
+        gsb.initGrid(allAtoms);
 
-        var rebuildJob = new KnnRebuildJob(knnContainer);
-        rebuildJob.Schedule().Complete();
+        int maxResults = 20;
+        var resultsNeighbor = gsb.searchWithin(allAtoms, neighboorDistance, maxResults);
+        gsb.clean();
 
-        var batchQueryJob = new QueryKNearestBatchJob(knnContainer, queryPositions, results);
-        batchQueryJob.ScheduleBatch(queryPositions.Length, queryPositions.Length / 32).Complete();
 
         int idA = 0;
         foreach (UnityMolAtom a1 in selec.atoms) {
 
-            for (int i = 0; i < kNeighbours; i++) { //For all neighboors
-                int idAtom = results[idA * kNeighbours + i];
+            for (int i = 0; i < maxResults; i++) { //For all neighboors
+                int idAtom = resultsNeighbor[idA * maxResults + i];
 
                 if (idAtom < 0 || idAtom >= selec.atoms.Count) {
-                    continue;
+                    break;
                 }
-                
+
                 UnityMolAtom a2 = selec.atoms[idAtom];
 
                 UnityMolResidue res1 = a1.residue;
@@ -178,39 +165,50 @@ public class HbondDetection {
                     continue;
                 }
 
+                UnityMolModel curM = res1.chain.model;
+
                 UnityMolAtom N = res1.atoms["N"];
                 UnityMolAtom H = null;
                 UnityMolAtom C = res2.atoms["C"];
                 UnityMolAtom O = res2.atoms["O"];
 
-                if (!selec.bonds.bondsDual.ContainsKey(N)) {
+                if (!selec.bonds.bonds.ContainsKey(N.idInAllAtoms)) {
                     Debug.Log("Nothing bonded to " + N);
-                    if (selec.bonds.bonds.ContainsKey(N)) {
-                        for (int d = 0; d < selec.bonds.bonds[N].Length; d++) {
-                            if (selec.bonds.bonds[N][d] != null) {
-                                Debug.Log(selec.bonds.bonds[N][d]);
-                            }
-                        }
-                    }
                     continue;
                 }
-                UnityMolAtom[] bondedN = selec.bonds.bondsDual[N];
+                int[] bondedN = selec.bonds.bonds[N.idInAllAtoms];
+
+                Vector3 Npos = N.position;
+                Vector3 Opos = O.position;
+                Vector3 Cpos = C.position;
+                if (idFrame != -1) {
+                    Npos = selec.extractTrajFramePositions[idFrame][atomToIdInSel[N]];
+                    Opos = selec.extractTrajFramePositions[idFrame][atomToIdInSel[O]];
+                    Cpos = selec.extractTrajFramePositions[idFrame][atomToIdInSel[C]];
+                }
+
 
                 Vector3 posH = Vector3.zero;
-                foreach (UnityMolAtom bN in bondedN) { //For all neighboors of N
-                    if (bN != null) {
+                foreach (int ibN in bondedN) { //For all neighboors of N
+                    if (ibN != -1) {
+                        UnityMolAtom bN = curM.allAtoms[ibN];
+                        Vector3 bNpos = bN.position;
+                        if (idFrame != -1) {
+                            bNpos = selec.extractTrajFramePositions[idFrame][atomToIdInSel[bN]];
+                        }
+
                         if (bN.type == "H") {
-                            posH = bN.position;
+                            posH = bNpos;
                             H = bN;
                             break;
                         }
                         else { //Average of bonded atoms to compute H position
-                            posH += N.position - bN.position;
+                            posH += Npos - bNpos;
                         }
                     }
                 }
                 if (H == null) { //H was not find => compute position
-                    posH = N.position + (1.1f * posH);
+                    posH = Npos + (1.1f * posH);
                 }
 
 
@@ -218,10 +216,10 @@ public class HbondDetection {
                 //
                 //  C +0.42e   O -0.42e
                 //  H +0.20e   N -0.20e
-                float rON = (O.position - N.position).magnitude;
-                float rCH = (C.position - posH).magnitude;
-                float rOH = (O.position - posH).magnitude;
-                float rCN = (C.position - N.position).magnitude;
+                float rON = (Opos - Npos).magnitude;
+                float rCH = (Cpos - posH).magnitude;
+                float rOH = (Opos - posH).magnitude;
+                float rCN = (C.position - Npos).magnitude;
 
                 float eON = 332 * (-0.42f * -0.20f) / rON;
                 float eCH = 332 * ( 0.42f *  0.20f) / rCH;
@@ -242,186 +240,76 @@ public class HbondDetection {
             idA++;
         }
 
-        knnContainer.Dispose();
-        queryPositions.Dispose();
-        results.Dispose();
         allAtoms.Dispose();
-
-        // Vector3[] points = new Vector3[selec.atoms.Count];
-        // int id = 0;
-        // //Transform points in the framework of the loadedMolecules transform
-        // foreach (UnityMolAtom a in selec.atoms) {
-        //     points[id++] = loadedMol.InverseTransformPoint(a.curWorldPosition);
-        // }
-
-        // KDTree tmpKDTree = KDTree.MakeFromPoints(points);
-
-
-        // foreach (UnityMolAtom a1 in selec.atoms) {
-
-        //     int[] ids = tmpKDTree.FindNearestsRadius(loadedMol.InverseTransformPoint(a1.curWorldPosition) , neighboorDistance);
-
-        //     for (int i = 0; i < ids.Length; i++) { //For all neighboors
-        //         UnityMolAtom a2 = selec.atoms[ids[i]];
-
-        //         UnityMolResidue res1 = a1.residue;
-        //         UnityMolResidue res2 = a2.residue;
-
-        //         if (res1 == res2) {
-        //             continue;
-        //         }
-        //         if (Mathf.Abs(res2.id - res1.id) <= 2) {
-        //             continue;
-        //         }
-
-        //         // residue 1 has the N-H
-        //         // residue 2 has the C=O
-        //         if (a1.type != "O") {
-        //             if (a2.type != "O") {
-        //                 continue;
-        //             }
-        //         }
-        //         else {
-        //             res1 = a2.residue;
-        //             res2 = a1.residue;
-        //         }
-
-        //         if (!res1.atoms.ContainsKey("N")) {
-        //             continue;
-        //         }
-        //         if (!res2.atoms.ContainsKey("C") || !res2.atoms.ContainsKey("O")) {
-        //             continue;
-        //         }
-
-        //         UnityMolAtom N = res1.atoms["N"];
-        //         UnityMolAtom H = null;
-        //         UnityMolAtom C = res2.atoms["C"];
-        //         UnityMolAtom O = res2.atoms["O"];
-
-        //         if (!selec.bonds.bondsDual.ContainsKey(N)) {
-        //             Debug.Log("Nothing bonded to " + N);
-        //             if (selec.bonds.bonds.ContainsKey(N)) {
-        //                 for (int d = 0; d < selec.bonds.bonds[N].Length; d++) {
-        //                     if (selec.bonds.bonds[N][d] != null) {
-        //                         Debug.Log(selec.bonds.bonds[N][d]);
-        //                     }
-        //                 }
-        //             }
-        //             continue;
-        //         }
-        //         UnityMolAtom[] bondedN = selec.bonds.bondsDual[N];
-
-        //         Vector3 posH = Vector3.zero;
-        //         foreach (UnityMolAtom bN in bondedN) { //For all neighboors of N
-        //             if (bN != null) {
-        //                 if (bN.type == "H") {
-        //                     posH = bN.position;
-        //                     H = bN;
-        //                     break;
-        //                 }
-        //                 else { //Average of bonded atoms to compute H position
-        //                     posH += N.position - bN.position;
-        //                 }
-        //             }
-        //         }
-        //         if (H == null) { //H was not find => compute position
-        //             posH = N.position + (1.1f * posH);
-        //         }
-
-
-        //         //  C=O ~ H-N
-        //         //
-        //         //  C +0.42e   O -0.42e
-        //         //  H +0.20e   N -0.20e
-        //         float rON = (O.position - N.position).magnitude;
-        //         float rCH = (C.position - posH).magnitude;
-        //         float rOH = (O.position - posH).magnitude;
-        //         float rCN = (C.position - N.position).magnitude;
-
-        //         float eON = 332 * (-0.42f * -0.20f) / rON;
-        //         float eCH = 332 * ( 0.42f *  0.20f) / rCH;
-        //         float eOH = 332 * (-0.42f *  0.20f) / rOH;
-        //         float eCN = 332 * ( 0.42f * -0.20f) / rCN;
-        //         float E = eON + eCH + eOH + eCN;
-
-        //         if (E >= -0.5f)
-        //             continue;
-
-        //         if (H == null) {
-        //             bonds.Add(O, N);
-        //         }
-        //         else {
-        //             bonds.Add(O, H);
-        //         }
-        //     }
-        // }
-
-
+        resultsNeighbor.Dispose();
         return bonds;
     }
 
-    public static UnityMolBonds DetectHydrogenBonds_Shrodinger(UnityMolSelection selec) {
+
+    public static UnityMolBonds DetectHydrogenBonds_Shrodinger(UnityMolSelection selec, int idFrame,
+            Dictionary<UnityMolAtom, int> atomToIdInSel) {
+
         UnityMolBonds bonds = new UnityMolBonds();
-        if(selec.Count == 0){
+        if (selec.atoms.Count == 0) {
+            return bonds;
+        }
+        if (selec.structures.Count != 1) {
+            Debug.LogWarning("Cannot compute hbonds for global selections");
             return bonds;
         }
 
-        Transform loadedMol = UnityMolMain.getRepresentationParent().transform;
-
         List<UnityMolAtom> acceptors = getAcceptors(selec);
 
-        var allAtoms = new NativeArray<float3>(selec.atoms.Count, Allocator.Persistent);
-        var accAtoms = new NativeArray<float3>(acceptors.Count, Allocator.Persistent);
-
-        int id = 0;
-        //Transform points in the framework of the loadedMolecules transform
-        foreach (UnityMolAtom a in selec.atoms) {
-            allAtoms[id++] = loadedMol.InverseTransformPoint(a.curWorldPosition);
-        }
-        id = 0;
-        foreach (UnityMolAtom a in acceptors) {
-            accAtoms[id++] = loadedMol.InverseTransformPoint(a.curWorldPosition);
+        if (acceptors.Count == 0) {
+            return bonds;
         }
 
-        //Arbitrary number that should be enough to find all atoms in the neighboorDistance
-        int kNeighbours = 15;
+        if(idFrame != -1) {
+//Implement this  !!!!!
+            return bonds;
+        }
 
-        //Create KDTree
-        var knnContainer = new KnnContainer(allAtoms, true, Allocator.TempJob);
-        var queryPositions = new NativeArray<float3>(accAtoms, Allocator.TempJob);
-        var results = new NativeArray<int>(acceptors.Count * kNeighbours, Allocator.TempJob);
 
-        var batchQueryJob = new QueryKNearestBatchJob(knnContainer, queryPositions, results);
-        batchQueryJob.ScheduleBatch(queryPositions.Length, queryPositions.Length / 32).Complete();
+        int kNei = (int)((Mathf.PI * 4 * limitDistanceHA * limitDistanceHA) * 0.3f);//Assuming 0.3 atom per Angstrom^3
+
+        UnityMolStructure s = selec.structures[0];
+
+        NativeArray<int> results = s.spatialSearch.SearchWithin(acceptors, limitDistanceHA, kNei);
 
         int idA = 0;
         foreach (UnityMolAtom acc in acceptors) {
+            for (int i = 0; i < kNei; i++) { //For all neighboors
+                int id = results[idA * kNei + i];
+                if (id >= 0) {
+                    UnityMolAtom n = s.currentModel.allAtoms[id];
+                    if (n.type == "H" && selec.atoms.Contains(n)) {
+                        Vector3 npos = n.position;
 
-            for (int i = 0; i < kNeighbours; i++) { //For all neighboors
+                        float distance = Vector3.Distance(acc.position, npos);
 
-                UnityMolAtom n = selec.atoms[results[idA * kNeighbours + i]];
-                if (n.type == "H" &&
-                        n.residue.chain.model.structure.uniqueName == acc.residue.chain.model.structure.uniqueName) {
+                        if (distance < limitDistanceHA) {
+                            UnityMolAtom donor = getBonded(n, selec.bonds);
 
-                    float distance = Vector3.Distance(acc.position, n.position);
-                    if (distance < limitDistanceHA) {
-                        UnityMolAtom donor = getBonded(n, selec.bonds);
-
-                        if (donor == null) {
-                            continue;
-                        }
-                        float DHA_angle = Vector3.Angle(donor.position - n.position, acc.position - n.position);
-
-                        if (DHA_angle > limitAngleDHA) {
-                            UnityMolAtom bondedToAcceptor = getBonded(acc, selec.bonds);
-
-                            if (bondedToAcceptor == null) {
+                            if (donor == null) {
                                 continue;
                             }
 
-                            float HAB_angle = Vector3.Angle(n.position - acc.position, bondedToAcceptor.position -  acc.position);
-                            if (HAB_angle > limitAngleHAB) {
-                                bonds.Add(n, acc);
+                            Vector3 donorpos = donor.position;
+
+                            float DHA_angle = Vector3.Angle(donorpos - npos, acc.position - npos);
+
+                            if (DHA_angle > limitAngleDHA) {
+                                UnityMolAtom bondedToAcceptor = getBonded(acc, selec.bonds);
+
+                                if (bondedToAcceptor == null) {
+                                    continue;
+                                }
+                                Vector3 bondedToAcceptorpos = bondedToAcceptor.position;
+
+                                float HAB_angle = Vector3.Angle(npos - acc.position, bondedToAcceptorpos -  acc.position);
+                                if (HAB_angle > limitAngleHAB) {
+                                    bonds.Add(n, acc);
+                                }
                             }
                         }
                     }
@@ -429,55 +317,8 @@ public class HbondDetection {
             }
             idA++;
         }
-        
-        knnContainer.Dispose();
-        queryPositions.Dispose();
+
         results.Dispose();
-        accAtoms.Dispose();
-        allAtoms.Dispose();
-
-
-        // Vector3[] points = new Vector3[selec.atoms.Count];
-        // int id = 0;
-        // //Transform points in the framework of the loadedMolecules transform
-        // foreach (UnityMolAtom a in selec.atoms) {
-        //     points[id++] = loadedMol.InverseTransformPoint(a.curWorldPosition);
-        // }
-
-        // KDTree tmpKDTree = KDTree.MakeFromPoints(points);
-
-        // List<UnityMolAtom> acceptors = getAcceptors(selec);
-
-        // foreach (UnityMolAtom acc in acceptors) {
-        //     List<UnityMolAtom> neighboors = findNeighboors(acc, selec, tmpKDTree, loadedMol);
-
-        //     foreach (UnityMolAtom n in neighboors) {
-        //         if (n.type == "H") {
-        //             float distance = Vector3.Distance(acc.position, n.position);
-        //             if (distance < limitDistanceHA) {
-        //                 UnityMolAtom donor = getBonded(n, selec.bonds);
-
-        //                 if (donor == null) {
-        //                     continue;
-        //                 }
-        //                 float DHA_angle = Vector3.Angle(donor.position - n.position, acc.position - n.position);
-
-        //                 if (DHA_angle > limitAngleDHA) {
-        //                     UnityMolAtom bondedToAcceptor = getBonded(acc, selec.bonds);
-
-        //                     if (bondedToAcceptor == null) {
-        //                         continue;
-        //                     }
-
-        //                     float HAB_angle = Vector3.Angle(n.position - acc.position, bondedToAcceptor.position -  acc.position);
-        //                     if (HAB_angle > limitAngleHAB) {
-        //                         bonds.Add(n, acc);
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
 
         return bonds;
     }
@@ -502,32 +343,32 @@ public class HbondDetection {
         return result;
     }
     static bool linkedToH(UnityMolAtom a, UnityMolSelection selec) {
-        UnityMolAtom[] bonded = selec.bonds.bondsDual[a];
-        if (bonded == null)
-            return false;
-        for (int i = 0; i < bonded.Length; i++) {
-            if (bonded[i] != null) {
-                if (bonded[i].type == "H") {
+        int[] bonded = null;
+        if (selec.bonds.bonds.TryGetValue(a.idInAllAtoms, out bonded)) {
+            for (int i = 0; i < bonded.Length; i++) {
+                if (bonded[i] != -1 && a.residue.chain.model.allAtoms[bonded[i]].type == "H") {
                     return true;
                 }
             }
         }
         return false;
     }
+
     static bool isAcceptor(UnityMolAtom atom) {
         return listAcceptors.Contains(atom.type);
     }
 
 //Returns first atom bonded to atom
     static UnityMolAtom getBonded(UnityMolAtom a, UnityMolBonds bonds) {
-        try {
-            return bonds.bondsDual[a][0];
+        int[] res;
+        if (bonds.bonds.TryGetValue(a.idInAllAtoms, out res)) {
+            if (res[0] != -1) {
+                return a.residue.chain.model.allAtoms[res[0]];
+            }
         }
-        catch {
-            // Debug.LogWarning("Did not find atom "+a+" in bonds");
-            return null;
-        }
-    }
+        // Debug.LogWarning("Did not find atom "+a+" in bonds");
+        return null;
 
+    }
 }
 }

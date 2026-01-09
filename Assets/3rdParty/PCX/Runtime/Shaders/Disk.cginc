@@ -9,6 +9,10 @@ half4 _Tint;
 half _PointSize;
 float4x4 _Transform;
 
+float _FogStart;
+float _FogDensity;
+float _UseFog;
+
 #if _COMPUTE_BUFFER
 StructuredBuffer<float4> _PointBuffer;
 #endif
@@ -17,20 +21,21 @@ StructuredBuffer<float4> _PointBuffer;
 struct Attributes
 {
 #if _COMPUTE_BUFFER
-    uint vertexID : SV_VertexID;
+uint vertexID : SV_VertexID;
 #else
-    float4 position : POSITION;
-    half3 color : COLOR;
+float4 position : POSITION;
+half3 color : COLOR;
+float4 worldP : TEXCOORD0;
 #endif
 };
 
 // Fragment varyings
 struct Varyings
 {
-    float4 position : SV_POSITION;
+float4 position : SV_POSITION;
+float4 worldP : TEXCOORD0;
 #if !PCX_SHADOW_CASTER
-    half3 color : COLOR;
-    UNITY_FOG_COORDS(0)
+half3 color : COLOR;
 #endif
 };
 
@@ -49,17 +54,18 @@ Varyings Vertex(Attributes input)
 
 #if !PCX_SHADOW_CASTER
     // Color space convertion & applying tint
-    #if UNITY_COLORSPACE_GAMMA
-        col *= _Tint.rgb * 2;
-    #else
-        col *= LinearToGammaSpace(_Tint.rgb) * 2;
-        col = GammaToLinearSpace(col);
-    #endif
+#if UNITY_COLORSPACE_GAMMA
+    col *= _Tint.rgb * 2;
+#else
+    col *= LinearToGammaSpace(_Tint.rgb) * 2;
+    col = GammaToLinearSpace(col);
+#endif
 #endif
 
     // Set vertex output.
     Varyings o;
     o.position = UnityObjectToClipPos(pos);
+    o.worldP = mul(UNITY_MATRIX_M, pos);
 #if !PCX_SHADOW_CASTER
     o.color = col;
     UNITY_TRANSFER_FOG(o, o.position);
@@ -119,7 +125,13 @@ half4 Fragment(Varyings input) : SV_Target
     return 0;
 #else
     half4 c = half4(input.color, _Tint.a);
-    UNITY_APPLY_FOG(input.fogCoord, c);
+
+    if (_UseFog) {
+        float d = input.worldP.z;
+        float fogFactor = exp(_FogStart - d  / max(0.0001, _FogDensity));
+        c.rgb = lerp(unity_FogColor, c.rgb, saturate(fogFactor));
+    }
+
     return c;
 #endif
 }

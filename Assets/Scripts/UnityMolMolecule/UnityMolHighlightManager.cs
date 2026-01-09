@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,38 +27,20 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.XR;
-
-using VRTK;
+using System.Runtime.InteropServices;
 
 using System;
 using System.Text;
 
 using Xenu.Game;
-
-
-using System.Runtime.InteropServices;
 
 namespace UMol {
 
@@ -93,6 +73,8 @@ public class UnityMolHighlightManager {
     Camera mainCam;
 
     private UnityMolSelection saveSel;
+
+    UnityOutlineManager[] outlineManagers;
 
 
     void getSphereVertices(bool cube = false) {
@@ -147,10 +129,19 @@ public class UnityMolHighlightManager {
         if (mainCam == null) {
             mainCam = Camera.main;
         }
+        if (outlineManagers == null) {
+            outlineManagers = GameObject.FindObjectsOfType<UnityOutlineManager>();
+        }
+
+        if (outlineManagers != null) {
+            foreach (var om in outlineManagers) {
+                om.ClearOutlines();
+            }
+        }
 
         if (mainCam.GetComponent<UnityOutlineManager>() != null)
             mainCam.GetComponent<UnityOutlineManager>().ClearOutlines();
-        else{
+        else {
             var fx = mainCam.gameObject.AddComponent<UnityOutlineFX>();
             mainCam.gameObject.AddComponent<UnityOutlineManager>().outlinePostEffect = fx;
         }
@@ -196,7 +187,7 @@ public class UnityMolHighlightManager {
             CombineInstance[] combine = new CombineInstance[atoms.Count];
             int id = 0;
 
-            Transform par = UnityMolMain.getStructureManager().findStructureGO(s);
+            Transform par = UnityMolMain.getStructureManager().GetStructureGameObject(s.name).transform;
             GameObject tmp = new GameObject("HighlightAtoms");
 
             tmp.transform.localPosition = Vector3.zero;
@@ -213,9 +204,11 @@ public class UnityMolHighlightManager {
             }
 
             MeshFilter mf = tmp.AddComponent<MeshFilter>();
-            mf.mesh = new Mesh();
-            mf.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            mf.mesh.CombineMeshes(combine);
+            Mesh currentMesh = new Mesh();
+            currentMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+
+            currentMesh.CombineMeshes(combine);
+            mf.sharedMesh = currentMesh;
 
             if (highlightMat == null) {
                 highlightMat = (Material)Resources.Load("Materials/invisible");
@@ -230,9 +223,15 @@ public class UnityMolHighlightManager {
             tmp.transform.parent = par;
 
 
+            if (outlineManagers != null) {
+                foreach (var om in outlineManagers) {
+                    om.AddOutline(mr);
+                }
+            }
+
             if (mainCam.GetComponent<UnityOutlineManager>() != null)
                 mainCam.GetComponent<UnityOutlineManager>().AddOutline(mr);
-            else{
+            else {
                 var fx = mainCam.gameObject.AddComponent<UnityOutlineFX>();
                 mainCam.gameObject.AddComponent<UnityOutlineManager>().outlinePostEffect = fx;
             }
@@ -243,7 +242,7 @@ public class UnityMolHighlightManager {
                 if (camL != null) {
                     if (mainCam.GetComponent<UnityOutlineManager>() != null)
                         camL.GetComponent<UnityOutlineManager>().AddOutline(mr);
-                    else{
+                    else {
                         var fx = mainCam.gameObject.AddComponent<UnityOutlineFX>();
                         mainCam.gameObject.AddComponent<UnityOutlineManager>().outlinePostEffect = fx;
                     }
@@ -266,8 +265,10 @@ public class UnityMolHighlightManager {
     public void Clean() {
         foreach (GameObject go in highlightDict.Values) {
 #if UNITY_EDITOR
+            GameObject.DestroyImmediate(go.GetComponent<MeshFilter>().sharedMesh);
             GameObject.DestroyImmediate(go);
 #else
+            GameObject.Destroy(go.GetComponent<MeshFilter>().sharedMesh);
             GameObject.Destroy(go);
 #endif
         }

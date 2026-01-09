@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,31 +27,26 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.Rendering;
 
 namespace UMol {
 public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
 
-    private List<GameObject> meshesGO;
+    ///Is limited view activated
+    public bool limitedView = false;
+    ///Local space coordinates of the center of limited view
+    public Vector3 limitedViewCenter = Vector3.zero;
+    ///Radius in Angstrom of the limited view
+    public float limitedViewRadius = 10.0f;
+
+    private List<Vector2[]> meshesUV2;
 
     public ISurfaceRepresentation atomRep;
 
@@ -62,24 +55,25 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     public bool isWireframe = false;
     public bool isTransparent = false;
 
-    public float curAlpha = 1.0f;
+    public float curAlpha = 0.1f;
     public float curWireSize = 0.1f;
 
-    private List<Material> initMat;
-    private List<Material> wireframeMat;
-    private List<Material> transparentMat;
+    // private Material highlightMat;
 
-    private Material highlightMat;
+    private bool savedShadowBeforeLimited = true;
+    public bool AOOn = true;
+
+    public List<GameObject> meshesGO;
 
 
     /// <summary>
     /// Disables the renderers for all objects managed by the instance of the manager.
     /// </summary>
     public override void DisableRenderers() {
-        if (meshesGO == null)
+        if (atomRep.meshesGO == null)
             return;
-        for (int i = 0; i < meshesGO.Count; i++) {
-            meshesGO[i].GetComponent<Renderer>().enabled = false;
+        for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+            atomRep.meshesGO[i].GetComponent<Renderer>().enabled = false;
         }
         isEnabled = false;
         // UnityMolMain.getRepresentationManager().UpdateActiveColliders();
@@ -89,39 +83,63 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     /// Enables the renderers for all objects managed by the instance of the manager.
     /// </summary>
     public override void EnableRenderers() {
-        if (meshesGO == null)
+        if (atomRep.meshesGO == null)
             return;
         if (needUpdate) {
-            atomRep.recompute();
-            needUpdate = false;
+            DoRecompute();
         }
-        for (int i = 0; i < meshesGO.Count; i++) {
-            meshesGO[i].GetComponent<Renderer>().enabled = true;
+        for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+            atomRep.meshesGO[i].GetComponent<Renderer>().enabled = true;
         }
         isEnabled = true;
         // UnityMolMain.getRepresentationManager().UpdateActiveColliders();
     }
 
+    public void DoRecompute(bool isTraj = false) {
+        RaytracingMaterial savedrtMat = null;
+        if (rtos != null && rtos.Count > 0) {
+            savedrtMat = rtos[0].rtMat;
+
+            for (int i = 0; i < rtos.Count; i++) {
+                GameObject.Destroy(rtos[i]);
+            }
+            rtos.Clear();
+        }
+        atomRep.recompute(isTraj);
+        needUpdate = false;
+
+        if (rtos != null) {
+            foreach (GameObject meshGO in atomRep.meshesGO) {
+                var rto = meshGO.AddComponent<RaytracedObject>();
+                if (savedrtMat != null)
+                    rto.rtMat = savedrtMat;
+                rtos.Add(rto);
+            }
+        }
+
+    }
+
     public void SwitchComputeMethod() {
         if (atomRep.isStandardSurface) {
             SurfaceRepresentation sr = (SurfaceRepresentation) atomRep;
-            if (sr.surfMethod == SurfMethod.EDTSurf) {
-                sr.surfMethod = SurfMethod.MSMS;
+            if (sr.SurfMethod == SurfMethod.EDTSurf) {
+                sr.SurfMethod = SurfMethod.MSMS;
             }
-            else if (sr.surfMethod == SurfMethod.MSMS) {
-                sr.surfMethod = SurfMethod.EDTSurf;
+            else if (sr.SurfMethod == SurfMethod.MSMS) {
+                sr.SurfMethod = SurfMethod.EDTSurf;
             }
             // else if (sr.surfMethod == SurfMethod.QUICKSES) {
             //     sr.surfMethod = SurfMethod.EDTSurf;
             // }
-            atomRep.recompute();
+
+            DoRecompute();
         }
     }
 
     public void SwitchCutSurface(bool isCut) {
         if (atomRep.isStandardSurface) {
-            ((SurfaceRepresentation)atomRep).isCutSurface = isCut;
-            atomRep.recompute();
+            ((SurfaceRepresentation)atomRep).IsCutSurface = isCut;
+            DoRecompute();
         }
     }
 
@@ -130,22 +148,16 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     /// </summary>
     public override void Init(SubRepresentation umolRep) {
 
-
         if (isInit) {
             return;
         }
 
         atomRep = (ISurfaceRepresentation) umolRep.atomRep;
+        AOOn = atomRep.useAO;
         meshesGO = atomRep.meshesGO;
-        initMat = new List<Material>();
-        foreach (GameObject go in meshesGO) {
-            initMat.Add(go.GetComponent<Renderer>().sharedMaterial);
-        }
-        wireframeMat = new List<Material>();
-        transparentMat = new List<Material>();
 
-        highlightMat = (Material) Resources.Load("Materials/HighlightMaterial");
-
+        if (UnityMolMain.raytracingMode)
+            InitRT();
 
         isInit = true;
         isEnabled = true;
@@ -156,29 +168,45 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
         isBackboneOn = true;
     }
 
+    public override void InitRT() {
+        if (rtos == null) {
+            rtos = new List<RaytracedObject>();
+
+            foreach (GameObject go in atomRep.meshesGO) {
+                RaytracedObject rto = go.AddComponent<RaytracedObject>();
+                rtos.Add(rto);
+            }
+        }
+    }
+
     public override void Clean() {
-        GameObject parent = null;
-        if (meshesGO.Count != 0) {
-            parent = meshesGO[0].transform.parent.gameObject;
+
+        if (rtos != null) {
+            for (int i = 0; i < rtos.Count; i++) {
+                GameObject.Destroy(rtos[i]);
+            }
+            rtos.Clear();
         }
 
-        for (int i = 0; i < meshesGO.Count; i++) {
-            GameObject.Destroy(meshesGO[i]);
+        GameObject parent = null;
+        if (atomRep.meshesGO != null) {
+            if (atomRep.meshesGO.Count != 0) {
+                parent = atomRep.meshesGO[0].transform.parent.gameObject;
+            }
+
+            for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+                GameObject.Destroy(atomRep.meshesGO[i].GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(atomRep.meshesGO[i]);
+            }
         }
         if (parent != null) {
             GameObject.Destroy(parent);
         }
 
-        wireframeMat.Clear();
-        initMat.Clear();
-        transparentMat.Clear();
-        meshesGO.Clear();
+        atomRep.meshesGO.Clear();
 
+        atomRep.meshesGO = null;
         atomRep = null;
-        wireframeMat = null;
-        initMat = null;
-        transparentMat = null;
-        meshesGO = null;
 
         isWireframe = false;
         isTransparent = false;
@@ -187,13 +215,13 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     }
 
     public override void ShowShadows(bool show) {
-        if (meshesGO == null)
+        if (atomRep.meshesGO == null)
             return;
-        for (int i = 0; i < meshesGO.Count; i++) {
+        for (int i = 0; i < atomRep.meshesGO.Count; i++) {
             if (show)
-                meshesGO[i].GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                atomRep.meshesGO[i].GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.On;
             else
-                meshesGO[i].GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                atomRep.meshesGO[i].GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
         }
     }
 
@@ -211,24 +239,64 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
 
 
     public void ApplyColors() {
-        foreach (GameObject go in meshesGO) {
+        int id = 0;
+        foreach (GameObject go in atomRep.meshesGO) {
             go.GetComponent<MeshFilter>().sharedMesh.SetColors(atomRep.meshColors[go]);
+
+            if (rtos != null && rtos.Count > 0) {
+                rtos[id].shouldUpdateMeshColor = true;
+            }
+            id++;
         }
     }
 
 
-    public override void SetColor(Color col, UnityMolSelection sele) {
-        if (sele.Count == atomRep.selection.Count) {
+    public override void SetColor(Color32 col, UnityMolSelection sele) {
+        if (sele.atoms.Count == atomRep.selection.atoms.Count) {
             foreach (GameObject go in atomRep.meshesGO) {
-                List<Color32> colors = atomRep.meshColors[go];
-                for (int i = 0; i < colors.Count; i++) {
-                    Color32 c = col;
-                    c.a = colors[i].a;
-                    colors[i] = c;
+                Color32[] colors = atomRep.meshColors[go];
+                for (int i = 0; i < colors.Length; i++) {
+                    colors[i] = col;
                 }
+            }
+
+            for (int i = 0; i < sele.atoms.Count; i++) {
+                atomRep.colorByAtom[i] = col;
             }
         }
         else {
+            //Optimization for color by chain
+            string selmda = sele.MDASelString;
+            UnityMolChain chain = sele.atoms[0].residue.chain;
+            if (selmda == chain.ToSelectionMDA() && sele.Count == chain.Count) {
+                GameObject go = null;
+                Color32 newCol = col;
+                int subSel = 0;
+                if (atomRep.chainToGo.TryGetValue(chain, out go)) {
+                    subSel = atomRep.chainToIdSubSel[chain];
+                    Color32[] colors = atomRep.meshColors[go];
+                    for (int i = 0; i < colors.Length; i++) {
+                        colors[i] = newCol;
+                    }
+                }
+                ApplyColors();
+
+                //Fill color by atom
+                int offset = 0;
+                for (int i = 0; i < subSel; i++) {
+                    offset += atomRep.subSelections[i].Count;
+                }
+
+                for (int i = 0; i < atomRep.subSelections[subSel].Count; i++)
+                    atomRep.colorByAtom[offset + i] = col;
+
+                return;
+            }
+
+            //DX surface and no correspondance between atoms and vertices
+            if (!atomRep.isStandardSurface && atomRep.vertToAtom.Count == 0) {
+                atomRep.computeNearestVertexPerAtom(atomRep.meshesGO.Last(), atomRep.subSelections.Last());
+            }
             foreach (UnityMolAtom a in sele.atoms) {
                 SetColor(col, a, false);
             }
@@ -236,104 +304,148 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
         ApplyColors();
     }
 
-    public override void SetColor(Color col, UnityMolAtom a) {
+    public override void SetColor(Color32 col, UnityMolAtom a) {
+        //DX surface and no correspondance between atoms and vertices
+        if (!atomRep.isStandardSurface && atomRep.vertToAtom.Count == 0) {
+            atomRep.computeNearestVertexPerAtom(atomRep.meshesGO.Last(), atomRep.subSelections.Last());
+        }
+
         GameObject go = null;
-        if (atomRep.atomToGo.TryGetValue(a, out go)) {
+        if (atomRep.chainToGo.TryGetValue(a.residue.chain, out go)) {
             if (go != null) {
+                int subSel = atomRep.chainToIdSubSel[a.residue.chain];
+                UnityMolSelection sel = atomRep.subSelections[subSel];
 
-                List<int> res = null;
-                List<Color32> colors = atomRep.meshColors[go];
+                //TODO: Improve this, it can be slow
+                int idA = sel.atoms.IndexOf(a);
+                if (idA == -1)
+                    return;
 
-                if (atomRep.atomToMesh.TryGetValue(a, out res)) {
-                    Color32 newCol = (Color32) col;
-                    atomRep.colorByAtom[a] = newCol;
-                    for (int i = 0; i < res.Count; i++) {
-                        if (res[i] >= 0 && res[i] < colors.Count) {
-                            Color32 tmpCol = colors[res[i]];
-                            newCol.a = tmpCol.a;
-                            colors[res[i]] = newCol;
-                        }
-                        else {
-                            Debug.Log("Wrong color index: " + res[i] + " > " + colors.Count);
-                        }
+                Color32[] colors = atomRep.meshColors[go];
+
+                Color32 newCol = col;
+                int[] vtoa = atomRep.vertToAtom[subSel];
+
+                //Loop over all the vertices and set the vertices associated with our atom
+                for (int i = 0; i < vtoa.Length; i++) {
+                    if (vtoa[i] == idA) {
+                        colors[i] = newCol;
                     }
                 }
-                else {
-                    // Debug.LogWarning("No mesh vertex for this atom");
-                }
-            }
-            else {
-                // Debug.LogError("No mesh vertex for this atom");
+                atomRep.colorByAtom[idA] = newCol;
             }
         }
 
         ApplyColors();
     }
 
-    public void SetColor(Color col, UnityMolAtom a, bool applyNow) {
+    public void SetColor(Color32 col, UnityMolAtom a, bool applyNow) {
+
+        //DX surface and no correspondance between atoms and vertices
+        if (!atomRep.isStandardSurface && atomRep.vertToAtom.Count == 0) {
+            atomRep.computeNearestVertexPerAtom(atomRep.meshesGO.Last(), atomRep.subSelections.Last());
+        }
+
         if (applyNow) {
             SetColor(col, a);
             return;
         }
         GameObject go = null;
-        if (atomRep.atomToGo.TryGetValue(a, out go)) {
+        if (atomRep.chainToGo.TryGetValue(a.residue.chain, out go)) {
             if (go != null) {
-                List<int> res = null;
-                List<Color32> colors = atomRep.meshColors[go];
+                int subSel = atomRep.chainToIdSubSel[a.residue.chain];
+                UnityMolSelection sel = atomRep.subSelections[subSel];
 
-                if (atomRep.atomToMesh.TryGetValue(a, out res)) {
-                    Color32 newCol = col;
-                    atomRep.colorByAtom[a] = newCol;
-                    for (int i = 0; i < res.Count; i++) {
-                        if (res[i] >= 0 && res[i] < colors.Count) {
-                            Color32 tmpCol = colors[res[i]];
-                            newCol.a = tmpCol.a;
-                            colors[res[i]] = newCol;
-                        }
-                        else {
-                            Debug.Log("Wrong color index: " + res[i] + " > " + colors.Count);
-                        }
+                //TODO: Improve this, it can be slow
+                int idA = sel.atoms.IndexOf(a);
+                if (idA == -1)
+                    return;
+
+                Color32[] colors = atomRep.meshColors[go];
+
+                Color32 newCol = col;
+                int[] vtoa = atomRep.vertToAtom[subSel];
+
+                //Loop over all the vertices and set the vertices associated with our atom
+                for (int i = 0; i < vtoa.Length; i++) {
+                    if (vtoa[i] == idA) {
+                        colors[i] = newCol;
                     }
                 }
-                else {
-                    // Debug.LogWarning("No mesh vertex for this atom");
-                }
-            }
-            else {
-                // Debug.LogError("No mesh vertex for this atom");
+                atomRep.colorByAtom[idA] = newCol;
             }
         }
     }
     public void ClearAO() {
-        foreach (GameObject go in meshesGO) {
+        foreach (GameObject go in atomRep.meshesGO) {
             Mesh m = go.GetComponent<MeshFilter>().sharedMesh;
-            Color32[] colors = m.colors32;
-            for (int i = 0; i < colors.Length; i++) {
-                Color32 col = colors[i];
-                col.a = 255;
-                colors[i] = col;
+            m.uv2 = null;
+            go.GetComponent<Renderer>().sharedMaterial.SetFloat("_AOIntensity", 0.0f);
+        }
+        AOOn = false;
+    }
+
+    public void DoAO() {
+        if (atomRep.meshesGO.Count > 0) {
+            try {
+                GameObject aoGo = new GameObject("tmpAO");
+                geoAO aoScript = aoGo.AddComponent<geoAO>();
+                aoScript.ComputeAO(atomRep.meshesGO);
+                GameObject.Destroy(aoGo);
+                AOOn = true;
+                foreach (GameObject go in atomRep.meshesGO) {
+                    go.GetComponent<Renderer>().sharedMaterial.SetFloat("_AOIntensity", 8.0f);
+                }
             }
-            m.colors32 = colors;
+            catch {
+                Debug.LogWarning("Could not compute AO");
+            }
         }
     }
 
-    public override void SetColors(Color col, List<UnityMolAtom> atoms) {
+    public override void SetColors(Color32 col, List<UnityMolAtom> atoms) {
         foreach (UnityMolAtom a in atoms) {
             SetColor(col, a, false);
         }
         ApplyColors();
+        if (atoms.Count == atomRep.selection.Count)
+            atomRep.colorationType = colorType.full;
     }
 
-    public override void SetColors(List<Color> cols, List<UnityMolAtom> atoms) {
+    public override void SetColors(List<Color32> cols, List<UnityMolAtom> atoms) {
         if (atoms.Count != cols.Count) {
             Debug.LogError("Lengths of color list and atom list are different");
             return;
         }
-        for (int i = 0; i < atoms.Count; i++) {
-            UnityMolAtom a = atoms[i];
-            Color col = cols[i];
-            SetColor(col, a, false);
+        //Optimization when we can just copy the array of colors
+        if (atoms.Count == atomRep.selection.Count) {
+            int offset = 0;
+            for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+                GameObject go = atomRep.meshesGO[i];
+                int[] vtoa = atomRep.vertToAtom[i];
+                Color32[] mcolors = atomRep.meshColors[go];
+                for (int j = 0; j < mcolors.Length; j++) {
+                    int idA = vtoa[j];
+                    if (idA + offset < cols.Count) {
+                        Color32 newc = cols[idA + offset];
+                        mcolors[j] = newc;
+                        atomRep.colorByAtom[idA + offset] = newc;
+                    }
+                }
+
+                offset += atomRep.subSelections[i].Count;
+            }
         }
+        else {
+            for (int i = 0; i < atoms.Count; i++) {
+                UnityMolAtom a = atoms[i];
+                Color32 col = cols[i];
+                SetColor(col, a, false);
+            }
+        }
+
+        atomRep.colorationType = colorType.custom;
+
         ApplyColors();
     }
 
@@ -393,16 +505,20 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
 
     // Fetch the dx value using the vertex positions
     public void ColorByCharge(bool normalizeDens, float minDens, float maxDens) {
+        //DX surface and no correspondance between atoms and vertices
+        if (!atomRep.isStandardSurface && atomRep.vertToAtom.Count == 0) {
+            atomRep.computeNearestVertexPerAtom(atomRep.meshesGO.Last(), atomRep.subSelections.Last());
+        }
+
         //If only one structure in selection and a DX map was loaded for this structure
         if (atomRep.selection.structures.Count == 1 && atomRep.selection.structures[0].dxr != null) {
             DXReader dxr = atomRep.selection.structures[0].dxr;
-            foreach (GameObject go in meshesGO) {
+            foreach (GameObject go in atomRep.meshesGO) {
                 Mesh m = go.GetComponent<MeshFilter>().sharedMesh;
                 Color32[] colors = m.colors32;
                 Vector3[] verts = m.vertices;
                 for (int i = 0; i < colors.Length; i++) {
-                    Color32 col = colors[i];
-                    byte alpha = col.a;
+                    Color32 col;
 
                     Vector3 v = verts[i];
                     float val = dxr.getValueAtPosition(v);
@@ -413,7 +529,6 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
                         col = dxDensityToColor32(val, minDens, maxDens);
                     }
 
-                    col.a = alpha;
                     colors[i] = col;
                 }
                 m.colors32 = colors;
@@ -428,19 +543,18 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     }
 
     public override void SetDepthCueingStart(float v) {
-        if (meshesGO == null)
+        if (atomRep.meshesGO == null)
             return;
-        foreach (GameObject meshGO in meshesGO) {
-
+        foreach (GameObject meshGO in atomRep.meshesGO) {
             Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_FogStart", v);
         }
     }
 
     public override void SetDepthCueingDensity(float v) {
-        if (meshesGO == null)
+        if (atomRep.meshesGO == null)
             return;
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in atomRep.meshesGO) {
 
             Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_FogDensity", v);
@@ -448,9 +562,9 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     }
 
     public override void EnableDepthCueing() {
-        if (meshesGO == null)
+        if (atomRep.meshesGO == null)
             return;
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in atomRep.meshesGO) {
 
             Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_UseFog", 1.0f);
@@ -458,9 +572,9 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     }
 
     public override void DisableDepthCueing() {
-        if (meshesGO == null)
+        if (atomRep.meshesGO == null)
             return;
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in atomRep.meshesGO) {
 
             Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_UseFog", 0.0f);
@@ -468,7 +582,7 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     }
 
     /// <summary>
-    /// As it is SUPER slow, do not update surface representations with trajectory for now
+    /// Surface representations with trajectory can be super slow !
     /// </summary>
     public override void updateWithTrajectory() {
         // Debug.LogWarning("Deactivating surface representation when reading trajectory = too slow");
@@ -476,17 +590,23 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
 
         needUpdate = true;
         bool wasEnabled = true;
-        if (meshesGO != null && meshesGO.Count >= 1)
-            wasEnabled = meshesGO[0].GetComponent<Renderer>().enabled;
+        if (atomRep.meshesGO != null && atomRep.meshesGO.Count >= 1)
+            wasEnabled = atomRep.meshesGO[0].GetComponent<Renderer>().enabled;
 
         if (wasEnabled) {
-            atomRep.recompute();
-            needUpdate = false;
+            DoRecompute(true);
         }
     }
 
     public override void updateWithModel() {
-        updateWithTrajectory();
+        needUpdate = true;
+        bool wasEnabled = true;
+        if (atomRep.meshesGO != null && atomRep.meshesGO.Count >= 1)
+            wasEnabled = atomRep.meshesGO[0].GetComponent<Renderer>().enabled;
+
+        if (wasEnabled) {
+            DoRecompute(false);
+        }
     }
 
 
@@ -527,102 +647,149 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     }
 
     public void SwitchWireframe(bool force = false) {
-        if (SystemInfo.graphicsShaderLevel >= 35) {
-            if (isWireframe && !force) {
-                int i = 0;
-                foreach (GameObject go in meshesGO) {
-                    go.GetComponent<Renderer>().sharedMaterial = initMat[i];
-                    i++;
-                }
+        if (isWireframe && !force) {
+            int i = 0;
+            foreach (GameObject go in atomRep.meshesGO) {
+                Material[] mats = go.GetComponent<Renderer>().sharedMaterials;
+                mats[0] = atomRep.normalMat;
+                // if (mats.Length == 2)
+                //     mats[1] = null;
+                go.GetComponent<Renderer>().sharedMaterials = mats;
+                if (isTransparent)
+                    go.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.On;
+                i++;
             }
-            else if (!isWireframe) {
-                if (wireframeMat.Count == 0) {
-                    Material wmat = (Material) Resources.Load("Materials/SurfaceWireframeVertColor");
-                    // Material wmat = new Material(Shader.Find("UCLA Game Lab/Wireframe Double Sided"));
-                    foreach (GameObject go in meshesGO) {
-                        go.GetComponent<Renderer>().sharedMaterial = wmat;
-                        wireframeMat.Add(wmat);
-                    }
-                }
-                else {
-                    int i = 0;
-                    foreach (GameObject go in meshesGO) {
-                        go.GetComponent<Renderer>().sharedMaterial = wireframeMat[i];
-                        i++;
-                    }
-                }
+            atomRep.currentMat = atomRep.normalMat;
+            isWireframe = false;
+        }
+        else if (!isWireframe) {
+            if (atomRep.wireMat == null)
+                atomRep.wireMat = new Material(Shader.Find("UMol/WireframeBakedBarycentricCoordinates"));
+            foreach (GameObject go in atomRep.meshesGO) {
+                Material[] mats = go.GetComponent<Renderer>().sharedMaterials;
+                //For some reason, wireframe does not accept to have a second material even when null
+                // if (mats.Length == 2) {
+                //     Material[] newMats = new Material[1];
+                //     mats = newMats;
+                // }
+                mats[0] = atomRep.wireMat;
+
+                go.GetComponent<Renderer>().sharedMaterials = mats;
             }
-            isWireframe = !isWireframe;
-            isTransparent = false;
+            atomRep.currentMat = atomRep.wireMat;
+            isWireframe = true;
+        }
+
+
+        isTransparent = false;
+        if (limitedView) {
+            activateLimitedView();
         }
         else {
-            Debug.LogWarning("Wireframe not available for your GPU");
+            disableLimitedView();
         }
+        if (UnityMolMain.isFogOn) {
+            EnableDepthCueing();
+            SetDepthCueingStart(UnityMolMain.fogStart);
+            SetDepthCueingDensity(UnityMolMain.fogDensity);
+        }
+        else {
+            DisableDepthCueing();
+        }
+
     }
     public void SwitchTransparent(bool force = false) {
 
         if (isTransparent && !force) {
             int i = 0;
-            foreach (GameObject go in meshesGO) {
-                go.GetComponent<Renderer>().sharedMaterial = initMat[i];
+            foreach (GameObject go in atomRep.meshesGO) {
+                Material[] mats = go.GetComponent<Renderer>().sharedMaterials;
+                mats[0] = atomRep.normalMat;
+                // if (mats.Length == 2) {
+                //     mats[1] = null;
+                // }
+                go.GetComponent<Renderer>().sharedMaterials = mats;
+                go.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.On;
+
                 i++;
             }
             isTransparent = false;
+            atomRep.currentMat = atomRep.normalMat;
         }
         else {
-            if (transparentMat.Count == 0) {
-                // Material wmat = (Material) Resources.Load("Materials/standardColorTransparent");
-                Material wmat = new Material(Shader.Find("Custom/SurfaceVertexColorTransparent"));
-                foreach (GameObject go in meshesGO) {
-                    go.GetComponent<Renderer>().sharedMaterial = wmat;
-                    transparentMat.Add(wmat);
-                }
+            if (atomRep.transMat == null) {
+                atomRep.transMat = new Material(Shader.Find("Custom/SurfaceVertexColorTransparent"));
+                // atomRep.transMat.SetTexture("_DitherPattern", Resources.Load("Images/BayerDither8x8") as Texture2D);
             }
-            else {
-                int i = 0;
-                foreach (GameObject go in meshesGO) {
-                    go.GetComponent<Renderer>().sharedMaterial = transparentMat[i];
-                    i++;
-                }
+
+            foreach (GameObject go in atomRep.meshesGO) {
+                Material[] mats = go.GetComponent<Renderer>().sharedMaterials;
+                // if (mats.Length != 2) {
+                //     Material[] newMats = new Material[2];
+                //     mats = newMats;
+                // }
+                mats[0] = atomRep.transMat;
+                // mats[1] = atomRep.transMatShadow;
+
+                go.GetComponent<Renderer>().sharedMaterials = mats;
+                go.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
             }
             isTransparent = true;
+            atomRep.currentMat = atomRep.transMat;
         }
+
         isWireframe = false;
+        if (limitedView) {
+            activateLimitedView();
+        }
+        else {
+            disableLimitedView();
+        }
+
+        if (UnityMolMain.isFogOn) {
+            EnableDepthCueing();
+            SetDepthCueingStart(UnityMolMain.fogStart);
+            SetDepthCueingDensity(UnityMolMain.fogDensity);
+        }
+        else {
+            DisableDepthCueing();
+        }
+
     }
 
     public override void HighlightRepresentation() {
-        foreach (GameObject meshGO in meshesGO) {
+        // foreach (GameObject meshGO in atomRep.meshesGO) {
 
-            Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
+        //     Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
 
-            if (mats.Length != 2) {
-                Material[] newMats = new Material[2];
-                newMats[0] = mats[0];
-                newMats[1] = highlightMat;
-                mats = newMats;
-                meshGO.GetComponent<Renderer>().sharedMaterials = newMats;
-            }
-        }
+        //     if (mats.Length != 2) {
+        //         Material[] newMats = new Material[2];
+        //         newMats[0] = mats[0];
+        //         newMats[1] = highlightMat;
+        //         mats = newMats;
+        //         meshGO.GetComponent<Renderer>().sharedMaterials = newMats;
+        //     }
+        // }
 
     }
 
 
     public override void DeHighlightRepresentation() {
 
-        foreach (GameObject meshGO in meshesGO) {
+        // foreach (GameObject meshGO in atomRep.meshesGO) {
 
-            Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
+        //     Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
 
-            if (mats.Length != 1) {
-                Material[] newMats = new Material[1];
-                newMats[0] = mats[0];
-                meshGO.GetComponent<Renderer>().sharedMaterials = newMats;
-            }
-        }
+        //     if (mats.Length != 1) {
+        //         Material[] newMats = new Material[1];
+        //         newMats[0] = mats[0];
+        //         meshGO.GetComponent<Renderer>().sharedMaterials = newMats;
+        //     }
+        // }
     }
     public override void SetSmoothness(float val) {
         if (!isWireframe) {
-            foreach (GameObject meshGO in meshesGO) {
+            foreach (GameObject meshGO in atomRep.meshesGO) {
 
                 Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
                 mats[0].SetFloat("_Glossiness", val);
@@ -631,7 +798,7 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
     }
     public override void SetMetal(float val) {
         if (!isWireframe) {
-            foreach (GameObject meshGO in meshesGO) {
+            foreach (GameObject meshGO in atomRep.meshesGO) {
 
                 Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
                 mats[0].SetFloat("_Metallic", val);
@@ -641,7 +808,7 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
 
     public void SetAlpha(float alpha) {
         if (isTransparent) {
-            foreach (GameObject meshGO in meshesGO) {
+            foreach (GameObject meshGO in atomRep.meshesGO) {
 
                 Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
                 Color col = mats[0].color;
@@ -654,21 +821,88 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
 
     public void SetWireframeSize(float s) {
         SwitchWireframe(true);
-        foreach (Material mat in wireframeMat) {
-            mat.SetFloat("_Thickness", s);
-        }
+        atomRep.wireMat.SetFloat("_Thickness", s);
         curWireSize = s;
     }
+
+    public void activateLimitedView() {
+        foreach (GameObject meshGO in atomRep.meshesGO) {
+            Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
+            mats[0].SetFloat("_LimitedView", 1.0f);
+            if (mats.Length == 2 && mats[1] != null)
+                mats[1].SetFloat("_LimitedView", 1.0f);
+        }
+        limitedView = true;
+        setLimitedViewRadius(limitedViewRadius);
+        setLimitedViewCenter(limitedViewCenter);
+        savedShadowBeforeLimited = (atomRep.meshesGO[0].GetComponent<Renderer>().shadowCastingMode == ShadowCastingMode.On);
+        ShowShadows(false);
+
+    }
+    public void disableLimitedView() {
+        foreach (GameObject meshGO in atomRep.meshesGO) {
+            Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
+            mats[0].SetFloat("_LimitedView", 0.0f);
+            if (mats.Length == 2 && mats[1] != null)
+                mats[1].SetFloat("_LimitedView", 0.0f);
+        }
+        limitedView = false;
+        if (!isTransparent)
+            ShowShadows(savedShadowBeforeLimited);
+    }
+    public void setLimitedViewRadius(float newRadius) {
+        foreach (GameObject meshGO in atomRep.meshesGO) {
+            Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
+            try {
+                mats[0].SetFloat("_LimitedViewRadius", newRadius);
+                if (mats.Length == 2 && mats[1] != null)
+                    mats[1].SetFloat("_LimitedViewRadius", newRadius);
+            }
+            catch {
+            }
+        }
+        limitedViewRadius = newRadius;
+    }
+    public void setLimitedViewCenter(Vector3 newCenter) {
+        foreach (GameObject meshGO in atomRep.meshesGO) {
+            Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
+            try {
+                mats[0].SetVector("_LimitedViewCenter", newCenter);
+                if (mats.Length == 2 && mats[1] != null)
+                    mats[1].SetVector("_LimitedViewCenter", newCenter);
+            }
+            catch {
+            }
+        }
+        limitedViewCenter = newCenter;
+    }
+
+    public override void UpdateLike() {
+    }
+
     public override UnityMolRepresentationParameters Save() {
+
         UnityMolRepresentationParameters res = new UnityMolRepresentationParameters();
         res.repT.atomType = AtomType.surface;
         res.repT.bondType = BondType.nobond;
         res.colorationType = atomRep.colorationType;
 
+        res.surfLimitedView = limitedView;
+        res.surfLimitedViewRadius = limitedViewRadius;
+        res.surfLimitedViewCenter = limitedViewCenter;
+
+        if (atomRep.isStandardSurface) {
+            res.surfCutSurface = ((SurfaceRepresentation)atomRep).IsCutSurface;
+            res.surfMethod = ((SurfaceRepresentation)atomRep).SurfMethod;
+            res.surfCutByChain = ((SurfaceRepresentation)atomRep).IsCutByChain;
+        }
+
         if (res.colorationType == colorType.custom) {
-            res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(atomRep.selection.Count);
-            foreach (UnityMolAtom a in atomRep.colorByAtom.Keys) {
-                res.colorPerAtom[a] = atomRep.colorByAtom[a];
+            //Need a light atom comparer to avoid indexing with unique atom serial here
+            res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(atomRep.selection.atoms.Count, new LightAtomComparer());
+            for (int i = 0; i < atomRep.selection.atoms.Count; i++) {
+                UnityMolAtom a = atomRep.selection.atoms[i];
+                res.colorPerAtom[a] = atomRep.colorByAtom[i];
             }
         }
         else if (res.colorationType == colorType.full) { //Get color of first atom/residue
@@ -676,14 +910,16 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
         }
         else if (res.colorationType == colorType.bfactor) {
             res.bfactorStartColor = atomRep.bfactorStartCol;
+            res.bfactorMidColor = atomRep.bfactorMidColor;
             res.bfactorEndColor = atomRep.bfactorEndCol;
         }
 
+
         if (!isTransparent && !isWireframe) {
-            res.smoothness = meshesGO[0].GetComponent<Renderer>().sharedMaterials[0].GetFloat("_Glossiness");
-            res.metal = meshesGO[0].GetComponent<Renderer>().sharedMaterials[0].GetFloat("_Metallic");
+            res.smoothness = atomRep.meshesGO[0].GetComponent<Renderer>().sharedMaterials[0].GetFloat("_Glossiness");
+            res.metal = atomRep.meshesGO[0].GetComponent<Renderer>().sharedMaterials[0].GetFloat("_Metallic");
         }
-        res.shadow = (meshesGO[0].GetComponent<Renderer>().shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.On);
+        res.shadow = (atomRep.meshesGO[0].GetComponent<Renderer>().shadowCastingMode == ShadowCastingMode.On);
         res.surfAlpha = curAlpha;
         res.surfWireframeSize = curWireSize;
         res.surfIsTransparent = isTransparent;
@@ -694,43 +930,54 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
 
     public override void Restore(UnityMolRepresentationParameters savedParams) {
 
+        //TODO: improve this because it can recompute several times the surface !
+
+        if (atomRep.isStandardSurface && !savedParams.surfCutByChain) {
+            ((SurfaceRepresentation)atomRep).IsCutByChain = savedParams.surfCutByChain;
+        }
+
+        if (atomRep.isStandardSurface && savedParams.surfMethod != SurfMethod.EDTSurf) {
+            SwitchComputeMethod();
+        }
+        if (atomRep.isStandardSurface && !savedParams.surfCutSurface) {
+            SwitchCutSurface(false);
+        }
+
         if (savedParams.repT.atomType == AtomType.surface && savedParams.repT.bondType == BondType.nobond) {
             if (savedParams.colorationType == colorType.full) {
                 SetColor(savedParams.fullColor, atomRep.selection);
             }
             else if (savedParams.colorationType == colorType.custom) {
-                foreach (UnityMolAtom a in atomRep.selection.atoms) {
-                    if (savedParams.colorPerAtom.ContainsKey(a)) {
-                        SetColor(savedParams.colorPerAtom[a], a, false);
-                    }
-                }
-                ApplyColors();
+                atomRep.restoreColorsPerAtom();
             }
-            else if (savedParams.colorationType == colorType.res) {
+            else if (savedParams.colorationType == colorType.atom) {
+                colorByAtom(atomRep.selection);
+            } else if (savedParams.colorationType == colorType.res) {
                 colorByRes(atomRep.selection);
-            }
-            else if (savedParams.colorationType == colorType.chain) {
+            } else if (savedParams.colorationType == colorType.chain) {
                 colorByChain(atomRep.selection);
-            }
-            else if (savedParams.colorationType == colorType.hydro) {
+            } else if (savedParams.colorationType == colorType.hydro) {
                 colorByHydro(atomRep.selection);
-            }
-            else if (savedParams.colorationType == colorType.seq) {
+            } else if (savedParams.colorationType == colorType.seq) {
                 colorBySequence(atomRep.selection);
-            }
-            else if (savedParams.colorationType == colorType.charge) {
+            } else if (savedParams.colorationType == colorType.charge) {
                 colorByCharge(atomRep.selection);
-            }
-            else if (savedParams.colorationType == colorType.restype) {
+            } else if (savedParams.colorationType == colorType.restype) {
                 colorByResType(atomRep.selection);
-            }
-            else if (savedParams.colorationType == colorType.rescharge) {
+            } else if (savedParams.colorationType == colorType.rescharge) {
                 colorByResCharge(atomRep.selection);
-            }
-            else if (savedParams.colorationType == colorType.bfactor) {
-                colorByBfactor(atomRep.selection, savedParams.bfactorStartColor, savedParams.bfactorEndColor);
+            } else if (savedParams.colorationType == colorType.resid) {
+                colorByResid(atomRep.selection);
+            } else if (savedParams.colorationType == colorType.resnum) {
+                colorByResnum(atomRep.selection);
+            } else if (savedParams.colorationType == colorType.bfactor) {
+                colorByBfactor(atomRep.selection, savedParams.bfactorStartColor, savedParams.bfactorMidColor, savedParams.bfactorEndColor);
             }
 
+            atomRep.colorationType = savedParams.colorationType;
+
+            if (!AOOn)
+                ClearAO();
             ShowShadows(savedParams.shadow);
 
             if (savedParams.surfIsWireframe) {
@@ -745,10 +992,22 @@ public class UnityMolSurfaceManager : UnityMolGenericRepresentationManager {
                 SetMetal(savedParams.metal);
                 SetSmoothness(savedParams.smoothness);
             }
-            atomRep.colorationType = savedParams.colorationType;
+            if (UnityMolMain.isFogOn) {
+                EnableDepthCueing();
+                SetDepthCueingStart(UnityMolMain.fogStart);
+                SetDepthCueingDensity(UnityMolMain.fogDensity);
+            }
+            else {
+                DisableDepthCueing();
+            }
+            limitedViewRadius = savedParams.surfLimitedViewRadius;
+            limitedViewCenter = savedParams.surfLimitedViewCenter;
+            if (savedParams.surfLimitedView)
+                activateLimitedView();
+
         }
         else {
-            Debug.LogError("Could not restore representation parameteres");
+            Debug.LogError("Could not restore representation parameters");
         }
     }
 }

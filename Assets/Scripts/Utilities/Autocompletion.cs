@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,41 +27,30 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
 using System.Collections.Generic;
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using UMol.API;
 using UMol;
+using Unity.Mathematics;
 using TMPro;
 
 
 [RequireComponent (typeof (TMP_Text))]
 public class Autocompletion : MonoBehaviour {
 
-    private string[] APIFunctionNames;
-    private string[] loadedMolAndSelections;
+    private List<string> APIFunctionNames;
+    private List<string> loadedMolAndSelections;
+    private List<string> possiblePaths;
     public TMP_InputField inf;
     public RawImage img;
     bool tabPressed = false;
@@ -72,26 +59,38 @@ public class Autocompletion : MonoBehaviour {
     List<int> completionMolSel;
     int idQuote = -1;
 
-    void Awake() {
+    bool escapePressed = false;
 
+    void Awake() {
 
         MethodInfo[] methodInfos = typeof(APIPython).GetMethods(BindingFlags.Public |
                                    BindingFlags.Static);
 
-        APIFunctionNames = new string[methodInfos.Length];
-        int i = 0;
+        APIFunctionNames = new List<string>(methodInfos.Length);
         foreach (MethodInfo mi in methodInfos.Distinct()) {
-            APIFunctionNames[i++] = mi.Name;
+            APIFunctionNames.Add(mi.Name);
         }
     }
     void Start() {
-        // List<int> test = AutoCompleteText("showD", APIFunctionNames);
-        // foreach(int id in test){
-        //     Debug.Log("Suggestion: "+APIFunctionNames[id]);
-        // }
 
         if (inf != null) {
             inf.onValueChanged.AddListener(delegate { RefreshSuggestions(inf);} );
+        }
+    }
+
+    void Update() {
+        if (inf != null && inf.text.Length == 0 && escapePressed) {
+            escapePressed = false;
+        }
+        if (Input.GetKey(KeyCode.Tab)) {
+            escapePressed = false;
+        }
+        if (Input.GetKey(KeyCode.Escape)) {
+            escapePressed = true;
+            if (img != null)
+                img.enabled = false;
+            TMP_Text txt = GetComponent<TMP_Text>();
+            txt.text = "";
         }
     }
 
@@ -100,11 +99,11 @@ public class Autocompletion : MonoBehaviour {
         TMP_Text txt = GetComponent<TMP_Text>();
         int inlen = inputF.text.Length;
 
-        if (inputF.text.Contains("(")) {//Complete molecule names and selection names
+        if (escapePressed)
+            return;
+        if (inputF.text.Contains("(") && !inputF.text.EndsWith(")")) {//Complete molecule names and selection names and paths
 
             if (inputF.text.Contains("\"") || inputF.text.Contains("'") ) {
-
-                loadedMolAndSelections = getMolAndSelNames();
 
                 bool curTabPress = false;
                 if (inlen > 0 && inputF.text[inlen - 1] == '\t') {
@@ -122,11 +121,19 @@ public class Autocompletion : MonoBehaviour {
 
                 if (!curTabPress || completionMolSel == null) {//Update suggestions
                     txt.text = "";
-                    string molselToComplete = extractMolSelString(inputF.text, out idQuote);
+                    string molselpathToComplete = extractMolSelString(inputF.text, out idQuote);
 
                     if (idQuote != -1) {
+                        loadedMolAndSelections = getMolAndSelNames();
 
-                        completionMolSel = AutoCompleteText(molselToComplete, loadedMolAndSelections);
+                        if (inputF.text.StartsWith("load") || inputF.text.StartsWith("export") || inputF.text.StartsWith("read")) {
+                            possiblePaths = getPossiblePath(molselpathToComplete);
+                            if (possiblePaths != null && possiblePaths.Count > 0) {
+                                loadedMolAndSelections.AddRange(possiblePaths);
+                            }
+                        }
+                        completionMolSel = AutoCompleteText(molselpathToComplete, loadedMolAndSelections);
+
                         foreach (int id in completionMolSel) {
                             txt.text += "<color=red>-</color>" + loadedMolAndSelections[id] + "\n";
                         }
@@ -135,7 +142,7 @@ public class Autocompletion : MonoBehaviour {
                     else {
                         completionMolSel = new List<int>();
                     }
-                    
+
                     if (img != null) {
                         img.enabled = completionMolSel.Count > 0;
                     }
@@ -144,13 +151,17 @@ public class Autocompletion : MonoBehaviour {
                 if (completionMolSel.Count > 0) {
                     if (curTabPress) {
 
-                        if (choice >= completionMolSel.Count) {
+                        if (choice >= completionMolSel.Count ) {
                             choice = 0;
                         }
-                        string newS = inputF.text.Substring(0, idQuote) + loadedMolAndSelections[completionMolSel[choice]];
+                        string newS = inputF.text.Substring(0, idQuote);
+                        string toAdd = loadedMolAndSelections[completionMolSel[choice]];
+                        newS += toAdd;
+
                         inputF.SetValue(newS);
                         inputF.stringPosition = inputF.text.Length;
                         updateTextCompletionWithChoice(txt, completionMolSel, loadedMolAndSelections);
+
                         tabPressed = true;
                     }
                 }
@@ -217,25 +228,63 @@ public class Autocompletion : MonoBehaviour {
         return s.Substring(id);
 
     }
-    string[] getMolAndSelNames() {
+    List<string> getMolAndSelNames() {
         UnityMolStructureManager sm = UnityMolMain.getStructureManager();
         UnityMolSelectionManager selM = UnityMolMain.getSelectionManager();
         List<string> res = new List<string>();
 
         foreach (UnityMolStructure s in sm.loadedStructures) {
-            res.Add(s.uniqueName);
+            res.Add(s.name);
         }
         foreach (string selname in selM.selections.Keys) {
             res.Add(selname);
         }
 
-        return res.ToArray();
+        return res;
+    }
+    List<string> getPossiblePath(string startp, int limit = 500) {
+        if (startp.Length < 1)
+            return null;
+        if (startp.Contains("~"))//TODO fix that
+            return null;
+        List<string> res = new List<string>();
+        string dirName = null;
+        string absStartingpath = null;
+        try {
+            absStartingpath = Path.GetFullPath(startp);
+            dirName = Path.GetDirectoryName(absStartingpath);
+        }
+        catch {}
+        if (dirName != null) {
+            try {
+                string[] dirs = Directory.GetDirectories(dirName);
+                for (int i = 0; i < dirs.Length; i++) {
+                    res.Add(dirs[i].Replace("\\", "/"));
+                    if (res.Count >= limit) {
+                        return res;
+                    }
+                }
+            }
+            catch {}
+            try {
+                string[] files = Directory.GetFiles(dirName);
+                for (int i = 0; i < files.Length; i++) {
+                    res.Add(files[i].Replace("\\", "/"));
+                    if (res.Count >= limit) {
+                        return res;
+                    }
+                }
+            }
+            catch {}
+        }
+
+        return res;
     }
 
-    void updateTextCompletionWithChoice(TMP_Text txt, List<int> complList, string[] compleText) {
+    void updateTextCompletionWithChoice(TMP_Text txt, List<int> complList, List<string> compleText) {
         txt.text = "";
-
         int i = 0;
+
         foreach (int id in complList) {
             if (i == choice) {
                 txt.text += "<u><color=red>-</color>" + compleText[id] + "</u>\n";
@@ -261,16 +310,17 @@ public class Autocompletion : MonoBehaviour {
     /// - recommend 0.4f ~ 0.7f
     /// </param>
     /// <returns>A list of compatible string ids in source.</returns>
-    public static List<int> AutoCompleteText(string input, string[] source, int maxShownCount = 5, float levenshteinDistance = 0.5f)
+    public static List<int> AutoCompleteText(string input, List<string> source, int maxShownCount = 8, float levenshteinDistance = 0.5f)
     {
         List<int> result = new List<int>();
+        List<int2> sortedRes = new List<int2>();
         HashSet<string> uniqueSrc = new HashSet<string>(source);
 
-        if (!string.IsNullOrEmpty(input) && input.Length >= 2 && input.Length < 25) {
+        if (!string.IsNullOrEmpty(input) && input.Length >= 2 && input.Length < 200) {
 
             string keywords = input;
 
-            for (int i = 0; i < source.Length; i++) {
+            for (int i = 0; i < source.Count; i++) {
                 if (result.Count == maxShownCount) {
                     return result;
                 }
@@ -290,7 +340,8 @@ public class Autocompletion : MonoBehaviour {
                     return result;
                 }
                 if (s.Contains(keywords)) {
-                    result.Add(Array.IndexOf(source, s));
+                    int id = source.IndexOf(s);
+                    result.Add(id);
                     toRM.Add(s);
                 }
             }
@@ -302,22 +353,168 @@ public class Autocompletion : MonoBehaviour {
             }
 
 
-            levenshteinDistance = Mathf.Clamp01(levenshteinDistance);
+            int ids = 0;
             foreach (string s in uniqueSrc) {
-                if (result.Count == maxShownCount) {
-                    return result;
-                }
-                int distance = LevenshteinDistance(s, keywords);
-                bool closeEnough = (int)(levenshteinDistance * s.Length) > distance;
-
-                if (closeEnough) {
-                    result.Add(Array.IndexOf(source, s));
-                }
+                int2 r; r.x = ids;
+                r.y = FuzzyMatch(s, keywords);
+                sortedRes.Add(r);
+                ids++;
             }
+
+            sortedRes.Sort(delegate(int2 c1, int2 c2) { return c2.y.CompareTo(c1.y); });
+            for (int i = 0; i < sortedRes.Count; i++) {
+                if (result.Count == maxShownCount) {
+                    break;
+                }
+                if (sortedRes[i].y > 1.5 * input.Length)
+                    result.Add(sortedRes[i].x);
+            }
+
+            // levenshteinDistance = Mathf.Clamp01(levenshteinDistance);
+            // foreach (string s in uniqueSrc) {
+            //     if (result.Count == maxShownCount) {
+            //         return result;
+            //     }
+            //     int distance = LevenshteinDistance(s, keywords);
+            //     bool closeEnough = (int)(levenshteinDistance * s.Length) > distance;
+
+            //     if (closeEnough) {
+            //         result.Add(Array.IndexOf(source, s));
+            //     }
+            // }
 
         }
 
         return result;
+    }
+
+
+    //From https://gist.github.com/CDillinger/2aa02128f840bdca90340ce08ee71bc2
+    /// <summary>
+    /// Does a fuzzy search for a pattern within a string, and gives the search a score on how well it matched.
+    /// </summary>
+    /// <param name="stringToSearch">The string to search for the pattern in.</param>
+    /// <param name="pattern">The pattern to search for in the string.</param>
+    /// <returns>The score which this search received, if a match was found.</param>
+    public static int FuzzyMatch(string stringToSearch, string pattern)
+    {
+        // Score consts
+        const int adjacencyBonus = 5;               // bonus for adjacent matches
+        const int separatorBonus = 10;              // bonus if match occurs after a separator
+        const int camelBonus = 10;                  // bonus if match is uppercase and prev is lower
+
+        const int leadingLetterPenalty = -3;        // penalty applied for every letter in stringToSearch before the first match
+        const int maxLeadingLetterPenalty = -9;     // maximum penalty for leading letters
+        const int unmatchedLetterPenalty = -1;      // penalty for every letter that doesn't matter
+
+
+        // Loop variables
+        var score = 0;
+        var patternIdx = 0;
+        var patternLength = pattern.Length;
+        var strIdx = 0;
+        var strLength = stringToSearch.Length;
+        var prevMatched = false;
+        var prevLower = false;
+        var prevSeparator = true;                   // true if first letter match gets separator bonus
+
+        // Use "best" matched letter if multiple string letters match the pattern
+        char? bestLetter = null;
+        char? bestLower = null;
+        int? bestLetterIdx = null;
+        var bestLetterScore = 0;
+
+        var matchedIndices = new List<int>();
+
+        // Loop over strings
+        while (strIdx != strLength)
+        {
+            var patternChar = patternIdx != patternLength ? pattern[patternIdx] as char ? : null;
+            var strChar = stringToSearch[strIdx];
+
+            var patternLower = patternChar != null ? char.ToLower((char)patternChar) as char ? : null;
+            var strLower = char.ToLower(strChar);
+            var strUpper = char.ToUpper(strChar);
+
+            var nextMatch = patternChar != null && patternLower == strLower;
+            var rematch = bestLetter != null && bestLower == strLower;
+
+            var advanced = nextMatch && bestLetter != null;
+            var patternRepeat = bestLetter != null && patternChar != null && bestLower == patternLower;
+            if (advanced || patternRepeat)
+            {
+                score += bestLetterScore;
+                matchedIndices.Add((int)bestLetterIdx);
+                bestLetter = null;
+                bestLower = null;
+                bestLetterIdx = null;
+                bestLetterScore = 0;
+            }
+
+            if (nextMatch || rematch)
+            {
+                var newScore = 0;
+
+                // Apply penalty for each letter before the first pattern match
+                // Note: Math.Max because penalties are negative values. So max is smallest penalty.
+                if (patternIdx == 0)
+                {
+                    var penalty = Math.Max(strIdx * leadingLetterPenalty, maxLeadingLetterPenalty);
+                    score += penalty;
+                }
+
+                // Apply bonus for consecutive bonuses
+                if (prevMatched)
+                    newScore += adjacencyBonus;
+
+                // Apply bonus for matches after a separator
+                if (prevSeparator)
+                    newScore += separatorBonus;
+
+                // Apply bonus across camel case boundaries. Includes "clever" isLetter check.
+                if (prevLower && strChar == strUpper && strLower != strUpper)
+                    newScore += camelBonus;
+
+                // Update pattern index IF the next pattern letter was matched
+                if (nextMatch)
+                    ++patternIdx;
+
+                // Update best letter in stringToSearch which may be for a "next" letter or a "rematch"
+                if (newScore >= bestLetterScore)
+                {
+                    // Apply penalty for now skipped letter
+                    if (bestLetter != null)
+                        score += unmatchedLetterPenalty;
+
+                    bestLetter = strChar;
+                    bestLower = char.ToLower((char)bestLetter);
+                    bestLetterIdx = strIdx;
+                    bestLetterScore = newScore;
+                }
+
+                prevMatched = true;
+            }
+            else
+            {
+                score += unmatchedLetterPenalty;
+                prevMatched = false;
+            }
+
+            // Includes "clever" isLetter check.
+            prevLower = strChar == strLower && strLower != strUpper;
+            prevSeparator = strChar == '_' || strChar == ' ';
+
+            ++strIdx;
+        }
+
+        // Apply score for last match
+        if (bestLetter != null)
+        {
+            score += bestLetterScore;
+            matchedIndices.Add((int)bestLetterIdx);
+        }
+
+        return score;
     }
 
 /// <summary>Computes the Levenshtein Edit Distance between two enumerables.</summary>

@@ -7,12 +7,12 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
         _Shrink         ("Shrink Factor", float) = 0.1
         _Scale          ("Link Scale", float) = 1.0
         _EllipseFactor  ("Ellipse Factor", float) = 1.0
-        _Brightness     ("Brightness", float) = 1.0
+        _Brightness     ("Brightness", float) = 0.75
         _NBParam        ("Texture size in x", Float) = 14.0
         _NBSticks       ("Texture size in y", Float) = 100.0
         _Shininess      ("Shininess", float) = 0.0
         _SpecularColor  ("Specular color", Color) = (1, 1, 1, 1)
-        _SelectedColor ("Color when selected", Color) = (1, 0.68, 0, 1)
+        // _SelectedColor ("Color when selected", Color) = (1, 0.68, 0, 1)
         _MatCap        ("MatCap  (RGB)", 2D) = "white" {}
         [Toggle] _UseFog ("Enable fog", Float) = 0.0
         _FogStart ("Fog start", Float) = 0.0
@@ -58,7 +58,7 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
             uniform float _Brightness;
             uniform float _Shininess;
             uniform float4 _SpecularColor;
-            uniform float4 _SelectedColor;
+            // uniform float4 _SelectedColor;
             // uniform float4 _LightColor0;
             // uniform sampler2D _ShadowMapTexture;
 
@@ -85,7 +85,7 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
                 float4 e1      : TEXCOORD5;
                 float4 e2      : TEXCOORD6;
                 float4 e3      : TEXCOORD7;
-                bool2 selected  : TEXCOORD8;
+                // bool2 selected  : TEXCOORD8;
                 float4 Color1  : COLOR0;
 
                 LIGHTING_COORDS(9, 10)
@@ -98,6 +98,10 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
                 float depth  : SV_Depth;
             };
 
+            struct shadowInput {
+                SHADOW_COORDS(0)
+            };
+
             // VERTEX SHADER IMPLEMENTATION =============================
 
             vertexOutput vert (appdata v) {
@@ -108,9 +112,8 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
 
                 float4 vertexPosition;
                 float NBParamm1 = _NBParam - 1;
-                float vertexid = v.uv_vetexids[0];
-                float x_texfetch = vertexid / (_NBSticks - 1);
-
+                float vertexid = v.uv_vetexids.x;
+                float x_texfetch = v.uv_vetexids.y;//vertexid / (_NBSticks - 1);
 
                 //Calculate all the stuffs to create parallepipeds that defines the enveloppe for ray-casting
                 half visibility = tex2Dlod(_MainTex, float4(x_texfetch, 10 / NBParamm1, 0, 0)).x;
@@ -118,8 +121,10 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
                 half2 scaleAtoms = tex2Dlod(_MainTex, float4(x_texfetch, 11 / NBParamm1, 0, 0)).xy;
 
 
-                float radius1 = scaleAtoms.x * visibility * tex2Dlod(_MainTex, float4(x_texfetch, 0, 0, 0)) * _Scale;
-                float radius2 = scaleAtoms.y * visibility * tex2Dlod(_MainTex, float4(x_texfetch, 1 / NBParamm1, 0, 0)) * _Scale;
+                float rad1 = tex2Dlod(_MainTex, float4(x_texfetch, 0, 0, 0));
+                float rad2 = tex2Dlod(_MainTex, float4(x_texfetch, 1 / NBParamm1, 0, 0));
+                float radius1 = scaleAtoms.x * visibility * rad1 * _Scale;
+                float radius2 = scaleAtoms.y * visibility * rad2 * _Scale;
 
                 float4 Color1 = tex2Dlod(_MainTex, float4(x_texfetch, 2 / NBParamm1, 0, 0));
                 float4 Color2 = tex2Dlod(_MainTex, float4(x_texfetch, 3 / NBParamm1, 0, 0));
@@ -134,8 +139,8 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
                 float sel1 = tex2Dlod(_MainTex, float4(x_texfetch, 12 / NBParamm1, 0, 0)).x;
                 float sel2 = tex2Dlod(_MainTex, float4(x_texfetch, 13 / NBParamm1, 0, 0)).x;
 
-                o.selected.x = (sel1 >= 0.9);
-                o.selected.y = (sel2 >= 0.9);
+                // o.selected.x = (sel1 >= 0.9);
+                // o.selected.y = (sel2 >= 0.9);
 
                 // Calculate distance between particles.
                 float4 posAtom1 = texpos1;
@@ -151,7 +156,7 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
 
                 float4 e3;
                 e3.xyz = normalize(posAtom1.xyz - posAtom2.xyz);
-                if (e3.z == 0.0) { e3.z = 0.0000000000001;}
+                if (e3.z == 0.0) { e3.z = 1e-7;}
                 if ( (posAtom1.x - posAtom2.x) == 0.0) { posAtom1.x += 0.001;}
                 if ( (posAtom1.y - posAtom2.y) == 0.0) { posAtom1.y += 0.001;}
                 if ( (posAtom1.z - posAtom2.z) == 0.0) { posAtom1.z += 0.001;}
@@ -179,7 +184,7 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
                 vertexPosition.w = 1.0;
 
                 // Calculate translation
-                vertexPosition.xyz += (posAtom2.xyz + posAtom1.xyz) / 2;
+                vertexPosition.xyz += (posAtom1.xyz + posAtom2.xyz) / 2;
 
                 o.pos = UnityObjectToClipPos(vertexPosition);
 
@@ -236,7 +241,7 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
             fragmentOutput frag (vertexOutput i)
             {
 
-                if (_Shrink < 0.0 || _Shrink > 0.9999)
+                if (_Shrink < 0.000001 || _Shrink > 0.9999)
                     discard;
 
 
@@ -290,18 +295,64 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
                 Ray ray = primary_ray(i_near, i_far);
                 float3 M = isect_surf(ray, mat);
                 float4 M1 = float4(M, 1.0);
+                float4 M2 = mul(mat,M1);
 
                 float4 clipHit = UnityObjectToClipPos(M1);
                 o.depth = update_z_buffer(clipHit);
 
-
-
                 if (cutoff_plane(M, cutoff1, -e3) || cutoff_plane(M, cutoff2, e3))
                     discard;
 
+                float3 worldPos = mul(unity_ObjectToWorld, M1);
+                float4 clipPos = UnityWorldToClipPos(float4(worldPos, 1.0));
+
+                               // stuff for directional shadow receiving
+            #if defined (SHADOWS_SCREEN)
+                // setup shadow struct for screen space shadows
+                shadowInput shadowIN;
+            #if defined(UNITY_NO_SCREENSPACE_SHADOWS)
+                // mobile directional shadow
+                shadowIN._ShadowCoord = mul(unity_WorldToShadow[0], float4(worldPos, 1.0));
+            #else
+                // screen space directional shadow
+                shadowIN._ShadowCoord = ComputeScreenPos(clipPos);
+            #endif // UNITY_NO_SCREENSPACE_SHADOWS
+            #else
+                // no shadow, or no directional shadow
+                float shadowIN = 0;
+            #endif // SHADOWS_SCREEN
+
+                // basic lighting
+                half3 worldNormal = UnityObjectToWorldNormal(M2);
+                half3 worldLightDir = UnityWorldSpaceLightDir(worldPos);
+                half ndotl = saturate(dot(worldNormal, worldLightDir));
+
+                // get shadow, attenuation, and cookie
+                UNITY_LIGHT_ATTENUATION(atten, shadowIN, worldPos);
+
+                // per pixel lighting
+                half3 lighting = _LightColor0 * ndotl * atten;
+
+            #if defined(UNITY_SHOULD_SAMPLE_SH)
+                // ambient lighting
+                half3 ambient = ShadeSH9(float4(worldNormal, 1));
+                lighting += ambient;
+
+            #if defined(VERTEXLIGHT_ON)
+                // "per vertex" non-important lights
+                half3 vertexLighting = Shade4PointLights(
+                unity_4LightPosX0, unity_4LightPosY0, unity_4LightPosZ0,
+                unity_LightColor[0].rgb, unity_LightColor[1].rgb, unity_LightColor[2].rgb, unity_LightColor[3].rgb,
+                unity_4LightAtten0, worldPos, worldNormal);
+
+                lighting += vertexLighting;
+            #endif // VERTEXLIGHT_ON
+            #endif // UNITY_SHOULD_SAMPLE_SH
+
+
                 //------------ blinn phong light try ------------------------
 
-                float3 normal = normalize(mul(ModelViewIT, mul(mat, M1)).xyz);
+                float3 normal = normalize(mul(ModelViewIT, M2).xyz);
 
 
                 float a = sum((M.xyz - cutoff2)  *  e3) / distance(cutoff2, cutoff1);
@@ -326,25 +377,26 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
                 float4 matcapLookup = lerp(matcapLookup2, matcapLookup1, a);
 
 
+                o.color = float4(lighting, 1) * pcolor * matcapLookup;
 
-                float3 L = normalize( mul(UNITY_MATRIX_V, float4(normalize(_WorldSpaceLightPos0.xyz), 0)));
-                float NdotL = saturate(dot(normal, L));
-                float4 diffuseTerm = NdotL * _LightColor0;
+                // float3 L = normalize( mul(UNITY_MATRIX_V, float4(normalize(_WorldSpaceLightPos0.xyz), 0)));
+                // float NdotL = saturate(dot(normal, L));
+                // float4 diffuseTerm = NdotL * _LightColor0;
 
-                // half shadow = tex2Dproj( _ShadowMapTexture,i._ShadowCoord).x;
-                half shadow = LIGHT_ATTENUATION(i);
+                // // half shadow = tex2Dproj( _ShadowMapTexture,i._ShadowCoord).x;
+                // half shadow = LIGHT_ATTENUATION(i);
 
 
-                float4 ambient = UNITY_LIGHTMODEL_AMBIENT * 1.5;
+                // float4 ambient = UNITY_LIGHTMODEL_AMBIENT;
 
-                o.color = (ambient + (diffuseTerm * shadow)) * pcolor ;
+                // o.color = (ambient + (diffuseTerm * shadow)) * pcolor ;
 
-                if (_Shininess && shadow > 0.5) {
-                    float specular = pow(max(dot(normal, L), 0.0), _Shininess);
+                if (_Shininess && atten > 0.5) {
+                    float specular = pow(max(ndotl, 0.0), _Shininess);
                     o.color += specular * _SpecularColor;
                 }
 
-                o.color *=  matcapLookup  *  1.25  *  _Brightness;
+                o.color *=   1.25 * _Brightness;
 
                 // UNITY_APPLY_FOG(i.fogCoord, o.color);
                 if(_UseFog){
@@ -405,8 +457,8 @@ Shader "UMol/Sticks HyperBalls Shadow Merged"
 
                 float4 vertexPosition;
                 float NBParamm1 = _NBParam - 1;
-                float vertexid = v.uv_vetexids[0];
-                float x_texfetch = vertexid / (_NBSticks - 1);
+                float vertexid = v.uv_vetexids.x;
+                float x_texfetch = v.uv_vetexids.y;//vertexid / (_NBSticks - 1);
 
 
                 //Calculate all the stuffs to create parallepipeds that defines the enveloppe for ray-casting

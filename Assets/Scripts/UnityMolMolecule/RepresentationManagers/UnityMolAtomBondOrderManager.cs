@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
@@ -58,12 +42,8 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 
 	public AtomRepresentationBondOrder atomRep;
 	private int nbAtoms;
-	private List<GameObject> meshesGO;
-	private Dictionary<int, KeyValuePair<int, int> > coordAtomTexture;
-	private Dictionary<UnityMolAtom, int> atomToCoord;
 	private bool[] texturesToUpdate;
-	private Texture2D[] texturesAtoms;
-	private List<Color> colors;
+	private List<Color32> colors;
 
 	public GameObject AtomMeshParent;
 	public float shininess = 0.0f;
@@ -82,14 +62,10 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 		}
 
 		atomRep = (AtomRepresentationBondOrder) umolRep.atomRep;
-		meshesGO = atomRep.meshesGO;
 		nbAtoms = atomRep.selection.atoms.Count;
-		texturesAtoms = atomRep.paramTextures;
-		coordAtomTexture = atomRep.coordAtomTexture;
-		atomToCoord = atomRep.atomToId;
 
-		texturesToUpdate = new bool[texturesAtoms.Length];
-		for (int i = 0; i < texturesAtoms.Length; i++)
+		texturesToUpdate = new bool[atomRep.paramTextures.Length];
+		for (int i = 0; i < atomRep.paramTextures.Length; i++)
 			texturesToUpdate[i] = false;
 
 		colors = atomRep.atomColors;
@@ -101,33 +77,42 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 		isBackboneOn = true;
 	}
 
+	public override void InitRT() {
+	}
+
 	public override void Clean() {
 
+		if (atomRep.meshesGO != null) {
+			for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+				GameObject.Destroy(atomRep.meshesGO[i].GetComponent<MeshFilter>().sharedMesh);
+				GameObject.Destroy(atomRep.meshesGO[i]);
+			}
+		}
 
 		if (atomRep.representationTransform != null) {
 			GameObject.DestroyImmediate(atomRep.representationTransform.gameObject);
 		}
 
-		for (int i = 0; i < meshesGO.Count; i++) {
-			GameObject.DestroyImmediate(meshesGO[i]);
+		for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+			GameObject.DestroyImmediate(atomRep.meshesGO[i]);
 		}
 
 		colors.Clear();
-		meshesGO.Clear();
-		coordAtomTexture.Clear();
-		atomToCoord.Clear();
+		atomRep.meshesGO.Clear();
+		atomRep.coordAtomTexture.Clear();
+		atomRep.atomToId.Clear();
 		texturesToUpdate = null;
-		for (int i = 0; i < texturesAtoms.Length; i++) {
-			GameObject.DestroyImmediate(texturesAtoms[i]);
+		for (int i = 0; i < atomRep.paramTextures.Length; i++) {
+			GameObject.Destroy(atomRep.paramTextures[i]);
 		}
-		GameObject.DestroyImmediate(AtomMeshParent);
+		GameObject.Destroy(AtomMeshParent);
 
 		nbAtoms = 0;
+		atomRep.atomToId = null;
+		atomRep.paramTextures = null;
+		atomRep.meshesGO = null;
+		atomRep.coordAtomTexture = null;
 		atomRep = null;
-		atomToCoord = null;
-		texturesAtoms = null;
-		meshesGO = null;
-		coordAtomTexture = null;
 		isInit = false;
 		isEnabled = false;
 
@@ -136,9 +121,11 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public void ApplyTextures() {
-		for (int i = 0; i < texturesAtoms.Length; i++) {
+		if (atomRep.meshesGO == null)
+			return;
+		for (int i = 0; i < atomRep.paramTextures.Length; i++) {
 			if (texturesToUpdate[i]) {
-				texturesAtoms[i].Apply(false, false);
+				atomRep.paramTextures[i].Apply(false, false);
 			}
 			texturesToUpdate[i] = false;
 		}
@@ -148,8 +135,10 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	/// Disables the renderers for all objects managed by the instance of the manager.
 	/// </summary>
 	public override void DisableRenderers() {
-		for (int i = 0; i < meshesGO.Count; i++) {
-			meshesGO[i].GetComponent<Renderer>().enabled = false;
+		if (atomRep.meshesGO == null)
+			return;
+		for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+			atomRep.meshesGO[i].GetComponent<Renderer>().enabled = false;
 		}
 		isEnabled = false;
 		// UnityMolMain.getRepresentationManager().UpdateActiveColliders();
@@ -159,22 +148,26 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	/// Enables the renderers for all objects managed by the instance of the manager.
 	/// </summary>
 	public override void EnableRenderers() {
-		for (int i = 0; i < meshesGO.Count; i++) {
-			meshesGO[i].GetComponent<Renderer>().enabled = true;
+		if (atomRep.meshesGO == null)
+			return;
+		for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+			atomRep.meshesGO[i].GetComponent<Renderer>().enabled = true;
 		}
 		isEnabled = true;
 		// UnityMolMain.getRepresentationManager().UpdateActiveColliders();
 	}
 
 	public override void ShowShadows(bool show) {
-		for (int i = 0; i < meshesGO.Count; i++) {
+		if (atomRep.meshesGO == null)
+			return;
+		for (int i = 0; i < atomRep.meshesGO.Count; i++) {
 			if (show) {
-				meshesGO[i].GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.On;
-				meshesGO[i].GetComponent<Renderer>().receiveShadows = true;
+				atomRep.meshesGO[i].GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.On;
+				atomRep.meshesGO[i].GetComponent<Renderer>().receiveShadows = true;
 			}
 			else {
-				meshesGO[i].GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
-				meshesGO[i].GetComponent<Renderer>().receiveShadows = false;
+				atomRep.meshesGO[i].GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+				atomRep.meshesGO[i].GetComponent<Renderer>().receiveShadows = false;
 			}
 		}
 	}
@@ -183,10 +176,11 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	/// Resets the positions of all atoms. Used when trajectory reading
 	/// </summary>
 	public void ResetPositions() {
+		Vector4 offset = new Vector4(atomRep.offsetPos.x, atomRep.offsetPos.y, atomRep.offsetPos.z, 0.0f);
 		for (int i = 0; i < nbAtoms; i++) {
-			if (coordAtomTexture.TryGetValue(i, out keyValP)) {
-				Vector4 atomPos = atomRep.selection.atoms[i].PositionVec4;
-				texturesAtoms[keyValP.Key].SetPixel(keyValP.Value, 0, atomPos);
+			if (atomRep.coordAtomTexture.TryGetValue(i, out keyValP)) {
+				Vector4 atomPos = atomRep.selection.atoms[i].PositionVec4 + offset;
+				atomRep.paramTextures[keyValP.Key].SetPixel(keyValP.Value, 0, atomPos);
 
 				texturesToUpdate[keyValP.Key] = true;
 			}
@@ -197,11 +191,11 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	/// Set a large bounding box to avoid culling
 	public void SetLargeBoundingVolume() {
 		if (!largeBB) {
-			if (meshesGO != null && meshesGO.Count != 0) {
-				for (int i = 0; i < meshesGO.Count; i++) {
-					Bounds b = meshesGO[i].GetComponent<MeshFilter>().mesh.bounds;
+			if (atomRep.meshesGO != null && atomRep.meshesGO.Count != 0) {
+				for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+					Bounds b = atomRep.meshesGO[i].GetComponent<MeshFilter>().sharedMesh.bounds;
 					b.size = Vector3.one * 5000.0f;
-					meshesGO[i].GetComponent<MeshFilter>().mesh.bounds = b;
+					atomRep.meshesGO[i].GetComponent<MeshFilter>().sharedMesh.bounds = b;
 				}
 			}
 		}
@@ -209,25 +203,19 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public void SetTexture(Texture tex) {
-		for (int i = 0; i < meshesGO.Count; i++) {
-			meshesGO[i].GetComponent<Renderer>().sharedMaterial.SetTexture("_MatCap", tex);
-		}
-	}
-	public void ResetTexture() {
-		Texture tex = (Texture) Resources.Load("Images/MatCap/daphz05");
-		for (int i = 0; i < meshesGO.Count; i++) {
-			meshesGO[i].GetComponent<Renderer>().sharedMaterial.SetTexture("_MatCap", tex);
+		for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+			atomRep.meshesGO[i].GetComponent<Renderer>().sharedMaterial.SetTexture("_MatCap", tex);
 		}
 	}
 
-	public override void SetColor(Color col, UnityMolSelection sele) {
+	public override void SetColor(Color32 col, UnityMolSelection sele) {
 		foreach (UnityMolAtom a in sele.atoms) {
 			SetColor(col, a);
 		}
 		ApplyTextures();
 	}
 
-	public override void SetColor(Color col, UnityMolAtom a) {
+	public override void SetColor(Color32 col, UnityMolAtom a) {
 		int idAtom = -1;
 		if (atomRep.atomToId.TryGetValue(a, out idAtom)) {
 			if (idAtom != -1) {
@@ -237,10 +225,10 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 		ApplyTextures();
 	}
 
-	public void SetColor(Color col, int atomNum) {
-		if (coordAtomTexture.TryGetValue(atomNum, out keyValP)) {
+	public void SetColor(Color32 col, int atomNum) {
+		if (atomRep.coordAtomTexture.TryGetValue(atomNum, out keyValP)) {
 
-			texturesAtoms[keyValP.Key].SetPixel(keyValP.Value, 2, col);
+			atomRep.paramTextures[keyValP.Key].SetPixel(keyValP.Value, 2, col);
 
 			texturesToUpdate[keyValP.Key] = true;
 			colors[atomNum] = col;
@@ -249,21 +237,21 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 
-	public override void SetColors(Color col, List<UnityMolAtom> atoms) {
+	public override void SetColors(Color32 col, List<UnityMolAtom> atoms) {
 		foreach (UnityMolAtom a in atoms) {
 			SetColor(col, a);
 		}
 		ApplyTextures();
 	}
 
-	public override void SetColors(List<Color> cols, List<UnityMolAtom> atoms) {
+	public override void SetColors(List<Color32> cols, List<UnityMolAtom> atoms) {
 		if (atoms.Count != cols.Count) {
 			Debug.LogError("Lengths of color list and atom list are different");
 			return;
 		}
 		for (int i = 0; i < atoms.Count; i++) {
 			UnityMolAtom a = atoms[i];
-			Color col = cols[i];
+			Color32 col = cols[i];
 			SetColor(col, a);
 		}
 		ApplyTextures();
@@ -284,8 +272,8 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public void SetScale(float newScale, int idAtom) {
-		if (coordAtomTexture.TryGetValue(idAtom, out keyValP)) {
-			texturesAtoms[keyValP.Key].SetPixel(keyValP.Value, 8, Vector4.one * newScale);
+		if (atomRep.coordAtomTexture.TryGetValue(idAtom, out keyValP)) {
+			atomRep.paramTextures[keyValP.Key].SetPixel(keyValP.Value, 8, Vector4.one * newScale);
 			texturesToUpdate[keyValP.Key] = true;
 			lastScale = newScale;
 		}
@@ -303,9 +291,9 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public override void SetDepthCueingStart(float v) {
-		if (meshesGO == null)
+		if (atomRep.meshesGO == null)
 			return;
-		foreach (GameObject meshGO in meshesGO) {
+		foreach (GameObject meshGO in atomRep.meshesGO) {
 
 			Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
 			mats[0].SetFloat("_FogStart", v);
@@ -313,9 +301,9 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public override void SetDepthCueingDensity(float v) {
-		if (meshesGO == null)
+		if (atomRep.meshesGO == null)
 			return;
-		foreach (GameObject meshGO in meshesGO) {
+		foreach (GameObject meshGO in atomRep.meshesGO) {
 
 			Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
 			mats[0].SetFloat("_FogDensity", v);
@@ -323,9 +311,9 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public override void EnableDepthCueing() {
-		if (meshesGO == null)
+		if (atomRep.meshesGO == null)
 			return;
-		foreach (GameObject meshGO in meshesGO) {
+		foreach (GameObject meshGO in atomRep.meshesGO) {
 
 			Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
 			mats[0].SetFloat("_UseFog", 1.0f);
@@ -333,9 +321,9 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public override void DisableDepthCueing() {
-		if (meshesGO == null)
+		if (atomRep.meshesGO == null)
 			return;
-		foreach (GameObject meshGO in meshesGO) {
+		foreach (GameObject meshGO in atomRep.meshesGO) {
 
 			Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
 			mats[0].SetFloat("_UseFog", 0.0f);
@@ -389,11 +377,11 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public void ShowAtom(int idAtom, bool show) {
-		if (coordAtomTexture.TryGetValue(idAtom, out keyValP)) {
+		if (atomRep.coordAtomTexture.TryGetValue(idAtom, out keyValP)) {
 			if (show) {
-				texturesAtoms[keyValP.Key].SetPixel(keyValP.Value, 7, Vector4.one);
+				atomRep.paramTextures[keyValP.Key].SetPixel(keyValP.Value, 7, Vector4.one);
 			} else {
-				texturesAtoms[keyValP.Key].SetPixel(keyValP.Value, 7, Vector4.zero);
+				atomRep.paramTextures[keyValP.Key].SetPixel(keyValP.Value, 7, Vector4.zero);
 			}
 			texturesToUpdate[keyValP.Key] = true;
 		}
@@ -401,7 +389,7 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 	public override void ShowAtom(UnityMolAtom a, bool show) {
 		int idInCoord = 0;
-		if (atomToCoord.TryGetValue(a, out idInCoord)) {
+		if (atomRep.atomToId.TryGetValue(a, out idInCoord)) {
 			ShowAtom(idInCoord, show);
 		}
 		ApplyTextures();
@@ -410,8 +398,8 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	public void ResetVisibility() {
 
 		for (int i = 0; i < nbAtoms; i++) {
-			if (coordAtomTexture.TryGetValue(i, out keyValP)) {
-				texturesAtoms[keyValP.Key].SetPixel(keyValP.Value, 7, Vector4.one);
+			if (atomRep.coordAtomTexture.TryGetValue(i, out keyValP)) {
+				atomRep.paramTextures[keyValP.Key].SetPixel(keyValP.Value, 7, Vector4.one);
 				texturesToUpdate[keyValP.Key] = true;
 			}
 		}
@@ -423,8 +411,8 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 		shininess = val;
 		float valShine = (shininess < 0.0001f ? 0.0f : 1.0f / shininess);
 
-		for (int i = 0; i < meshesGO.Count; i++) {
-			meshesGO[i].GetComponent<Renderer>().sharedMaterial.SetFloat("_Shininess", valShine);
+		for (int i = 0; i < atomRep.meshesGO.Count; i++) {
+			atomRep.meshesGO[i].GetComponent<Renderer>().sharedMaterial.SetFloat("_Shininess", valShine);
 		}
 	}
 
@@ -474,13 +462,14 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	}
 
 	public override void ResetColor(UnityMolAtom atom) {
-		SetColor(atom.color, atom);
+		SetColor(atom.color32, atom);
 	}
 
 	public override void ResetColors() {
 		foreach (UnityMolAtom a in atomRep.selection.atoms) {
-			SetColor(a.color, a);
+			SetColor(a.color32, a);
 		}
+		atomRep.colorationType = colorType.atom;
 	}
 
 
@@ -497,17 +486,24 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 	public override void SetMetal(float val) {
 		Debug.LogWarning("Cannot change this value for the hyperball representation");
 	}
+
+	public override void UpdateLike() {
+	}
+
 	public override UnityMolRepresentationParameters Save() {
 		UnityMolRepresentationParameters res = new UnityMolRepresentationParameters();
 
 		res.repT.atomType = AtomType.bondorder;
 		res.colorationType = atomRep.colorationType;
 
+		if (atomRep.meshesGO == null || atomRep.meshesGO.Count == 0)
+			return res;
+
 		if (res.colorationType == colorType.custom) {
 			int atomNum = 0;
-			res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(atomRep.selection.Count);
+			res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(atomRep.selection.atoms.Count);
 			foreach (UnityMolAtom a in atomRep.selection.atoms) {
-				if (coordAtomTexture.TryGetValue(atomNum, out keyValP)) {
+				if (atomRep.coordAtomTexture.TryGetValue(atomNum, out keyValP)) {
 					res.colorPerAtom[a] = colors[atomNum];
 				}
 			}
@@ -515,7 +511,7 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 		else if (res.colorationType == colorType.full) { //Get color of first atom/residue
 			int atomNum = 0;
 			foreach (UnityMolAtom a in atomRep.selection.atoms) {
-				if (coordAtomTexture.TryGetValue(atomNum, out keyValP)) {
+				if (atomRep.coordAtomTexture.TryGetValue(atomNum, out keyValP)) {
 					res.fullColor = colors[atomNum];
 					break;
 				}
@@ -523,11 +519,11 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 		}
 		else if (res.colorationType == colorType.bfactor) {
 			res.bfactorStartColor = atomRep.bfactorStartCol;
+			res.bfactorMidColor = atomRep.bfactorMidColor;
 			res.bfactorEndColor = atomRep.bfactorEndCol;
 		}
 		res.smoothness = shininess;
-		res.shadow = (meshesGO[0].GetComponent<Renderer>().shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.On);
-		// res.HBScale = lastScale;
+		res.shadow = (atomRep.meshesGO[0].GetComponent<Renderer>().shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.On);
 
 		return res;
 	}
@@ -538,8 +534,8 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 				SetColor(savedParams.fullColor, atomRep.selection);
 			}
 			else if (savedParams.colorationType == colorType.custom) {
-				List<Color> colors = new List<Color>(atomRep.selection.Count);
-				List<UnityMolAtom> restoredAtoms = new List<UnityMolAtom>(atomRep.selection.Count);
+				List<Color32> colors = new List<Color32>(atomRep.selection.atoms.Count);
+				List<UnityMolAtom> restoredAtoms = new List<UnityMolAtom>(atomRep.selection.atoms.Count);
 				foreach (UnityMolAtom a in atomRep.selection.atoms) {
 					if (savedParams.colorPerAtom.ContainsKey(a)) {
 						colors.Add(savedParams.colorPerAtom[a]);
@@ -572,18 +568,22 @@ public class UnityMolAtomBondOrderManager : UnityMolGenericRepresentationManager
 			else if (savedParams.colorationType == colorType.rescharge) {
 				colorByResCharge(atomRep.selection);
 			}
-			else if (savedParams.colorationType == colorType.bfactor) {
-				colorByBfactor(atomRep.selection, savedParams.bfactorStartColor, savedParams.bfactorEndColor);
+			else if (savedParams.colorationType == colorType.resnum) {
+				colorByResnum(atomRep.selection);
 			}
-
-			// SetSizes(atomRep.selection.atoms, savedParams.HBScale);
+			else if (savedParams.colorationType == colorType.resid) {
+				colorByResid(atomRep.selection);
+			}
+			else if (savedParams.colorationType == colorType.bfactor) {
+				colorByBfactor(atomRep.selection, savedParams.bfactorStartColor, savedParams.bfactorMidColor, savedParams.bfactorEndColor);
+			}
 
 			SetShininess(savedParams.smoothness);
 			ShowShadows(savedParams.shadow);
 			atomRep.colorationType = savedParams.colorationType;
 		}
 		else {
-			Debug.LogError("Could not restore representation parameteres");
+			Debug.LogError("Could not restore representation parameters");
 		}
 
 	}

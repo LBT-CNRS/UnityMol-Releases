@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,71 +27,67 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using UnityEngine.UI;
 
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using VRTK;
+
+using HTC.UnityPlugin.Vive;
+using HTC.UnityPlugin.Utility;
+
 using UMol.API;
 
-
 namespace UMol {
-
-[RequireComponent(typeof(VRTK_ControllerEvents))]
+[RequireComponent(typeof(ViveRoleSetter))]
 public class ControllerDrawLine : MonoBehaviour {
 
     public GameObject penGo;
+    public GameObject penTip;
 
-    VRTK_ControllerEvents controllerEvents;
     Transform loadedMols;
     GameObject curGo;
     UnityMolStructure curS;
     MeshLineRenderer lr;
     UnityMolSelectionManager selM;
     UnityMolStructureManager sm;
+    List<Material> materials = new List<Material>();
+
+    ViveRoleProperty curRole;
 
     void Start() {
         selM = UnityMolMain.getSelectionManager();
         sm = UnityMolMain.getStructureManager();
 
-        if (controllerEvents == null) {
-            controllerEvents = GetComponent<VRTK_ControllerEvents>();
-        }
-
         loadedMols = UnityMolMain.getRepresentationParent().transform;
-
-        controllerEvents.TriggerPressed += triggerClicked;
-        controllerEvents.TriggerReleased += triggerReleased;
-        controllerEvents.TriggerUnclicked += triggerReleased;
-        controllerEvents.TriggerTouchEnd += triggerReleased;
-
     }
 
-    private void triggerClicked(object sender, ControllerInteractionEventArgs e) {
+    void OnEnable() {
+        curRole = GetComponent<ViveRoleSetter>().viveRole;
+        if (curRole != null) {
+            ViveInput.AddPressDown((HandRole)curRole.roleValue, ControllerButton.Trigger, triggerClicked);
+            ViveInput.AddPressUp((HandRole)curRole.roleValue, ControllerButton.Trigger, triggerReleased);
+        }
+    }
+
+    void OnDisable() {
+        if (curRole != null) {
+            ViveInput.RemovePressDown((HandRole)curRole.roleValue, ControllerButton.Trigger, triggerClicked);
+            ViveInput.RemovePressUp((HandRole)curRole.roleValue, ControllerButton.Trigger, triggerReleased);
+        }
+    }
+
+
+    private void triggerClicked() {
         if (sm.loadedStructures.Count == 0) {
             return;
         }
-        if(!UnityMolMain.getAnnotationManager().drawMode){
+        if (!UnityMolMain.getAnnotationManager().drawMode) {
             return;
         }
 
@@ -110,28 +104,24 @@ public class ControllerDrawLine : MonoBehaviour {
         }
 
         curS = s;
-        curGo = new GameObject(s.uniqueName + "_DrawLine");
-        curGo.transform.parent = sm.findStructureGO(s).transform;
+        curGo = new GameObject(s.name + "_DrawLine");
+        curGo.transform.parent = sm.GetStructureGameObject(s.name).transform;
         curGo.transform.localPosition = Vector3.zero;
 
         Material mat = new Material(Shader.Find("Standard"));
         mat.color = Color.black;
-        curGo.AddComponent<MeshRenderer>().material = mat;
+        curGo.AddComponent<MeshRenderer>().sharedMaterial = mat;
+        materials.Add(mat);
 
 
         lr = curGo.AddComponent<MeshLineRenderer>();
 
-        // curGo.AddComponent<MeshFilter>().mesh = new Mesh();
-        // curGo.AddComponent<MeshRenderer>();
-        // curGo.AddComponent<MeshCollider>();
-        // UnityMolMain.getAnnotationManager().drawings.Add(curGo);
-
-
     }
 
-    private void triggerReleased(object sender, ControllerInteractionEventArgs e) {
-        if(UnityMolMain.getAnnotationManager().drawMode && curGo != null && lr != null){
-            APIPython.annotateDrawLine(curS.uniqueName, lr.positions, Color.blue);
+    private void triggerReleased() {
+        if (UnityMolMain.getAnnotationManager().drawMode && curGo != null && lr != null) {
+            //Redraw the same line, and destroy the current one, this is useful for multi-user sessions !
+            APIPython.annotateDrawLine(curS.name, lr.positions, Color.blue);
             GameObject.Destroy(curGo);
         }
 
@@ -146,19 +136,37 @@ public class ControllerDrawLine : MonoBehaviour {
             curGo = null;
             curS = null;
             lr = null;
-            if(penGo != null){
+            if (penGo != null) {
                 penGo.SetActive(false);
             }
             return;
         }
 
         if (curGo != null && lr != null) {
-            if(penGo != null){
+
+            if (penGo != null)
                 penGo.SetActive(true);
+
+            if (penTip != null) {
+                //Fill the line
+                lr.AddPoint(penTip.transform.position);
             }
-            //Fill the line
-            lr.AddPoint(penGo.transform.position);
+            else {
+                if (penGo != null) {
+                    //Fill the line
+                    lr.AddPoint(penGo.transform.position);
+                }
+                else {
+                    lr.AddPoint(transform.position);
+                }
+            }
         }
+    }
+    void OnDestroy() {
+        if (curGo != null)
+            GameObject.Destroy(curGo.GetComponent<MeshRenderer>().sharedMaterial);
+        foreach (Material m in materials)
+            Destroy(m);
     }
 
 

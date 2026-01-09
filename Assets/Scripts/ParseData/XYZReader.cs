@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,36 +27,14 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
-// Unity Classes
 using UnityEngine;
-
-// C# Classes
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Text;
-using System.Net;
 
 
 namespace UMol {
@@ -69,12 +45,24 @@ namespace UMol {
 /// </summary>
 public class XYZReader: Reader {
 
+    /// <summary>
+    /// List of XYZ file extensions
+    /// </summary>
     public static string[] XYZextensions = {"xyz"};
 
 
+    /// <summary>
+    /// Create a XYZReader with an optional filename
+    /// </summary>
+    /// <param name="fileName">the filename</param>
     public XYZReader(string fileName = ""): base(fileName) {}
 
-    protected override UnityMolStructure ReadData(StreamReader sr, bool readHET, bool readWater, bool simplyParse = false) {
+
+    /// <summary>
+    /// Parse a XYZ file contained in a StreamReader to a UnityMolStructure object
+    /// </summary>
+    protected override UnityMolStructure ReadData(StreamReader sr, bool readHET, bool readWater,
+            bool simplyParse = false, UnityMolStructure.MolecularType? forceStructureType = null) {
         List<UnityMolModel> models = new List<UnityMolModel>();
         List<UnityMolAtom> allAtoms = new List<UnityMolAtom>();
         List<UnityMolResidue> residues = new List<UnityMolResidue>();
@@ -86,7 +74,7 @@ public class XYZReader: Reader {
         bool readAtomLine = false;
         bool commentLine = false;
         int curMol = 0;
-        using (sr) { // Don't use garbage collection but free temp memory after reading the pdb file
+        using (sr) { // Don't use garbage collection but free temp memory after reading the xyz file
             StringBuilder debug = new StringBuilder();
 
             string line = "";
@@ -95,7 +83,7 @@ public class XYZReader: Reader {
                 if (line.Length > 0 && int.TryParse(line, out dummy)) { //New molecule
                     if (allAtoms.Count != 0) { //Record the current Model
 
-                        UnityMolResidue uniqueRes = new UnityMolResidue(0, allAtoms, "XYZ");
+                        UnityMolResidue uniqueRes = new UnityMolResidue(0, 0, allAtoms, "XYZ");
                         foreach (UnityMolAtom a in allAtoms) {
                             a.SetResidue(uniqueRes);
                         }
@@ -132,7 +120,7 @@ public class XYZReader: Reader {
                         continue;
                     }
                     if (idAtom == nbAtomsToParse + 1) {
-                        debug.Append(String.Format("More atoms in the files than specified {0} / {1}\n", idAtom, nbAtomsToParse));
+                        debug.AppendFormat("More atoms in the files than specified {0} / {1}\n", idAtom, nbAtomsToParse);
                         // Debug.LogWarning("More atoms in the files than specified "+idAtom+" / "+nbAtomsToParse);
                     }
                     allAtoms.Add(parseAtomLine(line, idAtom));
@@ -143,7 +131,7 @@ public class XYZReader: Reader {
         }
 
 
-        UnityMolResidue uRes = new UnityMolResidue(0, allAtoms, "XYZ");
+        UnityMolResidue uRes = new UnityMolResidue(0, 0, allAtoms, "XYZ");
         foreach (UnityMolAtom a in allAtoms) {
             a.SetResidue(uRes);
         }
@@ -161,15 +149,21 @@ public class XYZReader: Reader {
         models.Add(lastModel);
 
 
-        UnityMolStructure newStruct = new UnityMolStructure(models, this.fileNameWithoutExtension);
-        identifyStructureMolecularType(newStruct);
+        UnityMolStructure newStruct = new UnityMolStructure(models, this.FileNameWithoutExtension);
+
+        if (forceStructureType.HasValue) {
+            newStruct.structureType = forceStructureType.Value;
+        }
+        else {
+            newStruct.SetStructureMolecularType();
+        }
 
         foreach (UnityMolModel m in models) {
             m.structure = newStruct;
             if (!simplyParse) {
-                m.bonds = ComputeUnityMolBonds.ComputeBondsByResidue(m.allAtoms);
-                m.ComputeCenterOfGravity();
                 m.fillIdAtoms();
+                m.bonds = ComputeUnityMolBonds.ComputeBondsByResidue(m.allAtoms);
+                m.ComputeCentroid();
 
             }
         }
@@ -182,12 +176,12 @@ public class XYZReader: Reader {
 
         if (newStruct.models.Count != 1) {
             for (int i = 1; i < newStruct.models.Count; i++) {
-                CreateColliders(new UnityMolSelection(newStruct.models[i].allAtoms, newBonds: null, sel.name, newStruct.uniqueName));
+                CreateUnityObjects(newStruct.ToSelectionName(), new UnityMolSelection(newStruct.models[i].allAtoms, newBonds: null, sel.name, newStruct.name));
             }
         }
-        CreateColliders(sel);
-        newStruct.surfThread = startSurfaceThread(sel);
-        
+        CreateUnityObjects(newStruct.ToSelectionName(), sel);
+        newStruct.surfThread = StartSurfaceThread(sel);
+
         UnityMolMain.getStructureManager().AddStructure(newStruct);
         UnityMolMain.getSelectionManager().Add(sel);
 
@@ -215,25 +209,33 @@ public class XYZReader: Reader {
 
 
     /// <summary>
-    /// XYZ writer
-    /// Uses a selection
-    /// Uses the molecule name of the first atom
+    /// XYZ writer using a UnityMolSelection.
+    /// if comment is empty use the name of the structure of the first atome
+    /// Returns a string containing all the lines
     /// </summary>
-    public static string Write(UnityMolSelection select, string structName = "") {
-
+    /// <param name="select">the selection</param>
+    /// <param name="comment">string for the comment line</param>
+    /// <returns>string holding all the lines</returns>
+    public static string Write(UnityMolSelection select, string comment = "")
+    {
         StringBuilder sw = new StringBuilder();
+
+        if (string.IsNullOrEmpty(comment))
+        {
+            comment = select.atoms[0].residue.chain.model.structure.name;
+        }
 
         sw.Append(select.atoms.Count);
         sw.Append("\n");
-        sw.Append(select.atoms[0].residue.chain.model.structure.name);
+        sw.Append(comment);
         sw.Append("\n");
 
         //Atoms
         foreach (UnityMolAtom a in select.atoms) {
-            sw.Append(String.Format("{0,3}", a.type));
-            sw.Append(String.Format("{0,15:F5}", (-a.oriPosition.x)));
-            sw.Append(String.Format("{0,15:F5}", (a.oriPosition.y)));
-            sw.Append(String.Format("{0,15:F5}", (a.oriPosition.z)));
+            sw.AppendFormat("{0,3}", a.type);
+            sw.AppendFormat("{0,15:F5}", -a.oriPosition.x);
+            sw.AppendFormat("{0,15:F5}", a.oriPosition.y);
+            sw.AppendFormat("{0,15:F5}", a.oriPosition.z);
             sw.Append("\n");
         }
 
@@ -241,11 +243,17 @@ public class XYZReader: Reader {
 
     }
 
+    /// <summary>
+    /// XYZ writer using a UnityMolStructure.
+    /// Returns a string containing all the lines
+    /// </summary>
+    /// <param name="structure">the structure</param>
+    /// <returns>string holding all the lines</returns>
     public static string Write(UnityMolStructure structure) {
         StringBuilder sw = new StringBuilder();
 
         foreach (UnityMolModel m in structure.models) {
-            sw.Append(Write(m.ToSelection(), (structure.name + "_" + m.name)));
+            sw.Append(Write(m.ToSelection(), structure.name + "_" + m.name));
         }
 
         return sw.ToString();

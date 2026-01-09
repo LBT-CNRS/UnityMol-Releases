@@ -84,7 +84,7 @@ struct InterpolatorsVertex {
 	#endif
 
 	#if defined(LIGHTMAP_ON) || ADDITIONAL_MASKED_DIRECTIONAL_SHADOWS
-		float2 lightmapUV : TEXCOORD6;
+		float2 lightmapUV : TEXCOORD8;
 	#endif
 
 	#if defined(DYNAMICLIGHTMAP_ON)

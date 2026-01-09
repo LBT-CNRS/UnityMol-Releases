@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,23 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
 
 using UnityEngine;
 using Unity.Collections;
@@ -64,18 +49,21 @@ public class CustomRaycastBurst {
 	NativeArray<float> atomRad;
 	NativeArray<bool> results;
 
-	public bool DEBUG = false;
-	private static List<GameObject> debugGos = new List<GameObject>();
+	NativeArray<float3> atomPosTrajExtract;
+	NativeArray<float> atomRadTrajExtract;
+	NativeArray<bool> resultsTrajExtract;
+	public UnityMolAtom[] allAtomsExtract;
 
 	public bool needsFullUpdate = true;
 	public bool needsUpdatePos = false;
 	public bool needsUpdateRadii = false;
 
 	public UnityMolAtom[] allAtoms;
-	public Transform[] allTransforms;
+	UnityMolRepresentationManager repM;
 
 	void updateAllLists() {
-		UnityMolRepresentationManager repM = UnityMolMain.getRepresentationManager();
+		if (repM == null)
+			repM = UnityMolMain.getRepresentationManager();
 
 		int N = repM.atomsWithActiveRep.Count;
 
@@ -89,36 +77,107 @@ public class CustomRaycastBurst {
 		atomRad = new NativeArray<float>(N, Allocator.Persistent);
 		results = new NativeArray<bool>(N, Allocator.Persistent);
 
-		allTransforms = new Transform[N];
 		allAtoms = new UnityMolAtom[N];
 
 		int id = 0;
 		foreach (UnityMolAtom a in repM.atomsWithActiveRep) {
 			UnityMolStructure s = a.residue.chain.model.structure;
-			GameObject go = s.atomToGo[a];
-			Transform t = go.transform;
-			float scale = t.lossyScale.x;
-			atomPos[id] = t.position;
+			float scale = s.annotationParent.transform.lossyScale.x;
+			atomPos[id] = a.curWorldPosition;
 			allAtoms[id] = a;
 			atomRad[id] = a.radius * 0.5f * scale;
-			allTransforms[id] = t;
 			id++;
+		}
 
+		int Nextract = repM.countExtractTrajActive;
+
+		if (Nextract != 0) {
+
+			if (atomPosTrajExtract.IsCreated) {
+				atomPosTrajExtract.Dispose();
+				atomRadTrajExtract.Dispose();
+				resultsTrajExtract.Dispose();
+			}
+
+			atomPosTrajExtract = new NativeArray<float3>(Nextract, Allocator.Persistent);
+			atomRadTrajExtract = new NativeArray<float>(Nextract, Allocator.Persistent);
+			resultsTrajExtract = new NativeArray<bool>(Nextract, Allocator.Persistent);
+
+			allAtomsExtract = new UnityMolAtom[Nextract];
+
+			int idExtr = 0;
+
+
+			foreach (UnityMolRepresentation r in repM.extractedTrajRep) {
+				for (int i = 0; i < r.selection.extractTrajFramePositions.Count; i++) {
+					for (int j = 0; j < r.selection.atoms.Count; j++) {
+						UnityMolAtom a = r.selection.atoms[j];
+						UnityMolStructure s = a.residue.chain.model.structure;
+						float scale = s.annotationParent.transform.lossyScale.x;
+
+						if (idExtr < Nextract) {
+							Vector3 pos = r.selection.extractTrajFramePositions[i][j];
+							atomPosTrajExtract[idExtr] = s.annotationParent.transform.TransformPoint(pos);
+							atomRadTrajExtract[idExtr] = a.radius * 0.5f * scale;
+							allAtomsExtract[idExtr] = a;
+							idExtr++;
+						}
+						else {//Should not happen
+							break;
+						}
+					}
+				}
+			}
 		}
 	}
 
 	void updatePositions() {
-		for (int i = 0; i < allTransforms.Length; i++) {
-			atomPos[i] = allTransforms[i].position;
+		if (repM == null)
+			repM = UnityMolMain.getRepresentationManager();
+
+		for (int i = 0; i < allAtoms.Length; i++) {
+			atomPos[i] = allAtoms[i].curWorldPosition;
+		}
+
+		if (atomPosTrajExtract.IsCreated && atomPosTrajExtract.Length != 0) {
+
+			int idExtr = 0;
+			int Nextract = atomPosTrajExtract.Length;
+			foreach (UnityMolRepresentation r in repM.extractedTrajRep) {
+				for (int i = 0; i < r.selection.extractTrajFramePositions.Count; i++) {
+					for (int j = 0; j < r.selection.atoms.Count; j++) {
+						UnityMolAtom a = r.selection.atoms[j];
+						UnityMolStructure s = a.residue.chain.model.structure;
+
+						if (idExtr < Nextract) {
+							Vector3 pos = r.selection.extractTrajFramePositions[i][j];
+							atomPosTrajExtract[idExtr] = s.annotationParent.transform.TransformPoint(pos);
+							idExtr++;
+						}
+					}
+				}
+			}
 		}
 	}
 
 	void updateRadii() {
+		if (repM == null)
+			repM = UnityMolMain.getRepresentationManager();
 
 		for (int i = 0; i < allAtoms.Length; i++) {
-			Transform t = allTransforms[i];
-			float scale = t.lossyScale.x;
+			float scale = allAtoms[i].residue.chain.model.structure.annotationParent.transform.lossyScale.x;
 			atomRad[i] = allAtoms[i].radius * 0.5f * scale;
+		}
+
+		if (atomPosTrajExtract.IsCreated && atomPosTrajExtract.Length != 0) {
+
+			int Nextract = atomRadTrajExtract.Length;
+			for (int i = 0; i < Nextract; i++) {
+				UnityMolAtom a = allAtomsExtract[i];
+				UnityMolStructure s = a.residue.chain.model.structure;
+				float scale = s.annotationParent.transform.lossyScale.x;
+				atomRadTrajExtract[i] = a.radius * 0.5f * scale;
+			}
 		}
 	}
 
@@ -128,10 +187,17 @@ public class CustomRaycastBurst {
 			atomRad.Dispose();
 			results.Dispose();
 		}
+		if (atomPosTrajExtract.IsCreated) {
+			atomPosTrajExtract.Dispose();
+			atomRadTrajExtract.Dispose();
+			resultsTrajExtract.Dispose();
+		}
 	}
 
-	public UnityMolAtom customRaycastAtomBurst(Vector3 origin, Vector3 direction) {
+	public UnityMolAtom customRaycastAtomBurst(Vector3 origin, Vector3 direction,
+	        ref Vector3 worldPos, ref bool isExtractedAtom, bool useExtractedTraj = true) {
 
+		isExtractedAtom = false;
 
 		if (needsFullUpdate) {
 			updateAllLists();
@@ -146,19 +212,6 @@ public class CustomRaycastBurst {
 		if (needsUpdateRadii) {
 			updateRadii();
 			needsUpdateRadii = false;
-		}
-
-		if (DEBUG) {
-			CleanDebug();
-			int idA = 0;
-			foreach (Transform t in allTransforms) {
-				GameObject test = GameObject.CreatePrimitive(PrimitiveType.Cube);
-				debugGos.Add(test);
-				test.transform.parent = t;
-				test.transform.localPosition = Vector3.zero;
-				test.transform.localScale = Vector3.one;
-				idA++;
-			}
 		}
 
 		var raycastJob = new RaycastJob() {
@@ -184,24 +237,129 @@ public class CustomRaycastBurst {
 			}
 		}
 
-		if (idMin >= 0 && idMin < results.Length) {
-			//Make sure to get the atom from the current model
-			UnityMolStructure s = allAtoms[idMin].residue.chain.model.structure;
-			int idAtom = allAtoms[idMin].idInAllAtoms;
-			return s.currentModel.allAtoms[idAtom];
+		float minDistEx = 99999.0f;
+		int idMinEx = -1;
+
+		if (useExtractedTraj) {
+			if (atomPosTrajExtract.IsCreated && atomPosTrajExtract.Length != 0) {
+
+				var raycastJobEx = new RaycastJob() {
+					res = resultsTrajExtract,
+					pos = atomPosTrajExtract,
+					radii = atomRadTrajExtract,
+					ori = origin,
+					dir = direction
+				};
+
+				var raycastJobHandleEx = raycastJobEx.Schedule(resultsTrajExtract.Length, 64);
+				raycastJobHandleEx.Complete();
+
+
+				for (int i = 0; i < resultsTrajExtract.Length; i++) {
+					if (resultsTrajExtract[i]) {
+						float sdist = squaredDist(origin, atomPosTrajExtract[i]);
+						if (sdist < minDistEx) {
+							minDistEx = sdist;
+							idMinEx = i;
+						}
+					}
+				}
+			}
+		}
+
+
+		if (idMinEx < 0) {//No extracted trajectory frame atoms
+			if (idMin >= 0 && idMin < results.Length) {
+				//Make sure to get the atom from the current model
+				UnityMolStructure s = allAtoms[idMin].residue.chain.model.structure;
+				int idAtom = allAtoms[idMin].idInAllAtoms;
+				worldPos = atomPos[idMin];
+				return s.currentModel.allAtoms[idAtom];
+			}
+		}
+		else {//Choose closest between normal atom and atom from extracted trajectory frames
+			if (idMin >= 0 && idMin < results.Length && idMinEx < resultsTrajExtract.Length) {
+				if (minDistEx < minDist) { //Traj frame atom in front
+					UnityMolStructure s = allAtomsExtract[idMinEx].residue.chain.model.structure;
+					int idAtom = allAtomsExtract[idMinEx].idInAllAtoms;
+					worldPos = atomPosTrajExtract[idMinEx];
+					isExtractedAtom = true;
+					return s.currentModel.allAtoms[idAtom];
+				}
+				else {
+					UnityMolStructure s = allAtoms[idMin].residue.chain.model.structure;
+					int idAtom = allAtoms[idMin].idInAllAtoms;
+					worldPos = atomPos[idMin];
+					return s.currentModel.allAtoms[idAtom];
+				}
+			}
+			else if (idMin < 0 && idMinEx < resultsTrajExtract.Length) { //No normal atoms found but extracted trajectory frame atom found
+				UnityMolStructure s = allAtomsExtract[idMinEx].residue.chain.model.structure;
+				int idAtom = allAtomsExtract[idMinEx].idInAllAtoms;
+				worldPos = atomPosTrajExtract[idMinEx];
+				isExtractedAtom = true;
+				return s.currentModel.allAtoms[idAtom];
+			}
 		}
 
 		return null;
 
 	}
 
-	static void	CleanDebug() {
-		if (debugGos.Count != 0) {
-			for (int i = 0; i < debugGos.Count; i++) {
-				GameObject.Destroy(debugGos[i]);
+
+	///Use structure bounding box instead of active atoms
+	public UnityMolStructure customRaycastStructure(Vector3 origin, Vector3 direction) {
+
+		UnityMolStructureManager sm = UnityMolMain.getStructureManager();
+		Transform molPar = UnityMolMain.getRepresentationParent().transform;
+
+		float bestDist = float.MaxValue;
+		UnityMolStructure intersectedStructure = null;
+		Ray r = new Ray(origin, direction);
+
+		foreach (UnityMolStructure s in sm.loadedStructures) {
+			Bounds b = new Bounds();
+			Vector3 wpMax = s.annotationParent.parent.TransformPoint(s.currentModel.maximumPositions);
+			Vector3 wpMin = s.annotationParent.parent.TransformPoint(s.currentModel.minimumPositions);
+			b.Encapsulate(wpMax);
+			b.Encapsulate(wpMin);
+			b.center = s.annotationParent.parent.TransformPoint(s.currentModel.centroid);
+			float dist = 0.0f;
+			if (b.IntersectRay(r, out dist)) {
+				if (dist < bestDist) {
+					bestDist = dist;
+					intersectedStructure = s;
+				}
 			}
-			debugGos.Clear();
 		}
+
+		return intersectedStructure;
+
+	}
+
+	///Use structure bounding box to find the closest structure to a world space position
+	public UnityMolStructure customClosestStructure(Vector3 wpos) {
+		UnityMolStructureManager sm = UnityMolMain.getStructureManager();
+		Transform molPar = UnityMolMain.getRepresentationParent().transform;
+		float bestDist = float.MaxValue;
+		UnityMolStructure found = null;
+		foreach (UnityMolStructure s in sm.loadedStructures) {
+			Bounds b = new Bounds();
+			Vector3 wpMax = sm.structureToGameObject[s.name].transform.TransformPoint(s.currentModel.maximumPositions);
+			Vector3 wpMin = sm.structureToGameObject[s.name].transform.TransformPoint(s.currentModel.minimumPositions);
+			b.Encapsulate(wpMax);
+			b.Encapsulate(wpMin);
+			b.center = sm.structureToGameObject[s.name].transform.TransformPoint(s.currentModel.centroid);
+
+			Vector3 p = b.ClosestPoint(wpos);
+			float d = Vector3.Distance(p, wpos);
+			if (d < bestDist) {
+				bestDist = d;
+				found = s;
+			}
+		}
+
+		return found;
 	}
 
 	static float squaredDist(float3 a, float3 b) {

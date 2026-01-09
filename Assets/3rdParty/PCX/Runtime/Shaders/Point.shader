@@ -22,7 +22,6 @@ Shader "Point Cloud/Point"
             #pragma multi_compile_fog
             #pragma multi_compile _ UNITY_COLORSPACE_GAMMA
             #pragma multi_compile _ _DISTANCE_ON
-            #pragma multi_compile _ _COMPUTE_BUFFER
 
             #include "UnityCG.cginc"
             #include "Common.cginc"
@@ -45,24 +44,10 @@ Shader "Point Cloud/Point"
             float4x4 _Transform;
             half _PointSize;
 
-        #if _COMPUTE_BUFFER
-            StructuredBuffer<float4> _PointBuffer;
-        #endif
-
-        #if _COMPUTE_BUFFER
-            Varyings Vertex(uint vid : SV_VertexID)
-        #else
             Varyings Vertex(Attributes input)
-        #endif
             {
-            #if _COMPUTE_BUFFER
-                float4 pt = _PointBuffer[vid];
-                float4 pos = mul(_Transform, float4(pt.xyz, 1));
-                half3 col = PcxDecodeColor(asuint(pt.w));
-            #else
                 float4 pos = input.position;
                 half3 col = input.color;
-            #endif
 
             #ifdef UNITY_COLORSPACE_GAMMA
                 col *= _Tint.rgb * 2;

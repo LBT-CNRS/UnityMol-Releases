@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,61 +27,66 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
+using System;
+using System.Runtime.InteropServices;
 
 public class MeshData {
     public int[] triangles;
     public Vector3[] normals;
     public Vector3[] vertices;
     public Color32[] colors;
+    public float[] vertBuffer;
+    public int[] colBuffer;
+    public int[] atomByVert;
 
-    public void Scale(Vector3 scale){
-        for(int i=0;i<vertices.Length;i++){
+    public int nVert = 0;
+    public int nTri = 0;
+
+    public void Scale(Vector3 scale) {
+        for (int i = 0; i < nVert; i++) {
             vertices[i] = Vector3.Scale(scale, vertices[i]);
         }
     }
-    public void Offset(Vector3 offset){
-        for(int i=0;i<vertices.Length;i++){
+    public void Offset(Vector3 offset) {
+        for (int i = 0; i < nVert; i++) {
             vertices[i] += offset;
         }
     }
-    public void InvertX(){
-        for(int i=0;i<vertices.Length;i++){
+    public void InvertX() {
+        for (int i = 0; i < nVert; i++) {
             vertices[i].x = -vertices[i].x;
         }
     }
+    public void InvertTri() {
+        for (int i = 0; i < nTri; i++) { //Revert the triangles
+            int save = triangles[i * 3];
+            triangles[i * 3] = triangles[i * 3 + 1];
+            triangles[i * 3 + 1] = save;
+        }
+    }
+
+    public void CopyVertBufferToVert() {
+        GCHandle handleVs = GCHandle.Alloc(vertices, GCHandleType.Pinned);
+        IntPtr pV = handleVs.AddrOfPinnedObject();
+
+        Marshal.Copy(vertBuffer, 0, pV, vertBuffer.Length);
+    }
+
+    public void FillWhite() {
+        Color32 white = Color.white;
+        for (int i = 0; i < nVert; i++) {
+            colors[i] = white;
+        }
+    }
 }
-public struct Int4 {
-    public int x;
-    public int y;
-    public int z;
-    public int w;
-}
-public struct Int3 {
-    public int x;
-    public int y;
-    public int z;
-}
-public struct Int2 {
-    public int x;
-    public int y;
+
+public struct LInt2 {
+    public long x;
+    public long y;
 }

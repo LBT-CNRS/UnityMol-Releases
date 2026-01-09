@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
@@ -55,60 +39,174 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Burst;
 
 namespace UMol {
+
+/// <summary>
+/// Class to handle the smoothing of a trajectory
+/// Use Burst option to compute the smoothing.
+/// </summary>
 public class TrajectorySmoother {
 
+    /// <summary>
+    /// Burst structure for  smoothing
+    /// </summary>
+    [BurstCompile]
+    private struct SmoothedPositions : IJobParallelFor
+    {
+        public NativeArray<float3> InterpolatedPositions;
+        [ReadOnly] public NativeArray<float3> PosT1;
+        [ReadOnly] public NativeArray<float3> PosT2;
+        [ReadOnly] public float Step;
 
-	NativeArray<float3> positionsT1;
-	NativeArray<float3> positionsT2;
-	NativeArray<float3> result;
+        void IJobParallelFor.Execute(int index)
+        {
+            InterpolatedPositions[index] = math.lerp(PosT1[index], PosT2[index], Step);
+        }
+    }
 
-	public void init(Vector3[] post1, Vector3[] post2) {
+    /// <summary>
+    /// Burst structure for cubic smoothing
+    /// </summary>
+    [BurstCompile]
+    private struct SmoothedPositionsCubic : IJobParallelFor
+    {
+        public NativeArray<float3> InterpolatedPositions;
+        [ReadOnly] public NativeArray<float3> PosT1;//n-1
+        [ReadOnly] public NativeArray<float3> PosT2;//n
+        [ReadOnly] public NativeArray<float3> PosT3;//n+1
+        [ReadOnly] public NativeArray<float3> PosT4;//n+2
+        [ReadOnly] public float Step;
+
+        void IJobParallelFor.Execute(int index)
+        {
+            float3 p0 = PosT1[index];
+            float3 p1 = PosT2[index];
+            float3 p2 = PosT3[index];
+            float3 p3 = PosT4[index];
+
+            float3 v0 = (p2 - p0) * 0.5f;
+            float3 v1 = (p3 - p1) * 0.5f;
+
+            float s2 = Step * Step;
+            float s3 = Step * s2;
+
+            InterpolatedPositions[index] = (2.0f * p1 - 2.0f * p2 + v0 + v1) * s3 + (-3.0f * p1 + 3.0f * p2 - 2.0f * v0 - v1) * s2 + v0 * Step + p1;
+        }
+    }
+
+
+    //List of arrays needed for the smoothing
+	private NativeArray<float3> positionsTm1;
+    private NativeArray<float3> positionsT1;
+    private NativeArray<float3> positionsT2;
+    private NativeArray<float3> positionsT3;
+
+    /// <summary>
+    /// Coordinates of the atoms after smoothing.
+    /// </summary>
+    private NativeArray<float3> result;
+
+    /// <summary>
+    /// Cubic interpolation or not?
+    /// </summary>
+    private bool cubic;
+
+    /// <summary>
+    /// Initialize the object
+    /// <remarks>Can not use a classic Constructor due to the NativeArray and their disposal.</remarks>
+    /// </summary>
+    /// <param name="postm1"></param>
+    /// <param name="post1"></param>
+    /// <param name="post2"></param>
+    /// <param name="post3"></param>
+	public void Init(Vector3[] postm1, Vector3[] post1, Vector3[] post2, Vector3[] post3) {
+		cubic = false;
+		if (postm1 != null && post3 != null) {
+			cubic = true;
+		}
+
 		if (positionsT1 == null || positionsT1.Length == 0) {
 			positionsT1 = new NativeArray<float3>(post1.Length, Allocator.Persistent);
 			positionsT2 = new NativeArray<float3>(post2.Length, Allocator.Persistent);
 			result = new NativeArray<float3>(post1.Length, Allocator.Persistent);
 		}
+		if (cubic) {
+			if (positionsTm1 == null || positionsTm1.Length == 0) {
+				positionsTm1 = new NativeArray<float3>(postm1.Length, Allocator.Persistent);
+				positionsT3 = new NativeArray<float3>(post3.Length, Allocator.Persistent);
+			}
+		}
+
 
 		if (post1.Length == post2.Length && post1.Length == positionsT1.Length) {
-			// positionsT1.CopyFrom(post1);
-			// positionsT2.CopyFrom(post2);
-			GetNativeArray(positionsT1, post1);
-			GetNativeArray(positionsT2, post2);
+			getNativeArray(positionsT1, post1);
+			getNativeArray(positionsT2, post2);
+		}
+		if (cubic) {
+			getNativeArray(positionsTm1, postm1);
+			getNativeArray(positionsT3, post3);
 		}
 	}
 
-	public void clear() {
-		if(positionsT1.IsCreated){
+    /// <summary>
+    /// Clear the arrays.
+    /// </summary>
+	public void Clear() {
+		if (positionsT1.IsCreated) {
 			positionsT1.Dispose();
 			positionsT2.Dispose();
 		}
-		if(result.IsCreated){
+		if (positionsTm1.IsCreated) {
+			positionsTm1.Dispose();
+			positionsT3.Dispose();
+		}
+		if (result.IsCreated) {
 			result.Dispose();
 		}
 	}
 
-	public void process(Vector3[] outPos, float t) {
-		if(positionsT1.Length == positionsT2.Length && outPos.Length == positionsT1.Length){
-			var smoothJob = new SmoothedPositions() {
-				interpolatedPositions = result,
-				posT1 = positionsT1,
-				posT2 = positionsT2,
-				step = t
-			};
+    /// <summary>
+    /// Compute the smoothing over the number of frames
+    /// </summary>
+    /// <param name="outPos">Array of smoothed positions</param>
+    /// <param name="t">Array of smoothed positions</param>
+	public void Process(Vector3[] outPos, float t) {
 
-			var smoothJobHandle = smoothJob.Schedule(positionsT1.Length, 64);
-			smoothJobHandle.Complete();
+		if (positionsT1.Length == positionsT2.Length && outPos.Length == positionsT1.Length) {
+			if (cubic) {
+				SmoothedPositionsCubic smoothJob = new() {
+					InterpolatedPositions = result,
+					PosT1 = positionsTm1,
+					PosT2 = positionsT1,
+					PosT3 = positionsT2,
+					PosT4 = positionsT3,
+					Step = t
+				};
 
-			SetNativeArray(outPos, result);
+				JobHandle smoothJobHandle = smoothJob.Schedule(positionsT1.Length, 64);
+				smoothJobHandle.Complete();
+			}
+			else {
+				SmoothedPositions smoothJob = new() {
+					InterpolatedPositions = result,
+					PosT1 = positionsT1,
+					PosT2 = positionsT2,
+					Step = t
+				};
+
+				JobHandle smoothJobHandle = smoothJob.Schedule(positionsT1.Length, 64);
+				smoothJobHandle.Complete();
+			}
+
+			setNativeArray(outPos, result);
 		}
-		else{
+		else {
 			Debug.LogError("Wrong sizes, did you call init ?");
 		}
 
 	}
 
 	//From https://gist.github.com/LotteMakesStuff/c2f9b764b15f74d14c00ceb4214356b4
-	unsafe void GetNativeArray(NativeArray<float3> posNativ, Vector3[] posArray)
+    private static unsafe void getNativeArray(NativeArray<float3> posNativ, Vector3[] posArray)
 	{
 
 		// pin the buffer in place...
@@ -123,27 +221,13 @@ public class TrajectorySmoother {
 		// we create a scope where its 'safe' to get a pointer and directly manipulate the array
 
 	}
-	unsafe void SetNativeArray(Vector3[] posArray, NativeArray<float3> posNativ)
+    private static unsafe void setNativeArray(Vector3[] posArray, NativeArray<float3> posNativ)
 	{
 		// pin the target array and get a pointer to it
 		fixed (void* posArrayPointer = posArray)
 		{
 			// memcopy the native array over the top
 			UnsafeUtility.MemCpy(posArrayPointer, NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(posNativ), posArray.Length * (long) UnsafeUtility.SizeOf<float3>());
-		}
-	}
-
-	[BurstCompile]
-	struct SmoothedPositions : IJobParallelFor
-	{
-		public NativeArray<float3> interpolatedPositions;
-		[ReadOnly] public NativeArray<float3> posT1;
-		[ReadOnly] public NativeArray<float3> posT2;
-		[ReadOnly] public float step;
-
-		void IJobParallelFor.Execute(int index)
-		{
-			interpolatedPositions[index] = math.lerp(posT1[index], posT2[index], step);
 		}
 	}
 

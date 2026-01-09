@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,37 +27,23 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections;
 using System.Text;
-using VRTK;
+
+using HTC.UnityPlugin.Vive;
+using HTC.UnityPlugin.Utility;
 
 namespace UMol {
-
-[RequireComponent(typeof(VRTK_Pointer))]
-[RequireComponent(typeof(VRTK_StraightPointerRendererNoRB))]
+[RequireComponent(typeof(ViveRoleSetter))]
+[RequireComponent(typeof(PointerAtomSelection))]
 public class PointerHoverAtom : MonoBehaviour {
 
-    VRTK_Pointer pointer;
-    VRTK_StraightPointerRendererNoRB pointerR;
+    GameObject trajExtraGo;
     GameObject haloGo;
     TextMesh textm;
     Transform camTransform;
@@ -70,21 +54,32 @@ public class PointerHoverAtom : MonoBehaviour {
     float hoverScaleMultiplier = 1.0f;
 
     public bool pauseHovering = false;
+    UnityMolAtom lastPointedAtom = null;
 
+    ViveRoleProperty curRole;
+
+    PointerAtomSelection pas;
+    GameObject goAtom;
+
+
+    void OnEnable() {
+        curRole = GetComponent<ViveRoleSetter>().viveRole;
+
+        pas = GetComponent<PointerAtomSelection>();
+        if (curRole != null) {
+            ViveInput.AddPressDown((HandRole)curRole.roleValue, ControllerButton.PadTouch, buttonPressed);
+            ViveInput.AddPressUp((HandRole)curRole.roleValue, ControllerButton.PadTouch, buttonReleased);
+        }
+    }
+    void OnDisable() {
+        if (curRole != null) {
+            ViveInput.RemovePressDown((HandRole)curRole.roleValue, ControllerButton.PadTouch, buttonPressed);
+            ViveInput.RemovePressUp((HandRole)curRole.roleValue, ControllerButton.PadTouch, buttonReleased);
+        }
+    }
 
     void Start() {
         raycaster = UnityMolMain.getCustomRaycast();
-
-        if (pointer == null) {
-            pointer = GetComponent<VRTK_Pointer>();
-        }
-        if (pointerR == null) {
-            pointerR = GetComponent<VRTK_StraightPointerRendererNoRB>();
-        }
-        // pointer.PointerStateValid += DetectedCollision;
-        pointer.PointerStateInvalid += OutCollision;
-        pointer.ActivationButtonReleased += buttonReleased;
-        pointer.ActivationButtonPressed += buttonPressed;
 
         haloGo = GameObject.Instantiate((GameObject) Resources.Load("Prefabs/SphereOverAtom"));
         textm = haloGo.GetComponentsInChildren<TextMesh>()[0];
@@ -93,26 +88,24 @@ public class PointerHoverAtom : MonoBehaviour {
         haloGo.SetActive(false);
         textm.gameObject.GetComponent<MeshRenderer>().sortingOrder = 50;
 
+        trajExtraGo = new GameObject("DummyTrajExtractedGo");
+        goAtom = new GameObject("HoverAtomGo");
+        DontDestroyOnLoad(trajExtraGo);
+        DontDestroyOnLoad(haloGo);
+        DontDestroyOnLoad(goAtom);
     }
 
-    // void DetectedCollision(object sender, DestinationMarkerEventArgs e) {
-    //     RaycastHit raycastHit =  e.raycastHit;
-
-    //     showHover(raycastHit);
-
-    // }
     void Update() {
-        if(pauseHovering){
+        if (pauseHovering) {
             disableHovering();
             return;
         }
-        if (pressed) {
+        if (pressed && !pas.isOverUI) {
             showHover();
-            // showHover(pointer.pointerRenderer.GetDestinationHit());
         }
     }
     public static string formatAtomText(UnityMolAtom a) {
-        string nameS = a.residue.chain.model.structure.formatName(25);
+        string nameS = a.residue.chain.model.structure.FormatName(25);
 
 
         string textAtom = "<size=30>" + nameS + " </size>\n";
@@ -129,37 +122,55 @@ public class PointerHoverAtom : MonoBehaviour {
     }
     void showHover() {
 
-        UnityMolAtom a = raycaster.customRaycastAtomBurst(pointerR.actualContainer.transform.position, pointerR.actualContainer.transform.forward);
+
+        RigidPose cpose = VivePose.GetPose(curRole);
+
+        Vector3 p = Vector3.zero;
+        bool isExtrAtom = false;
+        UnityMolAtom a = raycaster.customRaycastAtomBurst(
+                             cpose.pos,
+                             cpose.forward,
+                             ref p, ref isExtrAtom, true);
         if (a != null) {
             if (haloGo == null) {
                 haloGo = GameObject.Instantiate((GameObject) Resources.Load("Prefabs/SphereOverAtom"));
                 textm = haloGo.GetComponentsInChildren<TextMesh>()[0];
                 haloGo.layer = LayerMask.NameToLayer("Ignore Raycast");
                 haloGo.SetActive(false);
+                DontDestroyOnLoad(haloGo);
             }
-            UnityMolStructureManager sm = UnityMolMain.getStructureManager();
-            Transform atomPar = sm.structureToGameObject[a.residue.chain.model.structure.uniqueName].transform;
+
+            UnityMolStructure s = a.residue.chain.model.structure;
 
 
             textm.text = formatAtomText(a);
             haloGo.SetActive(true);
-            haloGo.transform.position = atomPar.TransformPoint(a.position);
+
+            haloGo.transform.position = p;
+            trajExtraGo.transform.position = p;
 
             if (camTransform == null) {
                 camTransform = Camera.main.transform;
             }
 
             haloGo.transform.rotation = Quaternion.LookRotation(haloGo.transform.position - camTransform.position);
-            haloGo.transform.parent = a.residue.chain.model.structure.atomToGo[a].transform;
+
+            UnityMolMain.getAnnotationManager().setGOPos(a, goAtom);
+
+            if (!isExtrAtom)
+                haloGo.transform.SetParent(goAtom.transform);
+            else {
+                trajExtraGo.transform.SetParent(goAtom.transform.parent);
+                trajExtraGo.transform.localScale = goAtom.transform.localScale;
+                haloGo.transform.SetParent(trajExtraGo.transform);
+            }
 
             haloGo.transform.localScale =  hoverScaleMultiplier * a.radius * Vector3.one * 1.1f;
 
-
-            //Limit the length of the pointer renderer when hitting something
-            float dist = Vector3.Distance(transform.position, haloGo.transform.position);
-            pointerR.maximumLength = dist;
-            pointerR.SetValidColor();
-
+            if (lastPointedAtom == null || lastPointedAtom != a) {
+                ViveInput.TriggerHapticPulseEx(curRole.roleType, curRole.roleValue, 500);
+            }
+            lastPointedAtom = a;
         }
 
     }
@@ -168,17 +179,14 @@ public class PointerHoverAtom : MonoBehaviour {
             haloGo.SetActive(false);
             haloGo.transform.parent = null;
         }
-        pointerR.maximumLength = 100;
     }
 
-    void OutCollision(object sender, DestinationMarkerEventArgs e) {
-        disableHovering();
-    }
-    void buttonReleased(object sender, ControllerInteractionEventArgs e) {
+    void buttonReleased() {
         disableHovering();
         pressed = false;
+        lastPointedAtom = null;
     }
-    void buttonPressed(object sender, ControllerInteractionEventArgs e) {
+    void buttonPressed() {
         pressed = true;
     }
     public static string ReplaceFirstOccurrance(string original, string oldValue, string newValue)

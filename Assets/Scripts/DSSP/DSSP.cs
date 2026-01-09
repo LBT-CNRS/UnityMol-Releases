@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,23 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
@@ -57,9 +42,10 @@ using System.Linq;
 namespace UMol {
 public class DSSP {
 
-	public static void assignSS_DSSP(UnityMolStructure s) {
-		Debug.LogWarning("Using DSSP");
-		kabschSander(s);
+	public static void assignSS_DSSP(UnityMolStructure s, bool isTraj = false, int idExtractedFrame = -1, UnityMolSelection sel = null) {
+		if (!isTraj && idExtractedFrame != -1)
+			Debug.LogWarning("Using DSSP");
+		kabschSander(s, idExtractedFrame, sel);
 		s.ssInfoFromFile = false;
 	}
 
@@ -93,15 +79,31 @@ public class DSSP {
 		return toSkip;
 	}
 
-	public static Dictionary<UnityMolResidue, Vector3> ksAssignHydrogens(List<bool> toSkip, List<UnityMolResidue> residues) {
+	public static Dictionary<UnityMolResidue, Vector3> ksAssignHydrogens(List<bool> toSkip,
+	        List<UnityMolResidue> residues, int idExtra, UnityMolSelection sel) {
 
+		if(residues.Count < 3)
+			return null;
+		UnityMolStructure s = residues[0].chain.model.structure;
 		Dictionary<UnityMolResidue, Vector3> HatomsModel = new Dictionary<UnityMolResidue, Vector3>();
 		try {
-			HatomsModel.Add(residues[0], residues[0].atoms["N"].position);
+			if (idExtra != -1) {
+				int iida = sel.atomToIdInSel[residues[0].atoms["N"]];
+				HatomsModel.Add(residues[0], sel.extractTrajFramePositions[idExtra][iida]);
+			}
+			else {
+				HatomsModel.Add(residues[0], residues[0].atoms["N"].position);
+			}
 		}
 		catch {
 			try {
-				HatomsModel.Add(residues[0], residues[0].atoms["NT"].position);//For OPEP
+				if (idExtra != -1) {
+					int iida = sel.atomToIdInSel[residues[0].atoms["NT"]];
+					HatomsModel.Add(residues[0], sel.extractTrajFramePositions[idExtra][iida]);//For OPEP
+				}
+				else {
+					HatomsModel.Add(residues[0], residues[0].atoms["NT"].position);//For OPEP
+				}
 			}
 			catch {
 				toSkip[0] = true;
@@ -109,25 +111,46 @@ public class DSSP {
 		}
 		for (int i = 1; i < residues.Count; i++) {
 			if (!toSkip[i] && !toSkip[i - 1]) {
-				Vector3 prevC = residues[i - 1].atoms["C"].position;
-				Vector3 prevO = residues[i - 1].atoms["O"].position;
-				Vector3 R_CO = prevC - prevO;
-				Vector3 N = Vector3.zero;
-				if (residues[i].atoms.ContainsKey("N")) {
-					N = residues[i].atoms["N"].position;
+				if (idExtra != -1) {
+					int iida = sel.atomToIdInSel[residues[i - 1].atoms["C"]];
+					int iida2 = sel.atomToIdInSel[residues[i - 1].atoms["O"]];
+
+					Vector3 prevC = sel.extractTrajFramePositions[idExtra][iida];
+					Vector3 prevO = sel.extractTrajFramePositions[idExtra][iida2];
+					Vector3 R_CO = prevC - prevO;
+					Vector3 N = Vector3.zero;
+					if (residues[i].atoms.ContainsKey("N")) {
+						iida = sel.atomToIdInSel[residues[i].atoms["N"]];
+						N = sel.extractTrajFramePositions[idExtra][iida];
+					}
+					else if (residues[i].atoms.ContainsKey("NT")) { //For OPEP
+						iida = sel.atomToIdInSel[residues[i].atoms["NT"]];
+						N = sel.extractTrajFramePositions[idExtra][iida];
+					}
+					Vector3 H = N + R_CO.normalized;
+					HatomsModel.Add(residues[i], H);
 				}
-				else if (residues[i].atoms.ContainsKey("NT")) { //For OPEP
-					N = residues[i].atoms["NT"].position;
+				else {
+					Vector3 prevC = residues[i - 1].atoms["C"].position;
+					Vector3 prevO = residues[i - 1].atoms["O"].position;
+					Vector3 R_CO = prevC - prevO;
+					Vector3 N = Vector3.zero;
+					if (residues[i].atoms.ContainsKey("N")) {
+						N = residues[i].atoms["N"].position;
+					}
+					else if (residues[i].atoms.ContainsKey("NT")) { //For OPEP
+						N = residues[i].atoms["NT"].position;
+					}
+					Vector3 H = N + R_CO.normalized;
+					HatomsModel.Add(residues[i], H);
 				}
-				Vector3 H = N + R_CO.normalized;
-				HatomsModel.Add(residues[i], H);
 			}
 		}
 
 		return HatomsModel;
 	}
 
-	public static void kabschSander(UnityMolStructure s) {
+	public static void kabschSander(UnityMolStructure s, int idExtra, UnityMolSelection sel) {
 		const float HBOND_ENERGY_CUTOFF = -0.5f;
 		const float MINIMAL_CA_DISTANCE2 = 0.81f;
 
@@ -142,7 +165,7 @@ public class DSSP {
 
 			foreach (UnityMolChain c in m.chains.Values) {
 				// UnityMolResidue[] residues = c.residues.Values.ToArray();
-				List<UnityMolResidue> residues = c.residues.Values.ToList();
+				List<UnityMolResidue> residues = c.residues;
 				foreach (UnityMolResidue r in residues) {
 					//Ignore water!
 					if (!WaterSelection.waterResidues.Contains(r.name, StringComparer.OrdinalIgnoreCase)) {
@@ -155,7 +178,7 @@ public class DSSP {
 
 			List<bool> toSkip = checkResToSkip(allRes);
 
-			Dictionary<UnityMolResidue, Vector3> hatoms = ksAssignHydrogens(toSkip, allRes);
+			Dictionary<UnityMolResidue, Vector3> hatoms = ksAssignHydrogens(toSkip, allRes, idExtra, sel);
 			if (hatoms == null) {
 				return;
 			}
@@ -174,28 +197,36 @@ public class DSSP {
 						continue;
 					}
 					UnityMolAtom jCA = allRes[j].atoms["CA"];
-					Vector3 r12 = (iCA.position - jCA.position) / 10.0f;
+					Vector3 r12 = Vector3.zero;
+					if (idExtra != -1) {
+						int iida = sel.atomToIdInSel[iCA];
+						int iida2 = sel.atomToIdInSel[jCA];
+						Vector3 p1 = sel.extractTrajFramePositions[idExtra][iida];
+						Vector3 p2 = sel.extractTrajFramePositions[idExtra][iida2];
+
+						r12 = (p1 - p2) / 10.0f;
+					}
+					else {
+						r12 = (iCA.position - jCA.position) / 10.0f;
+					}
 
 					if (Vector3.Dot(r12, r12) < MINIMAL_CA_DISTANCE2) {
-						float e = ksDonorAcceptor(hatoms, allRes, i, j);
+						float e = ksDonorAcceptor(hatoms, allRes, i, j, idExtra, sel);
 						if (e < HBOND_ENERGY_CUTOFF && !isProline(allRes[i])) {
 							storeEnergies(hbonds, allRes[i], allRes[j], e);// hbond from donor=ri to acceptor=rj
 						}
 						if (j != i + 1) {
-							float e2 = ksDonorAcceptor(hatoms, allRes, j, i);
+							float e2 = ksDonorAcceptor(hatoms, allRes, j, i, idExtra, sel);
 							if (e2 < HBOND_ENERGY_CUTOFF && !isProline(allRes[j])) {
 								storeEnergies(hbonds, allRes[j], allRes[i], e);// hbond from donor=rj to acceptor=ri
 							}
 						}
 					}
 				}
-
 			}
 
-
 			computeBetaSheets(allRes, idChains, toSkip, hbonds, secondary);
-			computeAlphaHelices(allRes, idChains, toSkip, hbonds, secondary);
-
+			computeAlphaHelices(allRes, idChains, toSkip, hbonds, secondary, idExtra, sel);
 
 			for (int r = 0; r < allRes.Count; r++) {
 				UnityMolResidue.secondaryStructureType ss = UnityMolResidue.secondaryStructureType.Coil;
@@ -216,29 +247,41 @@ public class DSSP {
 
 				}
 				allRes[r].secondaryStructure = ss;
-
 			}
-
 		}
 	}
-
-
 
 	/// <summary>
 	/// Compute the Kabsch-Sander hydrogen bond energy between two residues
 	/// </summary>
 	public static float ksDonorAcceptor(Dictionary<UnityMolResidue, Vector3> hatoms,
-	                                    List<UnityMolResidue> residues, int idDon, int idAcc) {
+	                                    List<UnityMolResidue> residues, int idDon, int idAcc,
+	                                    int idExtra, UnityMolSelection sel) {
 
 		if (!hatoms.ContainsKey(residues[idDon])) {
 			return float.MaxValue;
 		}
 
 		Vector4 coupling = new Vector4(-2.7888f, -2.7888f, 2.7888f, 2.7888f); // 332 (kcal*A/mol) * 0.42 * 0.2
-		Vector3 NDon = residues[idDon].atoms["N"].position / 10.0f;
-		Vector3 HDon = hatoms[residues[idDon]] / 10.0f;
-		Vector3 CAcc = residues[idAcc].atoms["C"].position / 10.0f;
-		Vector3 OAcc = residues[idAcc].atoms["O"].position / 10.0f;
+
+		Vector3 HDon = HDon = hatoms[residues[idDon]] / 10.0f;
+		Vector3 NDon = Vector3.zero;
+		Vector3 CAcc = Vector3.zero;
+		Vector3 OAcc = Vector3.zero;
+
+		if (idExtra != -1) {
+			int iida = sel.atomToIdInSel[residues[idDon].atoms["N"]];
+			NDon = sel.extractTrajFramePositions[idExtra][iida] / 10.0f;
+			iida = sel.atomToIdInSel[residues[idAcc].atoms["C"]];
+			CAcc = sel.extractTrajFramePositions[idExtra][iida] / 10.0f;
+			iida = sel.atomToIdInSel[residues[idAcc].atoms["O"]];
+			OAcc = sel.extractTrajFramePositions[idExtra][iida] / 10.0f;
+		}
+		else {
+			NDon = residues[idDon].atoms["N"].position / 10.0f;
+			CAcc = residues[idAcc].atoms["C"].position / 10.0f;
+			OAcc = residues[idAcc].atoms["O"].position / 10.0f;
+		}
 
 		Vector3 rHO = HDon - OAcc;
 		Vector3 rHC = HDon - CAcc;
@@ -330,6 +373,7 @@ public class DSSP {
 
 		List<DSSP_Bridge> bridges = new List<DSSP_Bridge>();
 
+		//TODO: Improve this to avoid expensive N^2 loop -> use neighbor search
 		for (int i = 1; i < allRes.Count - 4; i++) {
 			for (int j = i + 3; j < allRes.Count; j++) {
 				DSSP_Bridge.BridgeType type = residueTestBridge(j, i, allRes, idChains, hbonds);
@@ -442,7 +486,8 @@ public class DSSP {
 	                                       List<int> idChains,
 	                                       List<bool> toSkip,
 	                                       Dictionary<UnityMolResidue, HbondKS> hbonds,
-	                                       List<DSSP_Bridge.SSType> secondary) {
+	                                       List<DSSP_Bridge.SSType> secondary,
+	                                       int idExtra, UnityMolSelection sel) {
 
 
 		List< List<DSSP_Bridge.helixFlag> > helixFlags = new List< List<DSSP_Bridge.helixFlag>>();
@@ -525,7 +570,7 @@ public class DSSP {
 			}
 		}
 
-		List<bool> isBend = computeBends(allRes, idChains, toSkip);
+		List<bool> isBend = computeBends(allRes, idChains, toSkip, idExtra, sel);
 
 		for (int i = 1; i < allRes.Count - 1; i++) {
 			if (secondary[i] == DSSP_Bridge.SSType.SS_LOOP && !toSkip[i]) {
@@ -552,24 +597,43 @@ public class DSSP {
 	 */
 	static List<bool> computeBends(List<UnityMolResidue> allRes,
 	                               List<int> idChains,
-	                               List<bool> toSkip) {
+	                               List<bool> toSkip,
+	                               int idExtra, UnityMolSelection sel) {
 
 		List<bool> result = new List<bool>(allRes.Count);
 		for (int i = 0; i < allRes.Count; i++) {
 			result.Add(false);
 		}
 
+		UnityMolStructure s = allRes[0].chain.model.structure;
+
 		for (int i = 2; i < allRes.Count - 2; i++) {
 			if (idChains[i - 2] == idChains[i + 2] && !toSkip[i - 2] && !toSkip[i] && !toSkip[i + 2]) {
-				Vector3 prevCA = allRes[i - 2].atoms["CA"].position;
-				Vector3 curCA = allRes[i].atoms["CA"].position;
-				Vector3 nextCA = allRes[i + 2].atoms["CA"].position;
+				if (idExtra != -1) {
+					int iida = sel.atomToIdInSel[allRes[i - 2].atoms["CA"]];
+					Vector3 prevCA = sel.extractTrajFramePositions[idExtra][iida];
+					iida = sel.atomToIdInSel[allRes[i].atoms["CA"]];
+					Vector3 curCA = sel.extractTrajFramePositions[idExtra][iida];
+					iida = sel.atomToIdInSel[allRes[i + 2].atoms["CA"]];
+					Vector3 nextCA = sel.extractTrajFramePositions[idExtra][iida];
 
-				Vector3 uPrime = prevCA - curCA;
-				Vector3 vPrime = curCA - nextCA;
-				float cosAngle = Vector3.Dot(uPrime, vPrime) / Mathf.Sqrt( Vector3.Dot(uPrime, uPrime) * Vector3.Dot(vPrime, vPrime));
-				float kappa = Mathf.Acos( Mathf.Clamp(cosAngle, -1.0f, 1.0f));
-				result[i] = kappa > (70.0f * (Mathf.PI / 180.0f));
+					Vector3 uPrime = prevCA - curCA;
+					Vector3 vPrime = curCA - nextCA;
+					float cosAngle = Vector3.Dot(uPrime, vPrime) / Mathf.Sqrt( Vector3.Dot(uPrime, uPrime) * Vector3.Dot(vPrime, vPrime));
+					float kappa = Mathf.Acos( Mathf.Clamp(cosAngle, -1.0f, 1.0f));
+					result[i] = kappa > (70.0f * (Mathf.PI / 180.0f));
+				}
+				else {
+					Vector3 prevCA = allRes[i - 2].atoms["CA"].position;
+					Vector3 curCA = allRes[i].atoms["CA"].position;
+					Vector3 nextCA = allRes[i + 2].atoms["CA"].position;
+
+					Vector3 uPrime = prevCA - curCA;
+					Vector3 vPrime = curCA - nextCA;
+					float cosAngle = Vector3.Dot(uPrime, vPrime) / Mathf.Sqrt( Vector3.Dot(uPrime, uPrime) * Vector3.Dot(vPrime, vPrime));
+					float kappa = Mathf.Acos( Mathf.Clamp(cosAngle, -1.0f, 1.0f));
+					result[i] = kappa > (70.0f * (Mathf.PI / 180.0f));
+				}
 			}
 		}
 		return result;
@@ -580,9 +644,6 @@ public class DSSP {
 		public UnityMolResidue r2;
 		public float e;
 	}
-
-
-
 
 }
 

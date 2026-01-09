@@ -1,20 +1,18 @@
-/*
+﻿/*
     ================================================================================
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -54,12 +38,13 @@ using System;
 using System.Xml.Linq;
 using System.Linq;
 using System.Globalization;
+using Unity.Mathematics;
 
 namespace UMol {
 public class FieldLinesRepresentation: AtomRepresentation {
 
     public Dictionary <string, List<Vector3>> linesPositions;
-    public Int2[] meshVertIds;
+    public int2[] meshVertIds;
     public FieldLinesReader reader;
     public GameObject goFL;
     public float magThreshold = 1.8f;
@@ -69,22 +54,14 @@ public class FieldLinesRepresentation: AtomRepresentation {
     public Color endColor = Color.white;
     public float lengthLine = 0.2f;//Length of the line in the shader
     public float speedLine = 1.0f;
+    public Material flMat;
 
     public FieldLinesRepresentation(string structName, UnityMolSelection sel, FieldLinesReader r) {
         colorationType = colorType.full;
 
         selection = sel;
 
-        GameObject loadedMolGO = UnityMolMain.getRepresentationParent();
-
-        representationParent = loadedMolGO.transform.Find(structName);
-        if (representationParent == null) {
-            representationParent = (new GameObject(structName).transform);
-            representationParent.parent = loadedMolGO.transform;
-            representationParent.localPosition = Vector3.zero;
-            representationParent.localRotation = Quaternion.identity;
-            representationParent.localScale = Vector3.one;
-        }
+        representationParent = UnityMolMain.getRepStructureParent(structName).transform;
 
         GameObject newRep = new GameObject("FieldLinesRepresentation");
         newRep.transform.parent = representationParent;
@@ -97,9 +74,9 @@ public class FieldLinesRepresentation: AtomRepresentation {
             if (sel.structures[0].dxr != null) {
                 Debug.LogWarning("No fieldlines computed or loaded. Computing fieldlines using dx map...");
 
-                reader = FieldLinesComputation.computeFieldlinesToFLReader(sel.structures[0].dxr, nbIter, magThreshold);
+                reader = FieldLinesReader.ComputeFieldlinesToFlReader(sel.structures[0].dxr, nbIter, magThreshold);
 
-                // API.APIPython.computeFieldlines(sel.structures[0].uniqueName, 1.8f);
+                // API.APIPython.computeFieldlines(sel.structures[0].name, 1.8f);
                 // throw new Exception("No fieldlines computed or loaded");
                 // return;
             }
@@ -110,7 +87,7 @@ public class FieldLinesRepresentation: AtomRepresentation {
                 // return;
             }
         }
-        linesPositions = reader.linesPositions;
+        linesPositions = reader.LinesPositions;
 
         DisplayFieldlines (startColor, endColor, newRep.transform);
 
@@ -118,7 +95,7 @@ public class FieldLinesRepresentation: AtomRepresentation {
         newRep.transform.localRotation = Quaternion.identity;
         newRep.transform.localScale = Vector3.one;
 
-        nbAtoms = sel.Count;
+        nbAtoms = sel.atoms.Count;
     }
 
     public void recompute(float newMag, int ite = 100) {
@@ -130,7 +107,7 @@ public class FieldLinesRepresentation: AtomRepresentation {
                 nbIter = ite;
                 magThreshold = newMag;
 
-                reader = FieldLinesComputation.computeFieldlinesToFLReader(selection.structures[0].dxr, nbIter, magThreshold);
+                reader = FieldLinesReader.ComputeFieldlinesToFlReader(selection.structures[0].dxr, nbIter, magThreshold);
 
             }
             else {
@@ -145,6 +122,7 @@ public class FieldLinesRepresentation: AtomRepresentation {
 
         GameObject newRep = null;
         if (goFL != null) {
+            GameObject.Destroy(goFL.GetComponent<MeshFilter>().sharedMesh);
             newRep = goFL.transform.parent.gameObject;
             GameObject.Destroy(goFL);
         }
@@ -154,7 +132,7 @@ public class FieldLinesRepresentation: AtomRepresentation {
         }
 
 
-        linesPositions = reader.linesPositions;
+        linesPositions = reader.LinesPositions;
 
         DisplayFieldlines (startColor, endColor, newRep.transform);
 
@@ -166,11 +144,10 @@ public class FieldLinesRepresentation: AtomRepresentation {
 
     public void DisplayFieldlines(Color c1, Color c2, Transform repParent, bool randomOffset = true) {
 
-        // Material mat = new Material (Shader.Find ("Particles/Standard Unlit"));
-        // Material mat = new Material (Shader.Find ("Custom/SurfaceVertexColor"));
-        Material mat = new Material (Shader.Find ("Custom/FieldlineAnimation"));
+        if(flMat == null)
+            flMat = new Material (Shader.Find ("Custom/FieldlineAnimation"));
 
-        meshVertIds = new Int2[linesPositions.Count];
+        meshVertIds = new int2[linesPositions.Count];
 
         Mesh nmesh = new Mesh();
         nmesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -185,7 +162,7 @@ public class FieldLinesRepresentation: AtomRepresentation {
         line.transform.localScale = Vector3.one;
         line.transform.localRotation = Quaternion.identity;
 
-        mr.material = mat;
+        mr.sharedMaterial = flMat;
 
         int totalVert = 0;
         int totalTri = 0;
@@ -224,7 +201,7 @@ public class FieldLinesRepresentation: AtomRepresentation {
             s.Normalize();
             norm.Normalize();
 
-            Int2 mId;
+            int2 mId;
             mId.x = vOffset;
             mId.y = traj.Count * 4;
             meshVertIds[cptL] = mId;
@@ -424,7 +401,7 @@ public class FieldLinesRepresentation: AtomRepresentation {
         nmesh.uv = uv;
         nmesh.uv2 = uv2;
 
-        mf.mesh = nmesh;
+        mf.sharedMesh = nmesh;
 
     }
 
@@ -508,232 +485,12 @@ public class FieldLinesRepresentation: AtomRepresentation {
 
         m.vertices = verts;
     }
-    public override void Clean(){}
-
-    // Mesh computeMeshLine(List<Vector3> traj, float offset, ) {
-    //     // Mesh m = new Mesh();
-
-    //     //Add the first 4 vertices
-    //     Vector3 norm = Vector3.Cross(traj[0], traj[1]);
-    //     Vector3 s = Vector3.Cross(norm, traj[1] - traj[0]);
-    //     s.Normalize();
-    //     norm.Normalize();
-
-    //     vertices[0] = traj[0] - (s * (lineWidth / 2)) - (norm * (lineWidth / 2));
-    //     vertices[1] = traj[0] + (s * (lineWidth / 2)) - (norm * (lineWidth / 2));
-    //     vertices[2] = traj[0] - (s * (lineWidth / 2)) + (norm * (lineWidth / 2));
-    //     vertices[3] = traj[0] + (s * (lineWidth / 2)) + (norm * (lineWidth / 2));
-
-    //     uv[0] = Vector2.zero;
-    //     uv[1] = Vector2.zero;
-    //     uv[2] = Vector2.zero;
-    //     uv[3] = Vector2.zero;
-
-    //     uv2[0] = Vector2.one * offset;
-    //     uv2[1] = Vector2.one * offset;
-    //     uv2[2] = Vector2.one * offset;
-    //     uv2[3] = Vector2.one * offset;
-
-    //     colors[0] = startColor;
-    //     colors[1] = startColor;
-    //     colors[2] = startColor;
-    //     colors[3] = startColor;
-
-    //     triangles[0] = 1;
-    //     triangles[1] = 0;
-    //     triangles[2] = 2;
-
-    //     triangles[3] = 1;
-    //     triangles[4] = 2;
-    //     triangles[5] = 3;
-
-    //     int idV = 4;
-    //     int idT = 6;
-    //     for (int p = 1; p < traj.Count - 1; p++) {
-    //         Vector3 cur = traj[p];
-    //         Vector3 next = traj[p + 1];
-
-    //         Vector3 normal = Vector3.Cross(cur, next);
-    //         Vector3 side = Vector3.Cross(normal, next - cur);
-    //         side.Normalize();
-    //         normal.Normalize();
-
-    //         Vector3 botLef = cur - (side * (lineWidth / 2)) - (normal * (lineWidth / 2));
-    //         Vector3 botRig = cur + (side * (lineWidth / 2)) - (normal * (lineWidth / 2));
-    //         Vector3 topLef = cur - (side * (lineWidth / 2)) + (normal * (lineWidth / 2));
-    //         Vector3 topRig = cur + (side * (lineWidth / 2)) + (normal * (lineWidth / 2));
-
-
-    //         vertices[idV + 0] = botLef;
-    //         vertices[idV + 1] = botRig;
-    //         vertices[idV + 2] = topLef;
-    //         vertices[idV + 3] = topRig;
-
-    //         float l = p / (float)traj.Count;
-
-    //         uv[idV + 0] = Vector2.one * l;
-    //         uv[idV + 1] = Vector2.one * l;
-    //         uv[idV + 2] = Vector2.one * l;
-    //         uv[idV + 3] = Vector2.one * l;
-
-    //         uv2[idV + 0] = Vector2.one * offset;
-    //         uv2[idV + 1] = Vector2.one * offset;
-    //         uv2[idV + 2] = Vector2.one * offset;
-    //         uv2[idV + 3] = Vector2.one * offset;
-
-    //         Color col = Color.Lerp(startColor, endColor, p / (float) traj.Count);
-    //         colors[idV + 0] = col;
-    //         colors[idV + 1] = col;
-    //         colors[idV + 2] = col;
-    //         colors[idV + 3] = col;
-
-
-    //         triangles[idT + 0] = idV - 4;
-    //         triangles[idT + 1] = idV - 3;
-    //         triangles[idT + 2] = idV + 1;
-
-    //         triangles[idT + 3] = idV - 4;
-    //         triangles[idT + 4] = idV + 1;
-    //         triangles[idT + 5] = idV;
-
-    //         triangles[idT + 6] = idV - 2;
-    //         triangles[idT + 7] = idV - 4;
-    //         triangles[idT + 8] = idV;
-
-    //         triangles[idT + 9] = idV - 2;
-    //         triangles[idT + 10] = idV;
-    //         triangles[idT + 11] = idV + 2;
-
-    //         triangles[idT + 12] = idV - 1;
-    //         triangles[idT + 13] = idV - 2;
-    //         triangles[idT + 14] = idV + 2;
-
-    //         triangles[idT + 15] = idV - 1;
-    //         triangles[idT + 16] = idV + 2;
-    //         triangles[idT + 17] = idV + 3;
-
-    //         triangles[idT + 18] = idV - 3;
-    //         triangles[idT + 19] = idV - 1;
-    //         triangles[idT + 20] = idV + 3;
-
-    //         triangles[idT + 21] = idV - 3;
-    //         triangles[idT + 22] = idV + 3;
-    //         triangles[idT + 23] = idV + 1;
-
-    //         idT += 24;
-
-    //         idV += 4;
-
-    //     }
-
-
-    //     int N = traj.Count;
-    //     //Add the last 4 vertices
-    //     norm = Vector3.Cross(traj[N - 2], traj[N - 1]);
-    //     s = Vector3.Cross(norm, traj[N - 1] - traj[N - 2]);
-    //     s.Normalize();
-    //     norm.Normalize();
-
-    //     vertices[idV + 0] = traj[N - 1] - (s * (lineWidth / 2)) - (norm * (lineWidth / 2));
-    //     vertices[idV + 1] = traj[N - 1] + (s * (lineWidth / 2)) - (norm * (lineWidth / 2));
-    //     vertices[idV + 2] = traj[N - 1] - (s * (lineWidth / 2)) + (norm * (lineWidth / 2));
-    //     vertices[idV + 3] = traj[N - 1] + (s * (lineWidth / 2)) + (norm * (lineWidth / 2));
-
-    //     uv[idV + 0] = Vector2.one;
-    //     uv[idV + 1] = Vector2.one;
-    //     uv[idV + 2] = Vector2.one;
-    //     uv[idV + 3] = Vector2.one;
-
-    //     uv2[idV + 0] = Vector2.one * offset;
-    //     uv2[idV + 1] = Vector2.one * offset;
-    //     uv2[idV + 2] = Vector2.one * offset;
-    //     uv2[idV + 3] = Vector2.one * offset;
-
-    //     colors[idV + 0] = endColor;
-    //     colors[idV + 1] = endColor;
-    //     colors[idV + 2] = endColor;
-    //     colors[idV + 3] = endColor;
-
-    //     triangles[idT + 0] = idV - 4;
-    //     triangles[idT + 1] = idV - 3;
-    //     triangles[idT + 2] = idV + 1;
-
-    //     triangles[idT + 3] = idV - 4;
-    //     triangles[idT + 4] = idV + 1;
-    //     triangles[idT + 5] = idV;
-
-    //     triangles[idT + 6] = idV - 2;
-    //     triangles[idT + 7] = idV - 4;
-    //     triangles[idT + 8] = idV;
-
-    //     triangles[idT + 9] = idV - 2;
-    //     triangles[idT + 10] = idV;
-    //     triangles[idT + 11] = idV + 2;
-
-    //     triangles[idT + 12] = idV - 1;
-    //     triangles[idT + 13] = idV - 2;
-    //     triangles[idT + 14] = idV + 2;
-
-    //     triangles[idT + 15] = idV - 1;
-    //     triangles[idT + 16] = idV + 2;
-    //     triangles[idT + 17] = idV + 3;
-
-    //     triangles[idT + 18] = idV - 3;
-    //     triangles[idT + 19] = idV - 1;
-    //     triangles[idT + 20] = idV + 3;
-
-    //     triangles[idT + 21] = idV - 3;
-    //     triangles[idT + 22] = idV + 3;
-    //     triangles[idT + 23] = idV + 1;
-
-
-    //     idT += 24;
-
-    //     triangles[idT + 0] = idV;
-    //     triangles[idT + 1] = idV + 1;
-    //     triangles[idT + 2] = idV + 2;
-
-    //     triangles[idT + 3] = idV + 1;
-    //     triangles[idT + 4] = idV + 3;
-    //     triangles[idT + 5] = idV + 2;
-
-
-    //     m.vertices = vertices;
-    //     m.normals = normals;
-    //     m.triangles = triangles;
-    //     m.colors32 = colors;
-    //     m.uv = uv;
-    //     m.uv2 = uv2;
-
-    //     return m;
-    // }
-
-    //Implementation using line renderer = slow & scale is an issue
-    // public void DisplayFieldlinesStatic(Color c1, Color c2, Transform repParent){
-
-    //  Material mat = new Material (Shader.Find ("Particles/Standard Unlit"));
-
-    //  float alpha = 1.0f;
-    //  Gradient gradient = new Gradient ();
-    //  gradient.SetKeys (
-    //      new GradientColorKey[] { new GradientColorKey (c1, 0.0f), new GradientColorKey (c2, 1.0f) },
-    //      new GradientAlphaKey[] { new GradientAlphaKey (alpha, 1.0f), new GradientAlphaKey (alpha, 1.0f) }
-    //  );
-
-    //  foreach (KeyValuePair<string, List<Vector3>> sl in linesPositions) {
-    //      GameObject lines = new GameObject ("Fieldline" + sl.Key);
-    //      lines.AddComponent<LineRenderer> ();
-    //      lines.transform.SetParent (repParent);
-    //      LineRenderer lineRenderer = lines.GetComponent<LineRenderer> ();
-    //      lineRenderer.useWorldSpace = false;
-    //      lineRenderer.material = mat;
-    //      lineRenderer.widthMultiplier = 0.2f;
-    //      lineRenderer.positionCount = sl.Value.Count;
-
-    //      lineRenderer.colorGradient = gradient;
-    //      lineRenderer.SetPositions (sl.Value.ToArray());
-    //      allLinesRenderer.Add (lineRenderer);
-    //  }
-    // }
+    public override void Clean(){
+        if(flMat != null){
+            GameObject.Destroy(flMat);
+            flMat = null;
+        }
+        goFL = null;
+    }
 }
 }

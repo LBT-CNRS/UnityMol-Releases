@@ -13,10 +13,6 @@ struct Ray {
     float3 direction ;
 };
 
-struct Quadric{
-	float3 s1;
-	float3 s2;
-};
 
 float4x4 mat_inverse(float4x4 A)
 {
@@ -85,8 +81,7 @@ bool cutoff_plane (float3 M, float3 cutoff, float3 x3) {
     float l = sum(x3  *  (M - cutoff));
     if (l<0.0)
         return true;
-    else
-        return false;
+    return false;
 }
 
 
@@ -109,8 +104,8 @@ float3 isect_surf(Ray r, float4x4 matrix_coef) {
     return r.origin.xyz + t1 * r.direction.xyz ;
 }
 
-Quadric isect_surf_ball(Ray r, float4x4 matrix_coef) {
-	Quadric q;
+float3 isect_surf_ball(Ray r, float4x4 matrix_coef) {
+
 	float4 direction = float4(r.direction, 0.0);
 	float4 origin = float4(r.origin, 1.0);
 	
@@ -128,9 +123,9 @@ Quadric isect_surf_ball(Ray r, float4x4 matrix_coef) {
   float t = t1;
 	// float t2 = (-b + sqDelta) / a  ;	  
 	// float t = (t1 < t2) ? t1 : t2;
-	q.s1 = r.origin + t * r.direction ;
-	q.s2 = q.s1;
-	return q;
+	// q.s1 = r.origin + t * r.direction ;
+	// q.s2 = q.s1;
+	return r.origin + t * r.direction;
 }
 
 
@@ -173,7 +168,7 @@ float4 calculate_focus(float4 pos1, float4 pos2,
     float4 c = a + b  *  e3sq / shrinkfactor;
 
     float4 d = pos1 - pos2;
-    d+=0.000000000001;//don't divide by 0
+    d+=1e-7;//don't divide by 0
 
     return c / (2.0  *  d);
 

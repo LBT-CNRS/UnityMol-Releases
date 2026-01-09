@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,53 +27,41 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using FFmpegOut;
+using UnityEngine.Rendering.PostProcessing;
 
-
+namespace UMol {
 public static class RecordManager {
 
     public static bool busy = false;
 
     public static Camera screenshotCam;
+    public static Camera uiCam;
 
     public static void takeScreenshot(string filePath, int resolutionWidth = 1280, int resolutionHeight = 720, bool transparentBG = false) {
         if (busy) {
             Debug.LogError("Already recording");
             return;
         }
-        if(screenshotCam == null){
+        if (screenshotCam == null) {
             createScreenShotCamera();
         }
-        try{
+        try {
             ScreenShot sc = screenshotCam.GetComponent<ScreenShot>();
-            if(transparentBG){
+            if (transparentBG) {
                 sc.takeTransparentScreenshot(resolutionWidth, resolutionHeight, filePath);
             }
-            else{
+            else {
                 sc.takeScreenshot(resolutionWidth, resolutionHeight, filePath);
             }
         }
-        catch(System.Exception e) {
-            Debug.LogError("Error recording in file '" + filePath + "' "+e);
+        catch (System.Exception e) {
+            Debug.LogError("Error recording in file '" + filePath + "' " + e);
             busy = false;
             return;
         }
@@ -87,16 +73,16 @@ public static class RecordManager {
             Debug.LogError("Already recording");
             return;
         }
-        if(screenshotCam == null){
+        if (screenshotCam == null) {
             createScreenShotCamera();
         }
         busy = true;
-        try{
+        try {
             ScreenShot sc = screenshotCam.GetComponent<ScreenShot>();
             sc.startScreenshotSequence(resolutionWidth, resolutionHeight, folderPath, transparentBG);
         }
-        catch{
-            Debug.LogError("Failed to start screenshot sequence for folder '"+folderPath+"'");
+        catch {
+            Debug.LogError("Failed to start screenshot sequence for folder '" + folderPath + "'");
         }
 
     }
@@ -112,12 +98,12 @@ public static class RecordManager {
 
     }
 
-    public static void startRecordingVideo(string filePath, int resolutionWidth = 1280, int resolutionHeight = 720, int frameRate = 30) {
+    public static void startRecordingVideo(string filePath, int resolutionWidth = 1280, int resolutionHeight = 720, int frameRate = 30, bool pause = false) {
         if (busy) {
             Debug.LogError("Already recording");
             return;
         }
-        if(screenshotCam == null){
+        if (screenshotCam == null) {
             createScreenShotCamera();
         }
         try {
@@ -130,7 +116,10 @@ public static class RecordManager {
             else {
                 Debug.LogWarning("Resolution or frameRate should be > 0");
             }
-            recorder.StartRecording(filePath);
+
+            setCanvasCamera();
+
+            recorder.StartRecording(filePath, pause);
         }
         catch {
             Debug.LogError("Error recording in file '" + filePath + "'");
@@ -153,32 +142,110 @@ public static class RecordManager {
             recorder._width = 1280;
             recorder._height = 720;
             recorder._frameRate = 30;
+
+            restoreCanvasCamera();
+
         }
         catch {
             Debug.LogError("Failed to stop recording");
         }
         busy = false;
     }
-    static void createScreenShotCamera(){
+
+    public static void pauseRecordingVideo() {
+        if (!busy) {
+            Debug.LogWarning("Not recording");
+            return;
+        }
+        CameraRecord recorder = screenshotCam.GetComponent<CameraRecord>();
+        recorder.PauseRecording();
+    }
+
+    public static void unpauseRecordingVideo() {
+        if (!busy) {
+            Debug.LogWarning("Not recording");
+            return;
+        }
+        CameraRecord recorder = screenshotCam.GetComponent<CameraRecord>();
+        recorder.UnpauseRecording();
+    }
+
+    private static void setCanvasCamera() {
+        //Set the 2D canvas camera to the recording camera
+        var allA = UnityMolMain.getAnnotationManager().allAnnotations;
+        foreach (var a in allA) {
+            if (a.GetType().ToString() == "UMol.Annotate2D") {
+                Canvas c = (a as Annotate2D).screenspaceCan;
+                c.worldCamera = screenshotCam;
+                break;
+            }
+        }
+    }
+
+    private static void restoreCanvasCamera() {
+
+        //Set the 2D canvas camera to the main camera
+        var allA = UnityMolMain.getAnnotationManager().allAnnotations;
+        foreach (var a in allA) {
+            if (a.GetType().ToString() == "UMol.Annotate2D") {
+                Canvas c = (a as Annotate2D).screenspaceCan;
+                c.worldCamera = Camera.main;
+                break;
+            }
+        }
+    }
+
+    static void createScreenShotCamera() {
+
         Transform camPar = Camera.main.transform;
         GameObject camGo = new GameObject("ScreenShotCamera");
         camGo.transform.parent = camPar;
         camGo.transform.localPosition = Vector3.zero;
         camGo.transform.localRotation = Quaternion.identity;
 
+
+
         screenshotCam = camGo.AddComponent<Camera>();
-        // screenshotCam.AddComponent<Smaa.SMAA>();
         // screenshotCam.CopyFrom(Camera.main);
         screenshotCam.nearClipPlane = Camera.main.nearClipPlane;
         screenshotCam.farClipPlane = Camera.main.farClipPlane;
         screenshotCam.stereoTargetEye = StereoTargetEyeMask.None;
-        screenshotCam.targetDisplay = 3;
+        // screenshotCam.targetDisplay = 3;
         screenshotCam.enabled = false;
-
-        camGo.AddComponent<ScreenShot>();
-        camGo.AddComponent<CameraRecord>();
+        screenshotCam.cullingMask = ~(1 << LayerMask.NameToLayer("3DUI"));
 
 
+
+        if (!UnityMolMain.inVR()) {
+            var ppl = camGo.AddComponent<PostProcessLayer>();
+            var mainppl = camPar.gameObject.GetComponent<PostProcessLayer>();
+            // var mainppvol = camPar.gameObject.GetComponent<PostProcessVolume>();
+            var outleu = camPar.gameObject.GetComponent<OutlineEffectUtil>();
+            ppl.Init(outleu.postProcessResources);
+
+            ppl.volumeLayer = mainppl.volumeLayer;
+            ppl.volumeTrigger = camGo.transform;
+        }
+
+        if (uiCam == null) {
+            GameObject uicamGo = new GameObject("RecordUICamera");
+            uicamGo.transform.parent = camGo.transform;
+            uicamGo.transform.localPosition = Vector3.zero;
+            uicamGo.transform.localRotation = Quaternion.identity;
+
+            uiCam = uicamGo.AddComponent<Camera>();
+            uiCam.nearClipPlane = screenshotCam.nearClipPlane;
+            uiCam.farClipPlane = screenshotCam.farClipPlane;
+            uiCam.stereoTargetEye = StereoTargetEyeMask.None;
+            // uiCam.targetDisplay = 3;
+            uiCam.enabled = false;
+            uiCam.clearFlags = CameraClearFlags.Depth;
+            uiCam.cullingMask = 1 << LayerMask.NameToLayer("3DUI");
+            uiCam.depth = -2;
+
+        }
+        camGo.AddComponent<ScreenShot>().uiCam = uiCam;
+        camGo.AddComponent<CameraRecord>().uiCam = uiCam;
     }
-
+}
 }

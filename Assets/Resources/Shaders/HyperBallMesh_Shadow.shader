@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 Shader "UMol/Ball HyperBalls Shadow Merged" {
 
 
@@ -24,6 +26,8 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
         _AOcoords ("AO coordinates in the atlas",Vector) = (0,0,0,0)
 
 	}
+
+
 	CGINCLUDE
 
 	#include "UnityCG.cginc"
@@ -34,10 +38,13 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
 	uniform sampler2D _MainTex;
 	uniform	float _Brightness,_NBParam,_NBAtoms;
 
+
+
 	ENDCG
 
 	SubShader {
 	    Tags { "DisableBatching" = "True" "RenderType"="Opaque"}
+        LOD 100
 
 		Pass {
 			// Lighting On
@@ -62,9 +69,9 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
             // uniform float4 _LightColor0;
             // uniform sampler2D _ShadowMapTexture;
 
-        float _UseFog;
-		float _FogStart;
-		float _FogDensity;
+            float _UseFog;
+    		float _FogStart;
+    		float _FogDensity;
 
             float _AOStrength;
             float _AOTexwidth;
@@ -72,7 +79,9 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
             float _AORes;
             sampler2D _AOTex;
 
-
+            struct shadowInput {
+                SHADOW_COORDS(0)
+            };
 
 			// vertex input: position
 			struct appdata {
@@ -99,11 +108,10 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
                 float3 spherePos        : TEXCOORD11;
 			};
 
-			struct fragment_out 
-					{
+			struct fragment_out  {
 					  float4 color : SV_Target;
 					  float depth  : SV_Depth;
-				};
+			};
 
 
 
@@ -116,19 +124,16 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
 				float NBParamm1 = _NBParam - 1;
 				v2p o; // Shader output
 
-				float vertexid = v.uv_vetexids[0];
-				float x_texfetch = vertexid/(_NBAtoms-1);
+				float vertexid = v.uv_vetexids.x;
+				float x_texfetch = v.uv_vetexids.y;//vertexid/(_NBAtoms-1);
 
                 float4 sphereposition = tex2Dlod(_MainTex,float4(x_texfetch,0,0,0));
 
                 half visibility = tex2Dlod(_MainTex,float4(x_texfetch,7/NBParamm1,0,0)).x;
 
-
-
                 float4 baseposition = tex2Dlod(_MainTex,float4(x_texfetch,4/NBParamm1,0,0));
 
                 float4 equation = tex2Dlod(_MainTex,float4(x_texfetch,6/NBParamm1,0,0));
-
 
                 float scale = tex2Dlod(_MainTex,float4(x_texfetch,8/NBParamm1,0,0)).x;
 
@@ -209,40 +214,75 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
 			 
 				Ray ray = primary_ray(i.i_near,i.i_far) ;
 
-			    Quadric q = isect_surf_ball(ray, mat);
-			    float3 M = q.s1;
+			    float3 M = isect_surf_ball(ray, mat);
 			    float4 clipHit = UnityObjectToClipPos(float4(M,1));
 			    OUT.depth = update_z_buffer(clipHit);
 				
 				//Transform normal to model space to view-space
 				float4 M1 = float4(M,1.0);
-				float4 M2 = mul(mat,M1);
+                float4 M2 = mul(mat,M1);
 
-				float3 normal = normalize(mul(ModelViewIT,M2).xyz);
+                float3 worldPos = mul(unity_ObjectToWorld, M1);
+                float4 clipPos = UnityWorldToClipPos(float4(worldPos, 1.0));
+
+                // stuff for directional shadow receiving
+            #if defined (SHADOWS_SCREEN)
+                // setup shadow struct for screen space shadows
+                shadowInput shadowIN;
+            #if defined(UNITY_NO_SCREENSPACE_SHADOWS)
+                // mobile directional shadow
+                shadowIN._ShadowCoord = mul(unity_WorldToShadow[0], float4(worldPos, 1.0));
+            #else
+                // screen space directional shadow
+                shadowIN._ShadowCoord = ComputeScreenPos(clipPos);
+            #endif // UNITY_NO_SCREENSPACE_SHADOWS
+            #else
+                // no shadow, or no directional shadow
+                float shadowIN = 0;
+            #endif // SHADOWS_SCREEN
+
+                // basic lighting
+                half3 worldNormal = UnityObjectToWorldNormal(M2);
+                half3 worldLightDir = UnityWorldSpaceLightDir(worldPos);
+                half ndotl = saturate(dot(worldNormal, worldLightDir));
+
+                // get shadow, attenuation, and cookie
+                UNITY_LIGHT_ATTENUATION(atten, shadowIN, worldPos);
+
+                // per pixel lighting
+                half3 lighting = _LightColor0 * ndotl * atten;
+
+            #if defined(UNITY_SHOULD_SAMPLE_SH)
+                // ambient lighting
+                half3 ambient = ShadeSH9(float4(worldNormal, 1));
+                lighting += ambient;
+
+            #if defined(VERTEXLIGHT_ON)
+                // "per vertex" non-important lights
+                half3 vertexLighting = Shade4PointLights(
+                unity_4LightPosX0, unity_4LightPosY0, unity_4LightPosZ0,
+                unity_LightColor[0].rgb, unity_LightColor[1].rgb, unity_LightColor[2].rgb, unity_LightColor[3].rgb,
+                unity_4LightAtten0, worldPos, worldNormal);
+
+                lighting += vertexLighting;
+            #endif // VERTEXLIGHT_ON
+            #endif // UNITY_SHOULD_SAMPLE_SH
+
+
+                float3 normal = normalize(mul(ModelViewIT, M2).xyz);//Eye space normal
 
 				//LitSPhere / MatCap
 				half2 vn = normal.xy;
 				
-			    float4 matcapLookup = tex2D(_MatCap, vn*0.5 + 0.5);    
+			    float4 matcapLookup = tex2D(_MatCap, vn*0.5 + 0.5);
 
-
-                float3 L = normalize( mul(UNITY_MATRIX_V,float4(normalize(_WorldSpaceLightPos0.xyz),0)));
-                float NdotL = saturate(dot(normal,L));
-                
-                float4 diffuseTerm = NdotL*_LightColor0;    
-
-				// half shadow = tex2Dproj( _ShadowMapTexture,i._ShadowCoord).x;
-				// half shadow = tex2Dproj( _ShadowMapTexture,UNITY_PROJ_COORD(i._ShadowCoord)).x;
-                half shadow = LIGHT_ATTENUATION(i);
-
-                float4 ambient = UNITY_LIGHTMODEL_AMBIENT *1.5;
                 float4 inColor = float4(i.color.xyz,1);
-                // inColor = lerp(inColor, _SelectedColor , i.selected*(_Time.y % 1.0));
-                OUT.color = (ambient + (diffuseTerm*shadow)) * inColor ;
 
-                if(_Shininess && shadow > 0.5){
-                    float specular = pow(max(dot(normal, L),0.0),_Shininess);
-                    OUT.color += specular*_SpecularColor;
+                OUT.color = float4(lighting, 1) * inColor;
+
+                if(_Shininess && atten > 0.5){
+                    float specular = pow( max(ndotl, 0.0), _Shininess);
+                    OUT.color += specular * _SpecularColor;
                 }
 
 				float aoterm = 1.0;
@@ -285,12 +325,9 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
 
 				OUT.color *= matcapLookup * 1.25 * _Brightness * aoterm;
 
-
-                // UNITY_APPLY_FOG(i.fogCoord, OUT.color);
-                // OUT.color.rgb = applyFog(OUT.color.rgb, mul(UNITY_MATRIX_M, M1), _Attenuation);
 				if(_UseFog){
 					// float fogFactor = smoothstep(_FogEnd, _FogStart, mul(UNITY_MATRIX_M, M1).z);		
-					float fogFactor = exp(_FogStart - mul(UNITY_MATRIX_M, M1).z  / max(0.0001, _FogDensity));
+					float fogFactor = exp(_FogStart - worldPos.z  / max(0.0001, _FogDensity));
 					OUT.color.rgb = lerp(unity_FogColor, OUT.color.rgb, saturate(fogFactor));
 				}
 
@@ -343,8 +380,8 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
 				float NBParamm1 = _NBParam - 1;
 				v2f o; // Shader output
 
-				float vertexid = v.uv_vetexids[0];
-				float x_texfetch = vertexid/(_NBAtoms-1);
+				float vertexid = v.uv_vetexids.x;
+				float x_texfetch = v.uv_vetexids.y;//vertexid/(_NBAtoms-1);
 
 
                 float4 sphereposition = tex2Dlod(_MainTex,float4(x_texfetch,0,0,0));
@@ -361,7 +398,6 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
 
 
                 float rayon =  scale * tex2Dlod(_MainTex,float4(x_texfetch,1/NBParamm1,0,0)).x;
-
 
 
 				o.visibility = (int)visibility;
@@ -429,7 +465,7 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
 				float4x4 ModelViewProj = UNITY_MATRIX_MVP;	// Matrix for screen coordinates
 				float4x4 ModelViewIT = UNITY_MATRIX_IT_MV; 
 
-				if(i.visibility!=1)
+				if(i.visibility != 1)
 					clip(-1);
 
 				//create matrix for the quadric equation of the sphere 
@@ -437,8 +473,7 @@ Shader "UMol/Ball HyperBalls Shadow Merged" {
 			 
 				Ray ray = primary_ray(i.i_near,i.i_far) ;
 
-			    Quadric q = isect_surf_ball(ray, mat);
-			    float3 M = q.s1;
+			    float3 M = isect_surf_ball(ray, mat);
 			    float4 clipHit = UnityObjectToClipPos(float4(M,1));
 			    float depth = update_z_buffer(clipHit);
 

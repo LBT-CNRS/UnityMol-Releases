@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -82,39 +66,96 @@ public class UnityMolRepresentation {
 		savedArgs = listArgs;
 		selection = sel;
 
-		Dictionary<UnityMolStructure, UnityMolSelection> byStruc = cutSelectionByStructure(sel);
 
-		foreach (UnityMolStructure s in byStruc.Keys) {
-			SubRepresentation sr;
-			sr.subSelection = byStruc[s];
+		if (selection.extractTrajFrame) {
+			bool changedSSInfo = false;
+			List<UnityMolResidue.secondaryStructureType> savedSSInfo = null;
 
-			sr.atomRep = null;
-			sr.bondRep = null;
-			sr.atomRepManager = null;
-			sr.bondRepManager = null;
-			sr.representationParent = null;
-			sr.atomRepresentationTransform = null;
-			sr.bondRepresentationTransform = null;
-
-
-			ShowAtoms(ref sr, listArgs);
-			ShowBonds(ref sr, listArgs);
-
-			if (sr.atomRep != null) {
-				sr.representationParent = sr.atomRep.representationParent;
-				sr.atomRepresentationTransform = sr.atomRep.representationTransform;
-				nbAtomsInRep += sr.atomRep.nbAtoms;
+			if (selection.structures[0].updateSSWithTraj) {
+				//Save current SS info
+				savedSSInfo = selection.structures[0].ssInfoToList();
 			}
-			if (sr.bondRep != null) {
-				sr.bondRepresentationTransform = sr.bondRep.representationTransform;
-				if (sr.representationParent == null) {
-					sr.representationParent = sr.bondRep.representationParent;
+			for (int id = 0; id < selection.extractTrajFrameIds.Count; id++) {
+				if (selection.structures[0].updateSSWithTraj) { //Needs to update the secondary structure
+					DSSP.assignSS_DSSP(selection.structures[0], false, id, selection);
+					changedSSInfo = true;
 				}
-				nbBondsInRep += sr.bondRep.nbBonds;
+				SubRepresentation sr;
+				sr.subSelection = sel;
+
+				sr.atomRep = null;
+				sr.bondRep = null;
+				sr.atomRepManager = null;
+				sr.bondRepManager = null;
+				sr.representationParent = null;
+				sr.atomRepresentationTransform = null;
+				sr.bondRepresentationTransform = null;
+				sr.idTrajExtract = id;
+
+				ShowAtoms(ref sr, listArgs);
+				ShowBonds(ref sr, listArgs);
+
+				if (sr.atomRep != null) {
+					sr.representationParent = sr.atomRep.representationParent;
+					sr.atomRepresentationTransform = sr.atomRep.representationTransform;
+					nbAtomsInRep += sr.atomRep.nbAtoms;
+				}
+				if (sr.bondRep != null) {
+					sr.bondRepresentationTransform = sr.bondRep.representationTransform;
+					if (sr.representationParent == null) {
+						sr.representationParent = sr.bondRep.representationParent;
+					}
+					nbBondsInRep += sr.bondRep.nbBonds;
+				}
+				subReps.Add(sr);
 			}
+			if (changedSSInfo) {
+				//Restore ss info
+				int idR = 0;
+				foreach (UnityMolChain c in selection.structures[0].currentModel.chains.Values) {
+					foreach (UnityMolResidue r in c.residues) {
+						r.secondaryStructure = savedSSInfo[idR];
+						idR++;
+					}
+				}
+			}
+		}
+		else {
+			Dictionary<UnityMolStructure, UnityMolSelection> byStruc = cutSelectionByStructure(sel);
+
+			foreach (UnityMolStructure s in byStruc.Keys) {
+				SubRepresentation sr;
+				sr.subSelection = byStruc[s];
+
+				sr.atomRep = null;
+				sr.bondRep = null;
+				sr.atomRepManager = null;
+				sr.bondRepManager = null;
+				sr.representationParent = null;
+				sr.atomRepresentationTransform = null;
+				sr.bondRepresentationTransform = null;
+				sr.idTrajExtract = -1;
 
 
-			subReps.Add(sr);
+				ShowAtoms(ref sr, listArgs);
+				ShowBonds(ref sr, listArgs);
+
+				if (sr.atomRep != null) {
+					sr.representationParent = sr.atomRep.representationParent;
+					sr.atomRepresentationTransform = sr.atomRep.representationTransform;
+					nbAtomsInRep += sr.atomRep.nbAtoms;
+				}
+				if (sr.bondRep != null) {
+					sr.bondRepresentationTransform = sr.bondRep.representationTransform;
+					if (sr.representationParent == null) {
+						sr.representationParent = sr.bondRep.representationParent;
+					}
+					nbBondsInRep += sr.bondRep.nbBonds;
+				}
+
+
+				subReps.Add(sr);
+			}
 		}
 
 		isEnabled = true;
@@ -200,7 +241,7 @@ public class UnityMolRepresentation {
 		sr.atomRep = null;
 		switch (repType.atomType) {
 		case AtomType.cartoon:
-			sr.atomRep = new CartoonRepresentation(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRep = new CartoonRepresentation(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.atomRepManager = new UnityMolCartoonManager();
 			sr.atomRepManager.Init(sr);
 			break;
@@ -210,45 +251,61 @@ public class UnityMolRepresentation {
 				bool AO = (bool)listArgs[1];
 				bool cutSurface = (bool)listArgs[2];
 				SurfMethod method = (SurfMethod) listArgs[3];
-				sr.atomRep = new SurfaceRepresentation(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, cutByChain, AO, cutSurface, method);
+				sr.atomRep = new SurfaceRepresentation(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, cutByChain, AO, cutSurface, method);
 			}
 			else if (listArgs.Length == 1) {
 				SurfMethod meth = (SurfMethod) listArgs[0];
-				sr.atomRep = new SurfaceRepresentation(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, method: meth);
+				sr.atomRep = new SurfaceRepresentation(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, method: meth);
 			}
 			else {
-				sr.atomRep = new SurfaceRepresentation(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+				sr.atomRep = new SurfaceRepresentation(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			}
 			sr.atomRepManager = new UnityMolSurfaceManager();
 			sr.atomRepManager.Init(sr);
 			break;
 		case AtomType.DXSurface:
-			DXReader dx = (DXReader)listArgs[0];
-
-			float iso = 0.0f;
-			if (listArgs[1] is double) {
-				double tmp = (double)listArgs[1];
-				iso = (float) tmp;
+			UnityMolStructureManager sm = UnityMolMain.getStructureManager();
+			UnityMolStructure s = sm.GetStructure((string)listArgs[0]);
+			if (s == null) {
+				Debug.LogError("Structure not found");
+				return;
 			}
-			else {
-				iso = (float)listArgs[1];
+			if (s.dxr == null) {
+				Debug.LogError("No map loaded for this structure");
+				return;
+			}
+			DXReader dx = s.dxr;
+
+			float iso = 10.0f;
+			if (listArgs.Length > 1) {
+				if (listArgs[1] is double) {
+					double tmp = (double)listArgs[1];
+					iso = (float) tmp;
+				}
+				else if (listArgs[1] is int) {
+					int tmp = (int)listArgs[1];
+					iso = (float) tmp;
+				}
+				else {
+					iso = (float)listArgs[1];
+				}
 			}
 			sr.atomRep = new DXSurfaceRepresentation(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, dx, iso);
 			sr.atomRepManager = new UnityMolSurfaceManager();//A Surface manager!
 			sr.atomRepManager.Init(sr);
 			break;
 		case AtomType.optihb:
-			sr.atomRep = new AtomRepresentationOptihb(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRep = new AtomRepresentationOptihb(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.atomRepManager = new UnityMolHBallMeshManager();
 			sr.atomRepManager.Init(sr);
 			break;
 		case AtomType.bondorder:
-			sr.atomRep = new AtomRepresentationBondOrder(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRep = new AtomRepresentationBondOrder(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.atomRepManager = new UnityMolAtomBondOrderManager();
 			sr.atomRepManager.Init(sr);
 			break;
 		case AtomType.sphere:
-			sr.atomRep = new AtomRepresentationSphere(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRep = new AtomRepresentationSphere(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.atomRepManager = new UnityMolSphereManager();
 			sr.atomRepManager.Init(sr);
 			break;
@@ -259,23 +316,50 @@ public class UnityMolRepresentation {
 			sr.atomRepManager.Init(sr);
 			break;
 		case AtomType.trace:
-			sr.atomRep = new AtomRepresentationTube(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRep = new AtomRepresentationTube(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.atomRepManager = new UnityMolTubeManager();
 			sr.atomRepManager.Init(sr);
 			break;
 		case AtomType.sugarribbons:
-			sr.atomRep = new AtomRepresentationSugarRibbons(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRep = new AtomRepresentationSugarRibbons(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.atomRepManager = new UnityMolSugarRibbonsManager();
 			sr.atomRepManager.Init(sr);
 			break;
+		case AtomType.sheherasade:
+			sr.atomRep = new SheherasadeRepresentation(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRepManager = new UnityMolSheherasadeManager();
+			sr.atomRepManager.Init(sr);
+			break;
 		case AtomType.ellipsoid:
-			sr.atomRep = new AtomEllipsoidRepresentation(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRep = new AtomEllipsoidRepresentation(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.atomRepManager = new UnityMolEllipsoidManager();
 			sr.atomRepManager.Init(sr);
 			break;
 		case AtomType.point:
-			sr.atomRep = new AtomRepresentationPoint(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.atomRep = new AtomRepresentationPoint(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.atomRepManager = new UnityMolAtomPointManager();
+			sr.atomRepManager.Init(sr);
+			break;
+		case AtomType.explosurf:
+			Vector3 symO = (Vector3)listArgs[0];
+			Vector3 symV = (Vector3)listArgs[1];
+			float sliceSize = 10.0f;
+			if (listArgs.Length > 2) {
+				if (listArgs[2] is double) {
+					double tmp = (double)listArgs[2];
+					sliceSize = (float) tmp;
+				}
+				else if (listArgs[2] is int) {
+					int tmp = (int)listArgs[2];
+					sliceSize = (float) tmp;
+				}
+				else {
+					sliceSize = (float)listArgs[2];
+				}
+			}
+
+			sr.atomRep = new ExplodedSurfaceRepresentation(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, symO, symV, sliceSize);
+			sr.atomRepManager = new UnityMolSurfaceManager();//A Surface manager!
 			sr.atomRepManager.Init(sr);
 			break;
 		case AtomType.noatom:
@@ -296,36 +380,37 @@ public class UnityMolRepresentation {
 		sr.bondRep = null;
 		switch (repType.bondType) {
 		case BondType.line:
-			sr.bondRep = new BondRepresentationLine(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.bondRep = new BondRepresentationLine(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.bondRepManager = new UnityMolBondLineManager();
 			sr.bondRepManager.Init(sr);
 			break;
 		case BondType.optihs:
-			sr.bondRep = new BondRepresentationOptihs(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.bondRep = new BondRepresentationOptihs(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.bondRepManager = new UnityMolHStickMeshManager();
+			((UnityMolHStickMeshManager)sr.bondRepManager).hbmm = (UnityMolHBallMeshManager)sr.atomRepManager;
 			sr.bondRepManager.Init(sr);
 			break;
 		case BondType.bondorder:
-			sr.bondRep = new BondRepresentationBondOrder(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+			sr.bondRep = new BondRepresentationBondOrder(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			sr.bondRepManager = new UnityMolBondBondOrderManager();
 			sr.bondRepManager.Init(sr);
 			break;
 		case BondType.hbond:
 			if (listArgs.Length == 1) {
-				sr.bondRep = new BondRepresentationHbonds(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, (bool)listArgs[0]);
+				sr.bondRep = new BondRepresentationHbonds(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, (bool)listArgs[0]);
 			}
 			else {
-				sr.bondRep = new BondRepresentationHbonds(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+				sr.bondRep = new BondRepresentationHbonds(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			}
 			sr.bondRepManager = new UnityMolHbondManager();
 			sr.bondRepManager.Init(sr);
 			break;
 		case BondType.hbondtube:
 			if (listArgs.Length == 1) {
-				sr.bondRep = new BondRepresentationHbondsTube(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, (bool)listArgs[0]);
+				sr.bondRep = new BondRepresentationHbondsTube(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection, (bool)listArgs[0]);
 			}
 			else {
-				sr.bondRep = new BondRepresentationHbondsTube(sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
+				sr.bondRep = new BondRepresentationHbondsTube(sr.idTrajExtract, sr.subSelection.structures[0].ToSelectionName(), sr.subSelection);
 			}
 			sr.bondRepManager = new UnityMolHbondTubeManager();
 			sr.bondRepManager.Init(sr);
@@ -346,7 +431,14 @@ public class UnityMolRepresentation {
 
 	public void updateWithNewSelection(UnityMolSelection sel) {
 
-		// if(sel.Count == selection.Count){//MEMO: Cannot do that as the selection is already updated
+		if (selection.extractTrajFrame) {
+			//TODO implement this correctly
+			Debug.LogError("Cannot update a special selection with new content. Please recreate a selection");
+			return;
+		}
+
+		//MEMO: Cannot do that as the selection is already updated
+		// if(sel.Count == selection.atoms.Count){
 		// 	updateWithModel();
 		// 	return;
 		// }
@@ -367,16 +459,21 @@ public class UnityMolRepresentation {
 					firstAtomRep = false;
 				}
 				sr.atomRepManager.Clean();
+				sr.atomRep.Clean();
 			}
 			if (sr.bondRepManager != null) {
-				if(firstBondRep){
+				if (firstBondRep) {
 					savedRepParamsBond = sr.bondRepManager.Save();
 					firstBondRep = false;
 				}
 				sr.bondRepManager.Clean();
+				sr.bondRep.Clean();
+
 			}
 		}
 		subReps.Clear();
+
+
 
 		Dictionary<UnityMolStructure, UnityMolSelection> byStruc = cutSelectionByStructure(sel);
 
@@ -391,7 +488,7 @@ public class UnityMolRepresentation {
 			sr.representationParent = null;
 			sr.atomRepresentationTransform = null;
 			sr.bondRepresentationTransform = null;
-
+			sr.idTrajExtract = -1;
 
 			ShowAtoms(ref sr, savedArgs);
 			ShowBonds(ref sr, savedArgs);
@@ -440,6 +537,8 @@ public class UnityMolRepresentation {
 
 
 	public void updateWithTrajectory() {
+		if (!selection.updateRepWithTraj)
+			return;
 		foreach (SubRepresentation sr in subReps) {
 			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null)
 				sr.atomRepManager.updateWithTrajectory();
@@ -449,6 +548,8 @@ public class UnityMolRepresentation {
 	}
 
 	public void updateWithModel() {
+		if (selection.extractTrajFrame)
+			return;
 		foreach (SubRepresentation sr in subReps) {
 			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null)
 				sr.atomRepManager.updateWithModel();
@@ -481,44 +582,44 @@ public class UnityMolRepresentation {
 
 
 
-	public void SetColor(UnityMolAtom atom, Color col) {
+	public void SetColor(UnityMolAtom atom, Color32 col) {
 		foreach (SubRepresentation sr in subReps) {
-			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null){
+			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null) {
 				sr.atomRepManager.SetColor(col, atom);
 				sr.atomRep.colorationType = colorType.custom;
 			}
-			if (repType.bondType != BondType.nobond && sr.bondRepManager != null){
+			if (repType.bondType != BondType.nobond && sr.bondRepManager != null) {
 				sr.bondRepManager.SetColor(col, atom);
 				sr.bondRep.colorationType = colorType.custom;
 			}
 		}
 	}
 
-	public void SetColor(List<UnityMolAtom> atoms, Color col) {
+	public void SetColor(List<UnityMolAtom> atoms, Color32 col) {
 		foreach (UnityMolAtom a in atoms) {
 			SetColor(a, col);
 		}
 	}
 
-	public void SetColors(List<UnityMolAtom> atoms, Color col) {
+	public void SetColors(List<UnityMolAtom> atoms, Color32 col) {
 		foreach (SubRepresentation sr in subReps) {
-			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null){
+			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null) {
 				sr.atomRepManager.SetColors(col, atoms);
 				sr.atomRep.colorationType = colorType.custom;
 			}
-			if (repType.bondType != BondType.nobond && sr.bondRepManager != null){
+			if (repType.bondType != BondType.nobond && sr.bondRepManager != null) {
 				sr.bondRepManager.SetColors(col, atoms);
 				sr.bondRep.colorationType = colorType.custom;
 			}
 		}
 	}
-	public void SetColors(List<UnityMolAtom> atoms, List<Color> cols) {
+	public void SetColors(List<UnityMolAtom> atoms, List<Color32> cols) {
 		foreach (SubRepresentation sr in subReps) {
-			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null){
+			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null) {
 				sr.atomRepManager.SetColors(cols, atoms);
 				sr.atomRep.colorationType = colorType.custom;
 			}
-			if (repType.bondType != BondType.nobond && sr.bondRepManager != null){
+			if (repType.bondType != BondType.nobond && sr.bondRepManager != null) {
 				sr.bondRepManager.SetColors(cols, atoms);
 				sr.bondRep.colorationType = colorType.custom;
 			}
@@ -526,10 +627,10 @@ public class UnityMolRepresentation {
 	}
 
 	public void ColorByAtom() {
-		List<Color> colors = new List<Color>(selection.Count);
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
 
 		foreach (UnityMolAtom a in selection.atoms) {
-			colors.Add(a.color);
+			colors.Add(a.color32);
 		}
 
 		foreach (SubRepresentation sr in subReps) {
@@ -544,41 +645,45 @@ public class UnityMolRepresentation {
 		}
 	}
 
-	public static Color hydroToColor(float dens, float minD, float maxD) {
+	public static Color32 hydroToColor(float dens, float minD, float maxD) {
 		if (dens < 0.0f) {
 			float t = Mathf.Clamp(dens / minD, 0.0f, 1.0f);
-			return Color.Lerp(Color.white, Color.red, t);
+			return Color32.Lerp((Color32)Color.white, (Color32)Color.red, t);
 		}
 
 		float tp = Mathf.Clamp(dens / maxD, 0.0f, 1.0f);
-		return Color.Lerp(Color.white, Color.blue, tp);
+		return Color32.Lerp((Color32)Color.white, (Color32)Color.blue, tp);
 	}
 
-	public static Color bfactorToColorNorm(float bf, Color startColor, Color endColor,
-	                                       float minB = 5.0f, float maxB = 100.0f) {
-		float mid = (maxB - minB) * 0.5f;
-		if (bf < mid) {
-			endColor = Color.white;
+	public static Color32 bfactorToColorNorm(float bf, Color32 startColor, Color32 midCol, Color32 endColor,
+	        float minB = 5.0f, float maxB = 100.0f) {
+
+		float div = (Mathf.Abs(maxB - minB) > 0.001f ? 1.0f / (maxB - minB) : 1.0f);
+		float normalizedBf = (bf - minB) * div;//bf between 0 and 1
+
+		if (normalizedBf < 0.5f) {
+			endColor = midCol;
 		}
 		else {
-			startColor = Color.white;
+			startColor = midCol;
 		}
 
-		float t = (bf - minB) / (maxB - minB);
-		return Color.Lerp(startColor, endColor, t);
+		return Color.Lerp(startColor, endColor, normalizedBf);
 	}
 
-	public static Color bfactorToColor(float bf, Color startColor, Color endColor,
+	public static Color32 bfactorToColor(float bf, Color32 startColor, Color32 endColor,
 	                                   float minB = 5.0f, float maxB = 100.0f) {
-		float mid = (maxB - minB) * 0.5f;
 
-		float t = (bf - minB) / (maxB - minB);
-		return Color.Lerp(startColor, endColor, t);
+		float div = (Mathf.Abs(maxB - minB) > 0.001f ? 1.0f / (maxB - minB) : 1.0f);
+		float normalizedBf = (bf - minB) * div;//bf between 0 and 1
+
+		return Color32.Lerp(startColor, endColor, normalizedBf);
 	}
+
 	public void ColorByHydro() {
 
 
-		List<Color> colors = new List<Color>(selection.Count);
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
 
 		foreach (UnityMolAtom a in selection.atoms) {
 			float hydro = a.residue.kdHydro;
@@ -598,40 +703,73 @@ public class UnityMolRepresentation {
 		}
 	}
 
-	public void ColorByBfactor(Color startColor, Color endColor) {
+	public void ColorByBfactor(Color startColor, Color midCol, Color endColor) {
 
-		List<Color> colors = new List<Color>(selection.Count);
+		Color32 startColor32 = (Color32) startColor;
+		Color32 midCol32 = (Color32) midCol;
+		Color32 endColor32 = (Color32) endColor;
+
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
+
+		bool containsCA = false;
+		foreach (UnityMolAtom a in selection.atoms) {
+			if (a.name == "CA" && a.type == "C") {
+				containsCA = true;
+			}
+		}
 
 		float minBfac = selection.atoms[0].bfactor;
 		float maxBfac = selection.atoms[0].bfactor;
 		foreach (UnityMolAtom a in selection.atoms) {
-			minBfac = Mathf.Min(a.bfactor, minBfac);
-			maxBfac = Mathf.Max(a.bfactor, maxBfac);
+			if (containsCA) { //Uses only CA for proteins
+				if (a.type == "C" && a.name == "CA") {
+					minBfac = Mathf.Min(a.bfactor, minBfac);
+					maxBfac = Mathf.Max(a.bfactor, maxBfac);
+				}
+			}
+			else {
+				minBfac = Mathf.Min(a.bfactor, minBfac);
+				maxBfac = Mathf.Max(a.bfactor, maxBfac);
+			}
 		}
 
-		foreach (UnityMolAtom a in selection.atoms) {
-			// colors.Add(bfactorToColor(a.bfactor, startColor, endColor));
-			colors.Add(bfactorToColorNorm(a.bfactor, startColor, endColor, minBfac, maxBfac));
+		if (!containsCA) {
+			foreach (UnityMolAtom a in selection.atoms) {
+				colors.Add(bfactorToColorNorm(a.bfactor, startColor32, midCol32, endColor32, minBfac, maxBfac));
+			}
 		}
+		else {
+			foreach (UnityMolAtom a in selection.atoms) {
+				if (a.residue.atoms.ContainsKey("CA")) {
+					float bf = a.residue.atoms["CA"].bfactor;
+					colors.Add(bfactorToColorNorm(bf, startColor32, midCol32, endColor32, minBfac, maxBfac));
+				}
+				else
+					colors.Add(bfactorToColorNorm(a.bfactor, startColor32, midCol32, endColor32, minBfac, maxBfac));
+			}
+		}
+
 
 		foreach (SubRepresentation sr in subReps) {
 			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null) {
 				sr.atomRepManager.SetColors(colors, selection.atoms);
 				sr.atomRep.colorationType = colorType.bfactor;
 				sr.atomRep.bfactorStartCol = startColor;
+				sr.atomRep.bfactorMidColor = midCol;
 				sr.atomRep.bfactorEndCol = endColor;
 			}
 			if (repType.bondType != BondType.nobond && sr.bondRepManager != null) {
 				sr.bondRepManager.SetColors(colors, selection.atoms);
 				sr.bondRep.colorationType = colorType.bfactor;
 				sr.bondRep.bfactorStartCol = startColor;
+				sr.bondRep.bfactorMidColor = midCol;
 				sr.bondRep.bfactorEndCol = endColor;
 			}
 		}
 	}
 
 	public void ColorByChain() {
-		Dictionary<UnityMolChain, Color> chainCol = new Dictionary<UnityMolChain, Color>();
+		Dictionary<UnityMolChain, Color32> chainCol = new Dictionary<UnityMolChain, Color32>();
 		int cptColor = 0;
 		foreach (UnityMolAtom a in selection.atoms) {
 			if (!chainCol.ContainsKey(a.residue.chain)) {
@@ -642,12 +780,13 @@ public class UnityMolRepresentation {
 		}
 		foreach (UnityMolChain c in chainCol.Keys) {
 			foreach (SubRepresentation sr in subReps) {
+				UnityMolSelection sel = c.ToSelection(false);
 				if (repType.atomType != AtomType.noatom && sr.atomRepManager != null) {
-					sr.atomRepManager.SetColor(chainCol[c], c.ToSelection());
+					sr.atomRepManager.SetColor(chainCol[c], sel);
 					sr.atomRep.colorationType = colorType.chain;
 				}
 				if (repType.bondType != BondType.nobond && sr.bondRepManager != null) {
-					sr.bondRepManager.SetColor(chainCol[c], c.ToSelection());
+					sr.bondRepManager.SetColor(chainCol[c], sel);
 					sr.bondRep.colorationType = colorType.chain;
 				}
 			}
@@ -679,7 +818,7 @@ public class UnityMolRepresentation {
 
 	public void ColorByResidue() {
 
-		List<Color> colors = new List<Color>(selection.Count);
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
 
 		foreach (UnityMolAtom a in selection.atoms) {
 			colors.Add(UnityMolMain.atomColors.getColorForResidue(a.residue));
@@ -700,7 +839,7 @@ public class UnityMolRepresentation {
 	public void ColorByResType() {
 
 
-		List<Color> colors = new List<Color>(selection.Count);
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
 
 		foreach (UnityMolAtom a in selection.atoms) {
 			colors.Add(UnityMolMain.atomColors.getColorRestypeForResidue(a.residue));
@@ -719,7 +858,7 @@ public class UnityMolRepresentation {
 	}
 	public void ColorByResCharge() {
 
-		List<Color> colors = new List<Color>(selection.Count);
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
 
 		foreach (UnityMolAtom a in selection.atoms) {
 			colors.Add(UnityMolMain.atomColors.getColorReschargeForResidue(a.residue));
@@ -737,6 +876,45 @@ public class UnityMolRepresentation {
 		}
 	}
 
+	public void ColorByResid() {
+
+
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
+
+		foreach (UnityMolAtom a in selection.atoms) {
+			colors.Add(UnityMolMain.atomColors.getColorFromPalette(a.residue.id));
+		}
+
+		foreach (SubRepresentation sr in subReps) {
+			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null) {
+				sr.atomRepManager.SetColors(colors, selection.atoms);
+				sr.atomRep.colorationType = colorType.resid;
+			}
+			if (repType.bondType != BondType.nobond && sr.bondRepManager != null) {
+				sr.bondRepManager.SetColors(colors, selection.atoms);
+				sr.bondRep.colorationType = colorType.resid;
+			}
+		}
+	}
+
+	public void ColorByResnum() {
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
+
+		foreach (UnityMolAtom a in selection.atoms) {
+			colors.Add(UnityMolMain.atomColors.getColorFromPalette(a.residue.resnum));
+		}
+
+		foreach (SubRepresentation sr in subReps) {
+			if (repType.atomType != AtomType.noatom && sr.atomRepManager != null) {
+				sr.atomRepManager.SetColors(colors, selection.atoms);
+				sr.atomRep.colorationType = colorType.resnum;
+			}
+			if (repType.bondType != BondType.nobond && sr.bondRepManager != null) {
+				sr.bondRepManager.SetColors(colors, selection.atoms);
+				sr.bondRep.colorationType = colorType.resnum;
+			}
+		}
+	}
 
 	/// Jet method to compute a rainbox effect (0 = blue to 1 = red)
 	public static Color rainbowColor(float t) {
@@ -760,27 +938,27 @@ public class UnityMolRepresentation {
 		Dictionary<UnityMolResidue, int> residuesOfS = new Dictionary<UnityMolResidue, int>();
 		Dictionary<string, int> nbResPerS = new Dictionary<string, int>();
 		foreach (UnityMolStructure s in selection.structures) {
-			if (!nbResPerS.ContainsKey(s.uniqueName)) {
-				nbResPerS[s.uniqueName] = 0;
+			if (!nbResPerS.ContainsKey(s.name)) {
+				nbResPerS[s.name] = 0;
 			}
 		}
 		foreach (UnityMolAtom a in selection.atoms) {
 			if (!residuesOfS.ContainsKey(a.residue)) {
-				residuesOfS[a.residue] = nbResPerS[a.residue.chain.model.structure.uniqueName];
-				nbResPerS[a.residue.chain.model.structure.uniqueName]++;
+				residuesOfS[a.residue] = nbResPerS[a.residue.chain.model.structure.name];
+				nbResPerS[a.residue.chain.model.structure.name]++;
 			}
 		}
 
 
-		Dictionary<UnityMolResidue, Color> resCol =
-		    new Dictionary<UnityMolResidue, Color>(new LightResidueComparer());
+		Dictionary<UnityMolResidue, Color32> resCol =
+		    new Dictionary<UnityMolResidue, Color32>(new LightResidueComparer());
 
-		List<Color> colors = new List<Color>(selection.Count);
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
 
 		foreach (UnityMolAtom a in selection.atoms) {
 			if (!resCol.ContainsKey(a.residue)) {
 				UnityMolStructure s = a.residue.chain.model.structure;
-				int nbRes = nbResPerS[s.uniqueName];
+				int nbRes = nbResPerS[s.name];
 				int idResPerS = residuesOfS[a.residue];
 
 				resCol[a.residue] = rainbowColor(idResPerS / (float) nbRes);
@@ -810,24 +988,24 @@ public class UnityMolRepresentation {
 		foreach (UnityMolStructure s in selection.structures) {
 			int cpt = 0;
 			foreach (UnityMolChain c in s.currentModel.chains.Values) {
-				foreach (UnityMolResidue r in c.residues.Values) {
+				foreach (UnityMolResidue r in c.residues) {
 					residuesOfS[r] = cpt;
 					cpt++;
 				}
 			}
-			nbResPerS[s.uniqueName] = cpt;
+			nbResPerS[s.name] = cpt;
 		}
 
 
-		Dictionary<UnityMolResidue, Color> resCol =
-		    new Dictionary<UnityMolResidue, Color>(new LightResidueComparer());
+		Dictionary<UnityMolResidue, Color32> resCol =
+		    new Dictionary<UnityMolResidue, Color32>(new LightResidueComparer());
 
-		List<Color> colors = new List<Color>(selection.Count);
+		List<Color32> colors = new List<Color32>(selection.atoms.Count);
 
 		foreach (UnityMolAtom a in selection.atoms) {
 			if (!resCol.ContainsKey(a.residue)) {
 				UnityMolStructure s = a.residue.chain.model.structure;
-				int nbRes = nbResPerS[s.uniqueName];
+				int nbRes = nbResPerS[s.name];
 				int idResPerS = residuesOfS[a.residue];
 
 				resCol[a.residue] = rainbowColor(idResPerS / (float) nbRes);
@@ -939,7 +1117,7 @@ public class UnityMolRepresentation {
 		if (lhs.selection == null && rhs.selection == null) { return true;}
 		if (lhs.selection == null || rhs.selection == null) { return false;}
 		if (lhs.selection.name != rhs.selection.name) {return false;}
-		// if (lhs.selection.Count != rhs.selection.Count) {return false;}
+		// if (lhs.selection.Count != rhs.selection.atoms.Count) {return false;}
 		if (lhs.repType.atomType != rhs.repType.atomType) {return false;}
 		if (lhs.repType.bondType != rhs.repType.bondType) {return false;}
 		return true;
@@ -950,10 +1128,19 @@ public class UnityMolRepresentation {
 
 	public override bool Equals(object obj) {
 		if (obj is UnityMolRepresentation) {
-			return this == obj;
+			return this == (UnityMolRepresentation)obj;
 		}
 		return false;
 	}
+
+    public override int GetHashCode()
+    {
+    	if(selection == null){
+    		return 0;
+    	}
+        string code = selection.name + ":" + repType.atomType + ":" + repType.bondType;
+        return code.GetHashCode();
+    }
 
 }
 
@@ -966,5 +1153,6 @@ public struct SubRepresentation {
 	public Transform atomRepresentationTransform;
 	public Transform bondRepresentationTransform;
 	public UnityMolSelection subSelection;
+	public int idTrajExtract;//Used by special extract selections
 }
 }

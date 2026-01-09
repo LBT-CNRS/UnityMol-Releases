@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,23 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
 
 using UnityEngine;
 using Unity.Collections;
@@ -58,78 +43,126 @@ namespace UMol {
 public class WireframeGenerator {
 
 
-	public Mesh toWireframe(Mesh inMesh, float wireSize = 0.01f) {
-		Vector3[] verts = inMesh.vertices;
-		Vector3[] norms = inMesh.normals;
-		int[] tris = inMesh.triangles;
-		Color32[] cols = inMesh.colors32;
+	public Mesh toWireframe(Mesh inMesh, ref int[] vToA, float wireSize = 0.01f) {
 
-		NativeArray<float3> InVertices = new NativeArray<float3>(verts.Length, Allocator.TempJob);
-		NativeArray<float3> InNormals = new NativeArray<float3>(verts.Length, Allocator.TempJob);
-		NativeArray<Color32> InColors = new NativeArray<Color32>(verts.Length, Allocator.TempJob);
-		NativeArray<int> InTriangles = new NativeArray<int>(tris.Length, Allocator.TempJob);
+		//Simpler version:
+		Mesh outMesh = new Mesh();
+		outMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+		Vector3[] vverts = inMesh.vertices;
+        int[] ttris = inMesh.triangles;
 
+        int N = inMesh.vertexCount;
+        int Ntri = ttris.Length;
+        int[] newTris = new int[Ntri * 2];
 
-		int totalVerts = tris.Length * 4;//Each vertex of the triangles generate 2 vertices
-		int totalTris = tris.Length * 2 * 3 * 2;//4 more triangles per triangle
+        for (int i = 0; i < Ntri / 3 - 3; i += 3) {
+            newTris[i * 6] = ttris[i * 3];
+            newTris[i * 6 + 1] = ttris[i * 3 + 1];
+            newTris[i * 6 + 2] = ttris[i * 3 + 1];
+            newTris[i * 6 + 3] = ttris[i * 3 + 2];
+            newTris[i * 6 + 4] = ttris[i * 3 + 2];
+            newTris[i * 6 + 5] = ttris[i * 3];
+        }
 
-		NativeArray<float3> OutVertices = new NativeArray<float3>(totalVerts, Allocator.TempJob);
-		NativeArray<float3> OutNormals = new NativeArray<float3>(totalVerts, Allocator.TempJob);
-		NativeArray<Color32> OutColors = new NativeArray<Color32>(totalVerts, Allocator.TempJob);
-		NativeArray<int> OutTriangles = new NativeArray<int>(totalTris, Allocator.TempJob);
+        outMesh.SetVertices(vverts);
+        outMesh.SetIndices(newTris, MeshTopology.Lines, 0);
 
-		GetNativeArray(InVertices, verts);
-		GetNativeArray(InNormals, norms);
-		GetNativeArray(InTriangles, tris);
-		GetNativeArray(InColors, cols);
+        return outMesh;
 
+        //Complicated method
 
-		var wireJob = new computeWireframe() {
-			outVerts = OutVertices,
-			outNorms = OutNormals,
-			outTris = OutTriangles,
-			outCols = OutColors,
-			verts = InVertices,
-			norms = InNormals,
-			tris = InTriangles,
-			cols = InColors,
-			size = wireSize
-		};
+		// Vector3[] verts = inMesh.vertices;
+		// Vector3[] norms = inMesh.normals;
+		// int[] tris = inMesh.triangles;
+		// Color32[] cols = inMesh.colors32;
 
-		var wireJobHandle = wireJob.Schedule(tris.Length / 3, 64);
-
-		Mesh newMesh = new Mesh();
-		newMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-
-		verts = new Vector3[OutVertices.Length];
-		norms = new Vector3[OutNormals.Length];
-		tris = new int[OutTriangles.Length];
-		cols = new Color32[OutColors.Length];
-
-		wireJobHandle.Complete();
+		// NativeArray<float3> InVertices = new NativeArray<float3>(verts.Length, Allocator.TempJob);
+		// NativeArray<float3> InNormals = new NativeArray<float3>(verts.Length, Allocator.TempJob);
+		// NativeArray<Color32> InColors = new NativeArray<Color32>(verts.Length, Allocator.TempJob);
+		// NativeArray<int> InTriangles = new NativeArray<int>(tris.Length, Allocator.TempJob);
+		// NativeArray<int> InVToA = new NativeArray<int>(verts.Length, Allocator.TempJob);
 
 
-		SetNativeArray(verts, OutVertices);
-		SetNativeArray(tris, OutTriangles);
-		SetNativeArray(norms, OutNormals);
-		SetNativeArray(cols, OutColors);
+		// int totalVerts = tris.Length * 4;//Each vertex of the triangles generate 2 vertices
+		// int totalTris = tris.Length * 2 * 3 * 2;//4 more triangles per triangle
 
-		newMesh.vertices = verts;
-		newMesh.triangles = tris;
-		newMesh.normals = norms;
-		newMesh.colors32 = cols;
+		// NativeArray<float3> OutVertices = new NativeArray<float3>(totalVerts, Allocator.TempJob);
+		// NativeArray<float3> OutNormals = new NativeArray<float3>(totalVerts, Allocator.TempJob);
+		// NativeArray<Color32> OutColors = new NativeArray<Color32>(totalVerts, Allocator.TempJob);
+		// NativeArray<int> OutTriangles = new NativeArray<int>(totalTris, Allocator.TempJob);
+		// NativeArray<int> OutVToA = new NativeArray<int>(totalVerts, Allocator.TempJob);
 
-		InVertices.Dispose();
-		InNormals.Dispose();
-		InColors.Dispose();
-		InTriangles.Dispose();
 
-		OutVertices.Dispose();
-		OutNormals.Dispose();
-		OutColors.Dispose();
-		OutTriangles.Dispose();
+		// GetNativeArray(InVertices, verts);
+		// GetNativeArray(InNormals, norms);
+		// GetNativeArray(InTriangles, tris);
+		// GetNativeArray(InColors, cols);
+		// if (vToA != null)
+		// 	GetNativeArray(InVToA, vToA);
 
-		return newMesh;
+
+		// var wireJob = new computeWireframe() {
+		// 	outVerts = OutVertices,
+		// 	outNorms = OutNormals,
+		// 	outTris = OutTriangles,
+		// 	outCols = OutColors,
+		// 	outVToA = OutVToA,
+		// 	verts = InVertices,
+		// 	norms = InNormals,
+		// 	v2a = InVToA,
+		// 	tris = InTriangles,
+		// 	cols = InColors,
+		// 	size = wireSize,
+		// 	useV2A = (vToA != null)
+		// };
+
+		// var wireJobHandle = wireJob.Schedule(tris.Length / 3, 64);
+
+		// Mesh newMesh = new Mesh();
+		// newMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+
+		// verts = new Vector3[OutVertices.Length];
+		// norms = new Vector3[OutNormals.Length];
+		// tris = new int[OutTriangles.Length];
+		// cols = new Color32[OutColors.Length];
+
+		// wireJobHandle.Complete();
+
+
+		// SetNativeArray(verts, OutVertices);
+		// SetNativeArray(tris, OutTriangles);
+		// SetNativeArray(norms, OutNormals);
+		// SetNativeArray(cols, OutColors);
+		// if (vToA != null){
+		// 	vToA = new int[OutVToA.Length];
+		// 	SetNativeArray(vToA, OutVToA);
+		// }
+
+		// newMesh.vertices = verts;
+		// newMesh.triangles = tris;
+		// newMesh.normals = norms;
+		// newMesh.colors32 = cols;
+
+		// //Used for hiding vertices
+		// Vector2[] uvs = new Vector2[verts.Length];
+		// for (int i = 0; i < uvs.Length; i++) {
+		// 	uvs[i] = Vector2.one;
+		// }
+		// newMesh.uv2 = uvs;
+
+		// InVertices.Dispose();
+		// InNormals.Dispose();
+		// InColors.Dispose();
+		// InTriangles.Dispose();
+		// InVToA.Dispose();
+
+		// OutVertices.Dispose();
+		// OutNormals.Dispose();
+		// OutColors.Dispose();
+		// OutTriangles.Dispose();
+		// OutVToA.Dispose();
+
+		// return newMesh;
 	}
 
 
@@ -144,13 +177,16 @@ public class WireframeGenerator {
 		public NativeArray<int> outTris;
 		[NativeDisableParallelForRestriction]
 		public NativeArray<Color32> outCols;
-
+		[NativeDisableParallelForRestriction]
+		public NativeArray<int> outVToA;
 
 		[ReadOnly] public NativeArray<float3> verts;
 		[ReadOnly] public NativeArray<float3> norms;
 		[ReadOnly] public NativeArray<int> tris;
+		[ReadOnly] public NativeArray<int> v2a;
 		[ReadOnly] public NativeArray<Color32> cols;
 		[ReadOnly] public float size;
+		[ReadOnly] public bool useV2A;
 
 		void IJobParallelFor.Execute(int index)
 		{
@@ -159,7 +195,7 @@ public class WireframeGenerator {
 			int t2 = tris[index * 3 + 1];
 			int t3 = tris[index * 3 + 2];
 
-			if(t1 == t2 || t2 == t3 || t3 == t1){
+			if (t1 == t2 || t2 == t3 || t3 == t1) {
 				return;
 			}
 
@@ -235,6 +271,20 @@ public class WireframeGenerator {
 			outTris[newIdT + 16] = newId + 11; outTris[newIdT + 34] = newId + 9;
 			outTris[newIdT + 17] = newId + 10; outTris[newIdT + 35] = newId + 10;
 
+			if (useV2A) {
+				outVToA[newId + 0] = v2a[t1];
+				outVToA[newId + 1] = v2a[t1];
+				outVToA[newId + 2] = v2a[t2];
+				outVToA[newId + 3] = v2a[t2];
+				outVToA[newId + 4] = v2a[t2];
+				outVToA[newId + 5] = v2a[t2];
+				outVToA[newId + 6] = v2a[t3];
+				outVToA[newId + 7] = v2a[t3];
+				outVToA[newId + 8] = v2a[t3];
+				outVToA[newId + 9] = v2a[t3];
+				outVToA[newId + 10] = v2a[t1];
+				outVToA[newId + 11] = v2a[t1];
+			}
 
 		}
 

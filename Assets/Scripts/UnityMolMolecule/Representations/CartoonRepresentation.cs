@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,43 +27,30 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
-using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System;
-using UnityEngine.XR;
-using VRTK;
+using UnityEngine;
 
 namespace UMol {
 public class CartoonRepresentation : AtomRepresentation {
 
     public List<GameObject> meshesGO;
     public Dictionary<UnityMolResidue, GameObject> residueToGo;
-    public List<UnityMolAtom> savedAtoms = new List<UnityMolAtom>();//Used to Save/Restore cartoon colors
+    public List<UnityMolAtom> savedAtoms = new List<UnityMolAtom>(); //Used to Save/Restore cartoon colors
 
     public Dictionary<UnityMolResidue, List<int>> residueToVert;
 
     public int totalVertices = 0;
+    public float customTubeSize = 1.0f;
+    public bool tube = false; //Draw as tube
+    public bool bfactortube = false;//When tube is true, use bfactors to set sizes
 
     public Dictionary<GameObject, List<Color32>> meshColors;
     public List<Color32[]> savedColors = new List<Color32[]>();
@@ -76,48 +61,39 @@ public class CartoonRepresentation : AtomRepresentation {
     private string structureName;
     private List<Segment> segments;
     private GameObject newRep;
-    private Material ribbonMat;
+    public Material ribbonMat;
+    public Material transMat;
     private bool useHET = false;
     private bool useWAT = false;
     private bool isFullMesh = false;
 
 
 
-    public CartoonRepresentation(string structName, UnityMolSelection sel, bool useHetatm = false, bool useWat = false) {
+    public CartoonRepresentation(int idF, string structName, UnityMolSelection sel,
+                                 bool useHetatm = false, bool useWat = false,
+                                 bool onlyTube = false, bool bfacTube = false, float coilTubeSize = 1.0f) {
 
         colorationType = colorType.defaultCartoon;
         meshesGO = new List<GameObject>();
         residueToGo = new Dictionary<UnityMolResidue, GameObject>();
         meshColors = new Dictionary<GameObject, List<Color32>>();
 
-        ribbonMat = new Material(Shader.Find("Custom/SurfaceVertexColor"));
+        if (ribbonMat == null) {
+            ribbonMat = new Material(Shader.Find("Custom/SurfaceVertexColor"));
+            ribbonMat.enableInstancing = true;
+        }
 
         structureName = structName;
         selection = sel;
         useHET = useHetatm;
         useWAT = useWat;
+        idFrame = idF;
 
-        GameObject loadedMolGO = UnityMolMain.getRepresentationParent();
+        customTubeSize = coilTubeSize;
+        tube = onlyTube;
+        bfactortube = bfacTube;
 
-        representationParent = loadedMolGO.transform.Find(structName);
-        if (UnityMolMain.inVR() && representationParent == null) {
-
-            Transform clref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.LeftController);
-            Transform crref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.RightController);
-            if (clref != null) {
-                representationParent = clref.Find(structName);
-            }
-            if (representationParent == null && crref != null) {
-                representationParent = crref.Find(structName);
-            }
-        }
-        if (representationParent == null) {
-            representationParent = (new GameObject(structName).transform);
-            representationParent.parent = loadedMolGO.transform;
-            representationParent.localPosition = Vector3.zero;
-            representationParent.localRotation = Quaternion.identity;
-            representationParent.localScale = Vector3.one;
-        }
+        representationParent = UnityMolMain.getRepStructureParent(structName).transform;
 
         newRep = new GameObject("AtomCartoonRepresentation");
         newRep.transform.parent = representationParent;
@@ -128,19 +104,18 @@ public class CartoonRepresentation : AtomRepresentation {
 
             segments = cutSelectionInSegments(selection);
 
-            displayCartoonMesh(structName, segments, newRep.transform);
+            displayCartoonMesh(selection, structName, segments, newRep.transform);
 
-        }
-        else {
+        } else {
 
 
             UnityMolSelection biggerSel = getAllStructureSelection(selection);
 
             segments = cutSelectionInSegments(biggerSel);
 
-            displayCartoonMesh(structName, segments, newRep.transform);
+            displayCartoonMesh(biggerSel, structName, segments, newRep.transform);
 
-            if (biggerSel.Count != selection.Count) {
+            if (biggerSel.Count != selection.atoms.Count) {
                 // Remove mesh parts not in selection
                 removeMeshParts(biggerSel);
             }
@@ -152,7 +127,42 @@ public class CartoonRepresentation : AtomRepresentation {
         newRep.transform.localRotation = Quaternion.identity;
         newRep.transform.localScale = Vector3.one;
 
-        nbAtoms = selection.Count;
+        // // Generate periodic images
+        // Vector3 per = selection.structures[0].periodic;
+        // for (int i = -1; i < 2; i++) {
+        //     for (int j = -1; j < 2; j++) {
+        //         for (int k = -1; k < 2; k++) {
+        //             if (i == 0 && j == 0 && k == 0)
+        //                 continue;
+        //             Vector3 cur = new Vector3(i, j, k);
+        //             foreach (GameObject m in meshesGO) {
+        //                 GameObject newM = GameObject.Instantiate(m);
+        //                 newM.transform.parent = newRep.transform;
+        //                 newM.transform.localScale = Vector3.one;
+        //                 newM.transform.localRotation = Quaternion.identity;
+        //                 newM.transform.localPosition = Vector3.Scale(per, cur);
+        //             }
+        //         }
+        //     }
+        // }
+
+
+        // // Symmetry stored in the PDB
+        // List<Matrix4x4> matrices = sel.structures[0].symMatrices;
+        // int id = 0;
+        // foreach (Matrix4x4 m in matrices) {
+        //     for (int i = 0; i < meshesGO.Count; i++) {
+        //         GameObject newMeshGo = GameObject.Instantiate(meshesGO[i]);
+        //         newMeshGo.transform.parent = newRep.transform;
+
+        //         newMeshGo.transform.localRotation = Quaternion.LookRotation(m.GetColumn(2), m.GetColumn(1));
+        //         newMeshGo.transform.localPosition = m.GetColumn(3);
+        //         newMeshGo.transform.localScale = Vector3.one;
+        //     }
+        //     id++;
+        // }
+
+        nbAtoms = selection.atoms.Count;
 
         savedAtoms.Clear();
         foreach (UnityMolAtom a in selection.atoms) {
@@ -192,8 +202,7 @@ public class CartoonRepresentation : AtomRepresentation {
             Segment curSeg;
             if (segDict.TryGetValue(segKey, out curSeg)) {
                 curSeg.residues.Add(atom.residue);
-            }
-            else {
+            } else {
                 curSeg = new Segment(atom.residue);
                 res.Add(curSeg);
                 segDict[segKey] = curSeg;
@@ -283,29 +292,29 @@ public class CartoonRepresentation : AtomRepresentation {
                 newTri.Add(triangles[t + 2]);
             }
 
-            m.triangles = newTri.ToArray();
+            m.SetTriangles(newTri, 0);
         }
 
     }
 
 
+    public static string getPreComputedKey(UnityMolChain c) {
+        return c.model.structure.name + "_" + c.model.name + "_" + c.name + "_Cartoon";
+    }
 
-    public void displayCartoonMesh(string structName, List<Segment> segments, Transform repParent, float ribbonWidth = 4.5f,
-                                   float bRad = 0.3f, int bRes = 10, bool useBspline = true, bool isTraj = false)
-    {
+    public void displayCartoonMesh(UnityMolSelection sel, string structName, List<Segment> segments, Transform repParent, float ribbonWidth = 4.5f,
+                                   float bRad = 0.3f, int bRes = 10, bool useBspline = true, bool isTraj = false) {
 
 
         // float start = Time.realtimeSinceStartup;
         savedColors = new List<Color32[]>();
         residueToVert = new Dictionary<UnityMolResidue, List<int>>();
 
-        for (int seg = 0; seg < segments.Count; seg++)
-        {
+        for (int seg = 0; seg < segments.Count; seg++) {
 
             Dictionary<UnityMolResidue, List<int>> segResidueToVert = new Dictionary<UnityMolResidue, List<int>>();
             int nbRes = segments[seg].residues.Count;
-            if (nbRes < 2)
-            {
+            if (nbRes < 2) {
                 continue;
             }
 
@@ -315,30 +324,39 @@ public class CartoonRepresentation : AtomRepresentation {
             MeshData mesh = null;
             string nameCartoonMesh = null;
             UnityMolResidue r = segments[seg].residues[0];
-            string keyPrecomputedRep = r.chain.model.structure.uniqueName + "_" + r.chain.model.name + "_" + r.chain.name + "_Cartoon";
+            string keyPrecomputedRep = getPreComputedKey(r.chain);
+            bool alreadyComputed = UnityMolMain.getPrecompRepManager().ContainsRep(keyPrecomputedRep);
 
-            if (UnityMolMain.getPrecompRepManager().ContainsRep(keyPrecomputedRep)) {
+            if (selection.extractTrajFrame) {
+                alreadyComputed = false;
+            }
+
+            if (alreadyComputed && !tube && customTubeSize == 1.0f) {
 
                 mesh = UnityMolMain.getPrecompRepManager().precomputedRep[keyPrecomputedRep];
                 Dictionary<UnityMolResidue, List<int>> tmpResVert = UnityMolMain.getPrecompRepManager().precomputedCartoonAsso[keyPrecomputedRep];
                 foreach (UnityMolResidue res in tmpResVert.Keys) {
                     segResidueToVert[res] = tmpResVert[res];
                 }
-            }
-            else {
+            } else {
                 if (isNucleic) {
-
-                    mesh = RibbonMeshDNA.createChainMesh(segments[seg].residues, ref segResidueToVert, isTraj);
-
+                    if (segments[seg].residues[0].chain.model.structure.structureType ==
+                            UnityMolStructure.MolecularType.Martini) {
+                        Debug.Log("Martini DNA");
+                        mesh = RibbonMeshMartiniDNA.createChainMesh(idFrame, sel, segments[seg].residues, ref segResidueToVert, isTraj);
+                    } else {
+                        mesh = RibbonMeshDNA.createChainMesh(idFrame, sel, segments[seg].residues, ref segResidueToVert, isTraj);
+                    }
+                } else { //Try with standard cartoon / Martini cartoon
+                    if (segments[seg].residues[0].chain.model.structure.structureType ==
+                            UnityMolStructure.MolecularType.Martini) {
+                        mesh = RibbonMeshMartini.createChainMesh(idFrame, sel, segments[seg].residues, ref segResidueToVert, isTraj);
+                    } else {
+                        mesh = RibbonMesh.createChainMesh(idFrame, sel, segments[seg].residues, ref segResidueToVert, customTubeSize, tube, bfactortube, isTraj);
+                    }
                 }
-                else {//Try with standard cartoon
 
-                    mesh = RibbonMesh.createChainMesh(segments[seg].residues, ref segResidueToVert, isTraj);
-                    // MeshData mesh = CartoonMesh.createChainMesh(segments[seg].residues, ref residueToMesh, isTraj);
-
-                }
-
-                if (mesh != null && mesh.vertices != null) {
+                if (!selection.extractTrajFrame && mesh != null && mesh.vertices != null && !tube && customTubeSize == 1.0f) {
                     UnityMolMain.getPrecompRepManager().precomputedRep[keyPrecomputedRep] = mesh;
                     UnityMolMain.getPrecompRepManager().precomputedCartoonAsso[keyPrecomputedRep] = segResidueToVert;
                 }
@@ -385,12 +403,13 @@ public class CartoonRepresentation : AtomRepresentation {
 
 
     void createUnityMesh(Segment seg, Transform parent, string name,
-                         Vector3[] vertices, Vector3[] normals, int[] triangles, Color32[] colors, Material ribbonMat = null)
-    {
+                         Vector3[] vertices, Vector3[] normals, int[] triangles, Color32[] colors, Material ribbonMat) {
 
         //Resources.Load("Materials/standardColorSpecular") as Material;
-        if (ribbonMat == null)
+        if (ribbonMat == null) {
             ribbonMat = new Material(Shader.Find("Custom/SurfaceVertexColor"));
+            ribbonMat.enableInstancing = true;
+        }
         Mesh m = new Mesh();
         m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
@@ -403,17 +422,16 @@ public class CartoonRepresentation : AtomRepresentation {
 
         if (normals != null)
             m.normals = normals;
-
-
-        GameObject go = new GameObject(name);
-        MeshFilter mf = go.AddComponent<MeshFilter>();
-        if (normals == null) {
+        else {
             m.RecalculateNormals();
             //High quality smoothing normals
             // m.RecalculateNormals(60);
         }
 
-        mf.mesh = m;
+        GameObject go = new GameObject(name);
+        MeshFilter mf = go.AddComponent<MeshFilter>();
+
+        mf.sharedMesh = m;
         go.AddComponent<MeshRenderer>().sharedMaterial = ribbonMat;
         go.transform.parent = parent;
         go.transform.localRotation = Quaternion.identity;
@@ -428,8 +446,7 @@ public class CartoonRepresentation : AtomRepresentation {
 
     }
 
-    void createUnityMesh(Segment seg, Transform parent, string name, MeshData meshD, Material ribbonMat = null)
-    {
+    void createUnityMesh(Segment seg, Transform parent, string name, MeshData meshD, Material ribbonMat) {
         createUnityMesh(seg, parent, name, meshD.vertices, meshD.normals, meshD.triangles, meshD.colors, ribbonMat);
     }
 
@@ -439,7 +456,7 @@ public class CartoonRepresentation : AtomRepresentation {
             Mesh m = go.GetComponent<MeshFilter>().sharedMesh;
             Color32[] tmpArrayColor = m.colors32;
             if (tmpArrayColor == null || tmpArrayColor.Length == 0) {
-                tmpArrayColor = new Color32[m.vertices.Length];
+                tmpArrayColor = new Color32[m.vertexCount];
             }
             meshColors[go] = tmpArrayColor.ToList();
         }
@@ -499,53 +516,99 @@ public class CartoonRepresentation : AtomRepresentation {
         }
     }
 
-    public void Clear() {
-        foreach (GameObject go in meshesGO) {
-            GameObject.Destroy(go);
-        }
-        meshesGO.Clear();
-        residueToGo.Clear();
-        residueToVert.Clear();
-    }
-
     public void recompute(bool isNewModel = false) {
 
-        List<Material> savedMat = new List<Material>();
+        Material curMat = null;
 
         foreach (GameObject m in meshesGO) {
-            savedMat.Add(m.GetComponent<MeshRenderer>().sharedMaterial);
+            curMat = m.GetComponent<MeshRenderer>().sharedMaterial;
+            break;
         }
 
+        // if (!selection.structures[0].updateSSWithTraj) {
         getMeshColorsPerResidue();
+        // }
 
-        Clear();
+        //------
+        // Clean();
+        if (meshesGO != null) {
+            foreach (GameObject go in meshesGO) {
+                GameObject.Destroy(go.GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(go);
+            }
+            meshesGO.Clear();
+            residueToGo.Clear();
+            residueToVert.Clear();
+        }
+        //------
+
 
         if (isNewModel) {
             segments = cutSelectionInSegments(selection);
-            displayCartoonMesh(structureName, segments, newRep.transform, isTraj: false);
-        }
-        else { //If trajectory then make sure we have a faster way to compute the cartoon.
+            displayCartoonMesh(selection, structureName, segments, newRep.transform, isTraj : false);
+        } else { //If trajectory then make sure we have a faster way to compute the cartoon.
             // Right now we just lower the cartoon quality settings
-            displayCartoonMesh(structureName, segments, newRep.transform, isTraj: true);
+            displayCartoonMesh(selection, structureName, segments, newRep.transform, isTraj : true);
         }
 
-        if (meshesGO.Count > 0 && meshesGO.Count == savedMat.Count) {
-            int i = 0;
+        if (meshesGO.Count > 0) {
             foreach (GameObject m in meshesGO) {
-                m.GetComponent<MeshRenderer>().sharedMaterial = savedMat[i++];
+                m.GetComponent<MeshRenderer>().sharedMaterial = curMat;
             }
         }
 
         UnityMolSelection biggerSel = getAllStructureSelection(selection);
-        if (biggerSel.Count != selection.Count) {
+        if (biggerSel.Count != selection.atoms.Count) {
             //Remove mesh parts not in selection
             removeMeshParts(biggerSel);
         }
-
+        // if (!selection.structures[0].updateSSWithTraj) {
         restoreColorsPerResidue();
+        // } else {
+        // getMeshColors();
+        // }
     }
+
     public override void Clean() {
-        Clear();
+        if (meshesGO != null) {
+            foreach (GameObject go in meshesGO) {
+                GameObject.Destroy(go.GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(go);
+            }
+            meshesGO.Clear();
+        }
+        if (ribbonMat != null) {
+            GameObject.Destroy(ribbonMat);
+            ribbonMat = null;
+        }
+        if (transMat != null) {
+            GameObject.Destroy(transMat);
+            transMat = null;
+        }
+        meshesGO = null;
+        if (residueToGo != null)
+            residueToGo.Clear();
+        residueToGo = null;
+        if (residueToVert != null)
+            residueToVert.Clear();
+        residueToVert = null;
+
+        if (savedAtoms != null)
+            savedAtoms.Clear();
+        savedAtoms = null;
+        if (meshColors != null)
+            meshColors.Clear();
+        meshColors = null;
+        if (savedColors != null)
+            savedColors.Clear();
+        savedColors = null;
+        colorByRes = null;
+        if (residuesPerChain != null)
+            residuesPerChain.Clear();
+        residuesPerChain = null;
+        if (segments != null)
+            segments.Clear();
+        segments = null;
     }
 
 }

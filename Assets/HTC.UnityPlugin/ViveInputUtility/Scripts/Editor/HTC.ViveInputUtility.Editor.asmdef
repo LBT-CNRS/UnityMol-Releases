@@ -1,0 +1,46 @@
+{
+    "name": "HTC.ViveInputUtility.Editor",
+    "rootNamespace": "",
+    "references": [
+        "HTC.ViveInputUtility",
+        "HTC.ViveInputUtility.UPMRegistryTool.Editor",
+        "Unity.XR.Management",
+        "Unity.XR.Management.Editor",
+        "Unity.XR.OpenVR",
+        "SteamVR",
+        "SteamVR_Input_Editor",
+        "Oculus.VR",
+        "Oculus.VR.Editor",
+        "Unity.XR.OpenXR",
+        "Unity.XR.OpenXR.Editor",
+        "Wave.XRSDK",
+        "Wave.XRSDK.Editor",
+        "Wave.Essence",
+        "Wave.Essence.Editor",
+        "Wave.Native",
+        "Wave.Native.Editor",
+        "Wave.OpenXR"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.htc.upm.wave.native",
+            "expression": "5.0.0",
+            "define": "VIU_WAVE_NATIVE_5_0_OR_NEWER"
+        },
+        {
+            "name": "com.htc.upm.wave.native",
+            "expression": "5.1.1",
+            "define": "VIU_WAVE_NATIVE_5_1_1_OR_NEWER"
+        }
+    ],
+    "noEngineReferences": false
+}

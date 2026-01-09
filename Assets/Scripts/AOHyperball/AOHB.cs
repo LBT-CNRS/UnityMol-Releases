@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
@@ -74,7 +58,7 @@ public class AOHB : MonoBehaviour {
     public bool debugMe = false;
 
     private LayerMask AOLayer;
-    public samplesAOpreset samplesAO = samplesAOpreset.High;
+    public samplesAOpreset samplesAO = samplesAOpreset.VeryHigh;
     public int AOtexResolution = 64;//AO texture point per atom
 
     private Vector3[] rayDir;
@@ -114,24 +98,28 @@ public class AOHB : MonoBehaviour {
     public void Run(UnityMolSelection sel, UnityMolHBallMeshManager hbm) {
 
 
-        foreach (UnityMolStructure s in sel.structures) {
-            if (s.trajectoryLoaded) {
-                Debug.LogWarning("Cannot compute AO for structure with a trajectory loaded");
-                return;
+        if (!sel.extractTrajFrame) {
+            foreach (UnityMolStructure s in sel.structures) {
+                if (s.trajectoryLoaded) {
+                    Debug.LogWarning("Cannot compute AO for structure with a trajectory loaded");
+                    return;
+                }
             }
         }
 
-        if (sel.Count > 75000) {
+        if (sel.atoms.Count > 75000) {
             AOtexResolution = 32;
+            samplesAO = samplesAOpreset.Medium;
         }
-        if (sel.Count > 100000) {
+        if (sel.atoms.Count > 100000) {
             AOtexResolution = 16;
+            samplesAO = samplesAOpreset.Low;
         }
 
         float timerAO = Time.realtimeSinceStartup;
 
         AOLayer = 1 << LayerMask.NameToLayer("AOLayer");
-        N = sel.Count;
+        N = sel.atoms.Count;
 
         savedPar = transform.parent.parent;
         savedRot = transform.parent.rotation;
@@ -139,7 +127,7 @@ public class AOHB : MonoBehaviour {
         savedPos = transform.parent.position;
 
         try {
-            InitSamplePos(sel);
+            InitSamplePos(sel, hbm);
             InitTextures(sel);
             CreateAOCam();
             DoAO(hbm);
@@ -150,7 +138,7 @@ public class AOHB : MonoBehaviour {
             transform.parent.rotation = savedRot;
             transform.parent.localScale = savedScale;
             transform.parent.position = savedPos;
-
+            GameObject.Destroy(AOMatCompute);
             return;
         }
 
@@ -158,6 +146,7 @@ public class AOHB : MonoBehaviour {
 #if UNITY_EDITOR
         Debug.Log("Time for full AO: " + (1000.0f * (Time.realtimeSinceStartup - timerAO)).ToString("f3") + " ms");
 #endif
+        GameObject.Destroy(AOMatCompute);
     }
 
 
@@ -182,7 +171,7 @@ public class AOHB : MonoBehaviour {
 
     }
 
-    void InitSamplePos(UnityMolSelection sel) {
+    void InitSamplePos(UnityMolSelection sel, UnityMolHBallMeshManager hbm) {
 
         transform.parent.parent = null;
         transform.parent.localScale = Vector3.one;
@@ -208,6 +197,10 @@ public class AOHB : MonoBehaviour {
         minPos = transform.parent.TransformPoint(sel.atoms[0].position);
         maxPos = transform.parent.TransformPoint(sel.atoms[0].position);
 
+        if (sel.extractTrajFrame) {
+            minPos = transform.parent.TransformPoint(sel.extractTrajFramePositions[hbm.atomRep.idFrame][0]);
+            minPos = transform.parent.TransformPoint(sel.extractTrajFramePositions[hbm.atomRep.idFrame][0]);
+        }
 
         bary = Vector3.zero;
 
@@ -216,6 +209,9 @@ public class AOHB : MonoBehaviour {
             UnityMolAtom a = sel.atoms[i];
             UnityMolStructure s = a.residue.chain.model.structure;
             Vector3 k = transform.parent.TransformPoint(a.position);
+            if (sel.extractTrajFrame) {
+                k = transform.parent.TransformPoint(sel.extractTrajFramePositions[hbm.atomRep.idFrame][i]);
+            }
 
             tmpos.x = k.x;
             tmpos.y = k.y;
@@ -381,8 +377,6 @@ public class AOHB : MonoBehaviour {
 
 
         List<Vector2> atlasinfo = new List<Vector2>(N);
-        int idx = 0;
-        int idy = 0;
         for (int i = 0; i < N; i++) {
             Vector2 idatom = Vector2.zero;
             idatom.x = (i * AOtexResolution) % AORTCur.width;

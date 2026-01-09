@@ -1,10 +1,11 @@
-﻿//using UnityEngine;
+﻿using UnityEngine;
 using IronPython.Hosting;
 using Microsoft.Scripting.Hosting;
 using System.Reflection;
+using System.Collections.Generic;
 
 public static class PythonUtils {
-	public static bool IsPythonFile(string path){
+	public static bool IsPythonFile(string path) {
 		return System.IO.Path.GetExtension (path) == ".py";
 	}
 
@@ -15,25 +16,29 @@ public static class PythonUtils {
 		typeof(PythonUtils),
 
 		typeof(UnityEngine.GameObject),
-		typeof(UnityEngine.Rigidbody),
-		typeof(UnityEngine.AI.NavMeshAgent),
+		typeof(UnityEngine.Input),
+		// typeof(UnityEngine.Rigidbody),
+		// typeof(UnityEngine.AI.NavMeshAgent),
 		//...
 	};
 
 	static ScriptEngine m_engine;
-	public static ScriptEngine GetEngine(){
+	public static ScriptEngine GetEngine() {
 		if (m_engine == null) {
 			m_engine = Python.CreateEngine ();
 			foreach (var type in c_mustHaveTypes) {
 				m_engine.Runtime.LoadAssembly (type.Assembly);
 			}
+			ICollection<string> searchPaths = m_engine.GetSearchPaths();
+			searchPaths.Add(Application.streamingAssetsPath + @"\IronPython\Lib\");
+			m_engine.SetSearchPaths(searchPaths);
 		}
 		return m_engine;
 	}
 
 
 	public const string defaultPythonConsoleHeader =
-@"import clr
+	    @"import clr
 clr.AddReference('UnityEngine','System', 'Assembly-CSharp')
 from UnityEngine import *
 from UMol import *
@@ -63,7 +68,7 @@ RGBA = Color
 ";
 
 	public const string defaultPythonBehaviourHeader =
-@"
+	    @"
 import clr
 clr.AddReference('UnityEngine','System', 'Assembly-CSharp')
 from UnityEngine import *
@@ -91,5 +96,5 @@ OnCollisionEnter = None
 OnCollisionStay = None
 OnCollisionExit = None
 ";
-	
+
 }

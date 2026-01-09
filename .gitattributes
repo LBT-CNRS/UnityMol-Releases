@@ -15,7 +15,6 @@
 *.gif filter=lfs diff=lfs merge=lfs -text
 *.pdb filter=lfs diff=lfs merge=lfs -text
 *.cif filter=lfs diff=lfs merge=lfs -text
-*.json filter=lfs diff=lfs merge=lfs -text
 Assets/3rdParty/StandaloneFileBrowser/** filter=lfs diff=lfs merge=lfs -text
 Assets/Plugins/SimpleFileBrowser/** filter=lfs diff=lfs merge=lfs -text
 *.bundle filter=lfs diff=lfs merge=lfs -text
@@ -34,13 +33,23 @@ Assets/Plugins/x86_64/libopenvr_api.so.meta filter=lfs diff=lfs merge=lfs -text
 Assets/Plugins/openvr_api.bundle/Contents filter=lfs diff=lfs merge=lfs -text
 Assets/Plugins/openvr_api.bundle/Contents.meta filter=lfs diff=lfs merge=lfs -text
 Assets/Models/** filter=lfs diff=lfs merge=lfs -text
-Assets/Plugins/artemis.dll filter=lfs diff=lfs merge=lfs -text
+Assets/Plugins/Unity_MDDriver** filter=lfs diff=lfs merge=lfs -text
+Assets/Scripts/CustomRaycast/RaySphereIntersection.dll filter=lfs diff=lfs merge=lfs -text
 Assets/Resources/Sounds/** filter=lfs diff=lfs merge=lfs -text
+Assets/Scripts/CustomRaycast/RaySphereIntersection.bundle filter=lfs diff=lfs merge=lfs -text
 Assets/3rdParty/MaterialUI-master/** filter=lfs diff=lfs merge=lfs -text
 Assets/Plugins/CUDASES/** filter=lfs diff=lfs merge=lfs -text
+Assets/Plugins/NeighborSearch.dll filter=lfs diff=lfs merge=lfs -text
 Assets/TextMesh[[:space:]]Pro/** filter=lfs diff=lfs merge=lfs -text
 Assets/StreamingAssets/HaadExe/** filter=lfs diff=lfs merge=lfs -text
 Assets/StreamingAssets/ReduceExe/reduce_wwPDB_het_dict.txt filter=lfs diff=lfs merge=lfs -text
 Assets/StreamingAssets/HaadExe/ filter=lfs diff=lfs merge=lfs -text
 Assets/StreamingAssets/ReduceExe filter=lfs diff=lfs merge=lfs -text
 Assets/Editor/TestData/protein_md_clean.xtc filter=lfs diff=lfs merge=lfs -text
+Assets/StreamingAssets/RotamerLibraries/** filter=lfs diff=lfs merge=lfs -text
+Assets/3rdParty/SharpZipLib/** filter=lfs diff=lfs merge=lfs -text
+Assets/Resources/Models/CombinedMeshes_HexagonsShared_-272646.asset filter=lfs diff=lfs merge=lfs -text
+Assets/Scripts/NormalModes/1p38_anm_modes.nmd filter=lfs diff=lfs merge=lfs -text
+Assets/3rdParty/PythonIntegration/IronPython/** filter=lfs diff=lfs merge=lfs -text
+
+Assets/Editor/TestData/*.json eol=lf

@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -113,7 +97,7 @@ public class QuickSelectionUI : MonoBehaviour {
 
         List<string> newOptions = new List<string>() {"Structure"};
         foreach (UnityMolStructure s in sm.loadedStructures) {
-            newOptions.Add(s.uniqueName);
+            newOptions.Add(s.name);
         }
 
         dpdStructure.ClearOptions();
@@ -121,7 +105,7 @@ public class QuickSelectionUI : MonoBehaviour {
 
         updateAvailableChains(dpdChain);
         dpdResidue.ClearOptions();
-        dpdResidue.AddOptions(new List<string>(){"Residue"});
+        dpdResidue.AddOptions(new List<string>() {"Residue"});
     }
     void selectCurrentStructure(Dropdown dpds) {
         currentStructureName = null;
@@ -164,9 +148,9 @@ public class QuickSelectionUI : MonoBehaviour {
         dpdr.SetValue(0);
         currentResidueId = -1;
         dpdr.ClearOptions();
-        
+
         HashSet<string> allResName = new HashSet<string>();
-        List<string> availableResi = new List<string>(){"Residue"};
+        List<string> availableResi = new List<string>() {"Residue"};
 
         if (currentStructureName == null && currentChainName == null) {
             // Debug.LogWarning("Please choose at least a structure or a chain");
@@ -177,9 +161,8 @@ public class QuickSelectionUI : MonoBehaviour {
             foreach (UnityMolStructure s in sm.loadedStructures) {
                 if (currentChainName == null) {
                     foreach (UnityMolChain c in s.currentModel.chains.Values) {
-                        foreach (int id in c.residues.Keys) {
-                            UnityMolResidue r = c.residues[id];
-                            availableResi.Add(r.name + "°"+r.id);
+                        foreach (UnityMolResidue r in c.residues) {
+                            availableResi.Add(r.name + "°" + r.id);
                             allResName.Add(r.name);
                         }
                     }
@@ -187,9 +170,8 @@ public class QuickSelectionUI : MonoBehaviour {
                 else if (s.currentModel.chains.ContainsKey(currentChainName)) {
 
                     UnityMolChain c = s.currentModel.chains[currentChainName];
-                    foreach (int id in c.residues.Keys) {
-                        UnityMolResidue r = c.residues[id];
-                        availableResi.Add(r.name + "°"+r.id);
+                    foreach (UnityMolResidue r in c.residues) {
+                        availableResi.Add(r.name + "°" + r.id);
                         allResName.Add(r.name);
                     }
                 }
@@ -199,9 +181,8 @@ public class QuickSelectionUI : MonoBehaviour {
             UnityMolStructure s = sm.nameToStructure[currentStructureName];
             if (currentChainName == null) {
                 foreach (UnityMolChain c in s.currentModel.chains.Values) {
-                    foreach (int id in c.residues.Keys) {
-                        UnityMolResidue r = c.residues[id];
-                        availableResi.Add(r.name + "°"+r.id);
+                    foreach (UnityMolResidue r in c.residues) {
+                        availableResi.Add(r.name + "°" + r.id);
                         allResName.Add(r.name);
                     }
                 }
@@ -209,16 +190,15 @@ public class QuickSelectionUI : MonoBehaviour {
             else if (s.currentModel.chains.ContainsKey(currentChainName)) {
 
                 UnityMolChain c = s.currentModel.chains[currentChainName];
-                foreach (int id in c.residues.Keys) {
-                    UnityMolResidue r = c.residues[id];
-                    availableResi.Add(r.name + "°"+r.id);
+                foreach (UnityMolResidue r in c.residues) {
+                    availableResi.Add(r.name + "°" + r.id);
                     allResName.Add(r.name);
                 }
             }
         }
 
-        foreach(string s in allResName){
-            availableResi.Add(s+"*");
+        foreach (string s in allResName) {
+            availableResi.Add(s + "*");
         }
 
         dpdr.AddOptions(availableResi);
@@ -230,7 +210,7 @@ public class QuickSelectionUI : MonoBehaviour {
         if (dpdr.value > 0) {
             try {
                 string fullR = dpdr.options[dpdr.value].text;
-                if(fullR.EndsWith("*")){
+                if (fullR.EndsWith("*")) {
                     currentResidueId = -2;
                     resName = fullR.Remove(fullR.Length - 1);
                     return;
@@ -258,15 +238,15 @@ public class QuickSelectionUI : MonoBehaviour {
                 if (currentResidueId >= 0) {
                     selMDAQuery += " and resid " + currentResidueId;
                 }
-                else if(currentResidueId == -2){
+                else if (currentResidueId == -2) {
                     selMDAQuery += " and resname " + resName;
                 }
             }
-            else{
+            else {
                 if (currentResidueId >= 0) {
                     selMDAQuery += " and resid " + currentResidueId;
                 }
-                else if(currentResidueId == -2){
+                else if (currentResidueId == -2) {
                     selMDAQuery += " and resname " + resName;
                 }
             }
@@ -276,7 +256,7 @@ public class QuickSelectionUI : MonoBehaviour {
             if (currentResidueId >= 0) {
                 selMDAQuery += " and resid " + currentResidueId;
             }
-            else if(currentResidueId == -2){
+            else if (currentResidueId == -2) {
                 selMDAQuery += " and resname " + resName;
             }
         }
@@ -290,7 +270,7 @@ public class QuickSelectionUI : MonoBehaviour {
         API.APIPython.select(selMDAQuery, curSel.name, createSelection: true,
                              addToExisting: false, silent: false);
 
-        Debug.Log("Selection: "+selMDAQuery);
+        Debug.Log("Selection: " + selMDAQuery);
         // currentStructureName = null;
         // currentChainName = null;
         // currentResidueId = -1;

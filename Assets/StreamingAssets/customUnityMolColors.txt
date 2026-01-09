@@ -1,0 +1,8 @@
+GHo6 #ffffff 1.2
+GO4 #d24b55 1.52
+GO3 #d24b55 1.52
+GHo3 #ffffff 1.2
+GC6 #48997f 1.7
+GO2 #d24b55 1.52
+GO1 #d24b55 1.52
+GHo2 #ffffff 1.2

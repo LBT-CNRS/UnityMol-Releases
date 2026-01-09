@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,171 +27,184 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.XR;
-using VRTK;
+using Unity.Mathematics;
+
 
 namespace UMol {
+
+/// <summary>
+/// Handles the Hbonds representation
+/// Create a GameObject for each Hbond with a Mesh associated to it.
+/// </summary>
 public class BondRepresentationHbonds : BondRepresentation {
 
-    public List<GameObject> meshesGO;
-    public Mesh curMesh;
-    public Dictionary<UnityMolAtom, List<GameObject>> atomToGo;
-    public Dictionary<UnityMolAtom, List<Mesh>> atomToMeshes;
-    public Dictionary<UnityMolAtom, List<int>> atomToVertices;
+    /// <summary>
+    /// List of GameObjects containing the meshes of the Hbonds
+    /// </summary>
+    public List<GameObject> MeshesGO { get; private set; }
 
-    public UnityMolBonds hbonds;
-    private GameObject newRep;
+    /// <summary>
+    /// Dictionary of UnityMolAtoms involved in at least one Hbond and their associated GameObjects
+    /// </summary>
+    public Dictionary<UnityMolAtom, List<GameObject>> AtomToGO { get; private set; }
+
+    /// <summary>
+    /// Dictionary of UnityMolAtoms involved in at least one Hbond and their associated Meshs.
+    /// </summary>
+    public Dictionary<UnityMolAtom, List<Mesh>> AtomToMeshes { get; private set; }
+
+    /// <summary>
+    /// Dictionary of UnityMolAtoms involved in at least one Hbond and their associated Vertices
+    /// </summary>
+    public Dictionary<UnityMolAtom, List<int>> AtomToVertices { get; private set; }
+
+    /// <summary>
+    /// Hydrogen bonds
+    /// </summary>
+    public UnityMolBonds Hbonds { get; set; }
+
+    /// <summary>
+    /// If the Hbonds are custom
+    /// </summary>
+    private bool isCustomHbonds { get; }
+
+    /// <summary>
+    /// GameObject parent holding all Hbonds GameObjects
+    /// </summary>
+    private readonly GameObject mainHbondsGO;
+
+    /// <summary>
+    /// Material for the Hbond
+    /// </summary>
     private Material hbondMat;
-
-    public bool isCustomHbonds = false;
 
     /// If customHbonds is true, use the bonds from the selection,
     /// else run hbond detection algorithm
-    public BondRepresentationHbonds(string structName, UnityMolSelection sel, bool customHbonds = false) {
+    public BondRepresentationHbonds(int idF, string structName, UnityMolSelection sel, bool customHbonds = false) {
 
         colorationType = colorType.full;
-        GameObject loadedMolGO = UnityMolMain.getRepresentationParent();
 
-        representationParent = loadedMolGO.transform.Find(structName);
-        if (UnityMolMain.inVR() && representationParent == null) {
-
-            Transform clref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.LeftController);
-            Transform crref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.RightController);
-            if (clref != null) {
-                representationParent = clref.Find(structName);
-            }
-            if (representationParent == null && crref != null) {
-                representationParent = crref.Find(structName);
-            }
-        }
-
-        if (representationParent == null) {
-            representationParent = (new GameObject(structName).transform);
-            representationParent.parent = loadedMolGO.transform;
-            representationParent.localPosition = Vector3.zero;
-            representationParent.localRotation = Quaternion.identity;
-            representationParent.localScale = Vector3.one;
-        }
+        representationParent = UnityMolMain.getRepStructureParent(structName).transform;
 
 
-
-        newRep = new GameObject("BondHbondRepresentation");
-        newRep.transform.parent = representationParent;
-        representationTransform = newRep.transform;
-
+        mainHbondsGO = new GameObject("BondHbondRepresentation");
+        mainHbondsGO.transform.parent = representationParent;
+        representationTransform = mainHbondsGO.transform;
 
         hbondMat = Resources.Load("Materials/hbondsTransparentUnlit") as Material;
 
-        AnimateHbonds anim = newRep.AddComponent<AnimateHbonds>();
+        AnimateHbonds anim = mainHbondsGO.AddComponent<AnimateHbonds>();
         anim.hbondMat = hbondMat;
 
-
         selection = sel;
+        idFrame = idF;
+        isCustomHbonds = customHbonds;
 
-        if (customHbonds == false) {
-            hbonds = HbondDetection.DetectHydrogenBonds(sel);
+        if (isCustomHbonds) {
+            Hbonds = sel.bonds;
         }
         else {
-            hbonds = sel.bonds;
-            isCustomHbonds = true;
+            Hbonds = HbondDetection.DetectHydrogenBonds(sel, idFrame, selection.atomToIdInSel);
         }
 
-        DisplayHBonds(newRep.transform);
 
-        newRep.transform.localPosition = Vector3.zero;
-        newRep.transform.localRotation = Quaternion.identity;
-        newRep.transform.localScale = Vector3.one;
+        displayHBonds();
+
+        mainHbondsGO.transform.localPosition = Vector3.zero;
+        mainHbondsGO.transform.localRotation = Quaternion.identity;
+        mainHbondsGO.transform.localScale = Vector3.one;
 
         //Don't do that to avoid updating the representation every time showSelection is called
         // nbBonds = hbonds.Count;
         nbBonds = sel.bonds.Count;
     }
 
-    public void DisplayHBonds(Transform repParent) {
+    /// <summary>
+    /// Create GameObjects and meshes for displaying the Hbonds
+    /// </summary>
+    private void displayHBonds() {
 
-        int nbSticks = hbonds.Length;
-
-
-        meshesGO = new List<GameObject>();
-        atomToMeshes = new Dictionary<UnityMolAtom, List<Mesh>>();
-        atomToVertices = new Dictionary<UnityMolAtom, List<int>>();
-        atomToGo = new Dictionary<UnityMolAtom, List<GameObject>>();
+        int nbSticks = Hbonds.Length;
 
 
-        if (nbSticks == 0)
+        MeshesGO = new List<GameObject>();
+        AtomToMeshes = new Dictionary<UnityMolAtom, List<Mesh>>();
+        AtomToVertices = new Dictionary<UnityMolAtom, List<int>>();
+        AtomToGO = new Dictionary<UnityMolAtom, List<GameObject>>();
+
+        if (nbSticks == 0) {
             return;
-
+        }
 
         int countBond = 0;
 
-        var keys = hbonds.Dbonds.Keys;
+        UnityMolModel curM = selection.atoms[0].residue.chain.model;
 
-        foreach (UnityMolAtom atom1 in keys) {
-            for (int at = 0; at < hbonds.Dbonds[atom1].Length; at++) {
+        HashSet<int2> doneBonds = new HashSet<int2>();
 
-                UnityMolAtom atom2 = hbonds.Dbonds[atom1][at];
-                if (hbonds.Dbonds[atom1][at] != null) {
-
-                    // GameObject currentGO = GameObject.Instantiate((GameObject) Resources.Load("Prefabs/HbondPrefab"));
-                    // currentGO.name = "BondHBond_" + countBond + "_" + atom1.number + "/" + atom2.number;
-                    GameObject currentGO = new GameObject("BondHBond_" + "BondHBond_" + countBond + "_" + atom1.number + "/" + atom2.number);
-                    currentGO.transform.parent = repParent;
-                    currentGO.transform.localRotation = Quaternion.identity;
-                    currentGO.transform.localPosition = Vector3.zero;
-                    currentGO.transform.localScale = Vector3.one;
-
-                    Mesh curMesh = createQuadMesh(atom1, atom2);
-
-                    if (!atomToGo.ContainsKey(atom1)) {
-                        atomToGo[atom1] = new List<GameObject>();
-                    }
-
-                    if (!atomToGo.ContainsKey(atom2)) {
-                        atomToGo[atom2] = new List<GameObject>();
-                    }
-
-                    atomToGo[atom1].Add(currentGO);
-                    atomToGo[atom2].Add(currentGO);
-
-
-
-                    MeshFilter mf = currentGO.AddComponent<MeshFilter>();
-                    mf.mesh = curMesh;
-                    MeshRenderer mr = currentGO.AddComponent<MeshRenderer>();
-                    mr.material = hbondMat;
-
-
-                    meshesGO.Add(currentGO);
-                    countBond++;
+        foreach (int ida in Hbonds.bonds.Keys) {
+            UnityMolAtom atom1 = curM.allAtoms[ida];
+            foreach (int idb in Hbonds.bonds[ida]) {
+                if (idb == -1) {
+                    continue;
                 }
+                int2 k, invk;
+                k.x = ida; invk.x = idb;
+                k.y = idb; invk.y = ida;
+                if (doneBonds.Contains(k) || doneBonds.Contains(invk)) {
+                    continue;
+                }
+
+                doneBonds.Add(k);
+                UnityMolAtom atom2 = curM.allAtoms[idb];
+
+                GameObject currentGO = new GameObject("BondHBond_" + "BondHBond_" + countBond + "_" + atom1.number + "/" + atom2.number);
+                currentGO.transform.parent = mainHbondsGO.transform;
+                currentGO.transform.localRotation = Quaternion.identity;
+                currentGO.transform.localPosition = Vector3.zero;
+                currentGO.transform.localScale = Vector3.one;
+
+                Mesh curMesh = createQuadMesh(atom1, atom2);
+
+                if (!AtomToGO.ContainsKey(atom1)) {
+                    AtomToGO[atom1] = new List<GameObject>();
+                }
+
+                if (!AtomToGO.ContainsKey(atom2)) {
+                    AtomToGO[atom2] = new List<GameObject>();
+                }
+
+                AtomToGO[atom1].Add(currentGO);
+                AtomToGO[atom2].Add(currentGO);
+
+
+
+                MeshFilter mf = currentGO.AddComponent<MeshFilter>();
+                mf.sharedMesh = curMesh;
+                MeshRenderer mr = currentGO.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = hbondMat;
+
+
+                MeshesGO.Add(currentGO);
+                countBond++;
             }
         }
     }
 
-
-
-    Mesh createQuadMesh(UnityMolAtom atom1, UnityMolAtom atom2, float lineWidth = 0.5f) {
+    /// <summary>
+    /// Create a quadrangle mesh for one Hbond between atom1 and atom2
+    /// </summary>
+    /// <param name="atom1">1st atom of the Hbond</param>
+    /// <param name="atom2">2nd atom of the Hbond</param>
+    /// <param name="lineWidth">Width of line of the quadrangle</param>
+    /// <returns>the quadrangle mesh</returns>
+    private Mesh createQuadMesh(UnityMolAtom atom1, UnityMolAtom atom2, float lineWidth = 0.5f) {
 
         Vector3[] newVertices = new Vector3[4];
         Vector2[] newUV = new Vector2[4];
@@ -202,6 +213,13 @@ public class BondRepresentationHbonds : BondRepresentation {
 
         Vector3 start = atom1.position;
         Vector3 end   = atom2.position;
+        if (idFrame != -1) {
+            int iida = selection.atomToIdInSel[atom1];
+            start = selection.extractTrajFramePositions[idFrame][iida];
+            iida = selection.atomToIdInSel[atom2];
+            end = selection.extractTrajFramePositions[idFrame][iida];
+        }
+
 
         Vector3 normal = Vector3.Cross(start, end);
         Vector3 side = Vector3.Cross(normal, end - start);
@@ -242,75 +260,94 @@ public class BondRepresentationHbonds : BondRepresentation {
 
 
 
-        Mesh curMesh = new Mesh();
+        Mesh curMesh = new Mesh {
+            vertices = newVertices,
+            triangles = newTriangles,
+            colors32 = newColors,
+            uv = newUV
+        };
 
-        curMesh.vertices = newVertices;
-        curMesh.triangles = newTriangles;
-        curMesh.colors32 = newColors;
-        curMesh.uv = newUV;
         curMesh.RecalculateNormals();
 
 
-        if (atomToMeshes.ContainsKey(atom1)) {
-            atomToMeshes[atom1].Add(curMesh);
-            atomToVertices[atom1].Add(ida);
-            atomToVertices[atom1].Add(ida + 1);
+        if (AtomToMeshes.ContainsKey(atom1)) {
+            AtomToMeshes[atom1].Add(curMesh);
+            AtomToVertices[atom1].Add(ida);
+            AtomToVertices[atom1].Add(ida + 1);
 
         }
         else {
-            atomToMeshes[atom1] = new List<Mesh>();
-            atomToVertices[atom1] = new List<int>();
-            atomToMeshes[atom1].Add(curMesh);
-            atomToVertices[atom1].Add(ida);
-            atomToVertices[atom1].Add(ida + 1);
+            AtomToMeshes[atom1] = new List<Mesh>();
+            AtomToVertices[atom1] = new List<int>();
+            AtomToMeshes[atom1].Add(curMesh);
+            AtomToVertices[atom1].Add(ida);
+            AtomToVertices[atom1].Add(ida + 1);
 
         }
 
-        if (atomToMeshes.ContainsKey(atom2)) {
-            atomToMeshes[atom2].Add(curMesh);
-            atomToVertices[atom2].Add(ida + 2);
-            atomToVertices[atom2].Add(ida + 3);
+        if (AtomToMeshes.ContainsKey(atom2)) {
+            AtomToMeshes[atom2].Add(curMesh);
+            AtomToVertices[atom2].Add(ida + 2);
+            AtomToVertices[atom2].Add(ida + 3);
 
         }
         else {
-            atomToMeshes[atom2] = new List<Mesh>();
-            atomToVertices[atom2] = new List<int>();
-            atomToMeshes[atom2].Add(curMesh);
-            atomToVertices[atom2].Add(ida + 2);
-            atomToVertices[atom2].Add(ida + 3);
+            AtomToMeshes[atom2] = new List<Mesh>();
+            AtomToVertices[atom2] = new List<int>();
+            AtomToMeshes[atom2].Add(curMesh);
+            AtomToVertices[atom2].Add(ida + 2);
+            AtomToVertices[atom2].Add(ida + 3);
 
         }
         return curMesh;
     }
 
-
-
-
-    public void Clear() {
-        foreach (GameObject go in meshesGO) {
-            GameObject.Destroy(go);
+    /// <summary>
+    /// Destroy all GameObjets of the hbonds and clear the various dictionaries.
+    /// </summary>
+    /// <param name="destroyHbondMaterial">destroy also the Material if true</param>
+    private void clean(bool destroyHbondMaterial = true) {
+        if (MeshesGO != null) {//Already destroyed by the manager
+            foreach (GameObject go in MeshesGO) {
+                GameObject.Destroy(go.GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(go);
+            }
+            MeshesGO.Clear();
         }
-        meshesGO.Clear();
-        atomToGo.Clear();
-        atomToMeshes.Clear();
-        atomToVertices.Clear();
+
+        if (destroyHbondMaterial) {
+            hbondMat = null;
+        }
+        AtomToGO.Clear();
+        AtomToMeshes.Clear();
+        AtomToVertices.Clear();
     }
+
+    /// <summary>
+    /// Override method which just call the private clean method
+    /// </summary>
     public override void Clean() {
-        Clear();
+        clean();
     }
 
-    public void recompute() {
-        Clear();
-        if (!isCustomHbonds)
-            hbonds = HbondDetection.DetectHydrogenBonds(selection);
-        else
-            hbonds = selection.bonds;
+    /// <summary>
+    /// Recompute GameObjects linked to the Hbonds.
+    /// If lightRecompute is false, also recompute the detection of the Hbonds if IsCustomHbonds is false.
+    /// </summary>
+    /// <param name="lightRecompute">If true, don't recompute the detection of the hbonds</param>
+    public void Recompute(bool lightRecompute) {
+        //Clean without destroying material
+        clean(false);
 
-        DisplayHBonds(newRep.transform);
-    }
-    public void recomputeLight() {
-        Clear();
-        DisplayHBonds(newRep.transform);
+        if (!lightRecompute) {
+            if (isCustomHbonds) {
+                Hbonds = selection.bonds;
+            } else {
+                Hbonds = HbondDetection.DetectHydrogenBonds(selection, idFrame, selection.atomToIdInSel);
+            }
+        }
+
+        displayHBonds();
     }
 }
 }

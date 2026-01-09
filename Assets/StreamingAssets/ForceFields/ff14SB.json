@@ -1,0 +1,5494 @@
+{
+    "atom_types": {
+        "2C": {
+            "epsilon": "0.1094",
+            "epsilon_14": "0.1094",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "3C": {
+            "epsilon": "0.1094",
+            "epsilon_14": "0.1094",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "C": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "C*": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "C8": {
+            "epsilon": "0.1094",
+            "epsilon_14": "0.1094",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CA": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CB": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CC": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CN": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CO": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CR": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CT": {
+            "epsilon": "0.1094",
+            "epsilon_14": "0.1094",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CV": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CW": {
+            "epsilon": "0.086",
+            "epsilon_14": "0.086",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "CX": {
+            "epsilon": "0.1094",
+            "epsilon_14": "0.1094",
+            "rmin": "1.908",
+            "rmin_14": "1.908"
+        },
+        "H": {
+            "epsilon": "0.0157",
+            "epsilon_14": "0.0157",
+            "rmin": "0.6",
+            "rmin_14": "0.6"
+        },
+        "H1": {
+            "epsilon": "0.0157",
+            "epsilon_14": "0.0157",
+            "rmin": "1.387",
+            "rmin_14": "1.387"
+        },
+        "H4": {
+            "epsilon": "0.015",
+            "epsilon_14": "0.015",
+            "rmin": "1.409",
+            "rmin_14": "1.409"
+        },
+        "H5": {
+            "epsilon": "0.015",
+            "epsilon_14": "0.015",
+            "rmin": "1.359",
+            "rmin_14": "1.359"
+        },
+        "HA": {
+            "epsilon": "0.015",
+            "epsilon_14": "0.015",
+            "rmin": "1.459",
+            "rmin_14": "1.459"
+        },
+        "HC": {
+            "epsilon": "0.0157",
+            "epsilon_14": "0.0157",
+            "rmin": "1.487",
+            "rmin_14": "1.487"
+        },
+        "HO": {
+            "epsilon": "0.0",
+            "epsilon_14": "0.0",
+            "rmin": "0.0",
+            "rmin_14": "0.0"
+        },
+        "HP": {
+            "epsilon": "0.0157",
+            "epsilon_14": "0.0157",
+            "rmin": "1.1",
+            "rmin_14": "1.1"
+        },
+        "HS": {
+            "epsilon": "0.0157",
+            "epsilon_14": "0.0157",
+            "rmin": "0.6",
+            "rmin_14": "0.6"
+        },
+        "N": {
+            "epsilon": "0.17",
+            "epsilon_14": "0.17",
+            "rmin": "1.824",
+            "rmin_14": "1.824"
+        },
+        "N2": {
+            "epsilon": "0.17",
+            "epsilon_14": "0.17",
+            "rmin": "1.824",
+            "rmin_14": "1.824"
+        },
+        "N3": {
+            "epsilon": "0.17",
+            "epsilon_14": "0.17",
+            "rmin": "1.824",
+            "rmin_14": "1.824"
+        },
+        "NA": {
+            "epsilon": "0.17",
+            "epsilon_14": "0.17",
+            "rmin": "1.824",
+            "rmin_14": "1.824"
+        },
+        "NB": {
+            "epsilon": "0.17",
+            "epsilon_14": "0.17",
+            "rmin": "1.824",
+            "rmin_14": "1.824"
+        },
+        "O": {
+            "epsilon": "0.21",
+            "epsilon_14": "0.21",
+            "rmin": "1.6612",
+            "rmin_14": "1.6612"
+        },
+        "O2": {
+            "epsilon": "0.21",
+            "epsilon_14": "0.21",
+            "rmin": "1.6612",
+            "rmin_14": "1.6612"
+        },
+        "OH": {
+            "epsilon": "0.2104",
+            "epsilon_14": "0.2104",
+            "rmin": "1.721",
+            "rmin_14": "1.721"
+        },
+        "S": {
+            "epsilon": "0.25",
+            "epsilon_14": "0.25",
+            "rmin": "2.0",
+            "rmin_14": "2.0"
+        },
+        "SH": {
+            "epsilon": "0.25",
+            "epsilon_14": "0.25",
+            "rmin": "2.0",
+            "rmin_14": "2.0"
+        }
+    },
+    "residues": {
+        "ACE": {
+            "C": {
+                "charge": "0.5972",
+                "type": "C"
+            },
+            "CH3": {
+                "charge": "-0.3662",
+                "type": "CT"
+            },
+            "HH31": {
+                "charge": "0.1123",
+                "type": "HC"
+            },
+            "HH32": {
+                "charge": "0.1123",
+                "type": "HC"
+            },
+            "HH33": {
+                "charge": "0.1123",
+                "type": "HC"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "ALA": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0337",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.1825",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0823",
+                "type": "H1"
+            },
+            "HB1": {
+                "charge": "0.0603",
+                "type": "HC"
+            },
+            "HB2": {
+                "charge": "0.0603",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0603",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "ARG": {
+            "C": {
+                "charge": "0.7341",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2637",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0007",
+                "type": "C8"
+            },
+            "CD": {
+                "charge": "0.0486",
+                "type": "C8"
+            },
+            "CG": {
+                "charge": "0.039",
+                "type": "C8"
+            },
+            "CZ": {
+                "charge": "0.8076",
+                "type": "CA"
+            },
+            "H": {
+                "charge": "0.2747",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.156",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0327",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0327",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.0687",
+                "type": "H1"
+            },
+            "HD3": {
+                "charge": "0.0687",
+                "type": "H1"
+            },
+            "HE": {
+                "charge": "0.3456",
+                "type": "H"
+            },
+            "HG2": {
+                "charge": "0.0285",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0285",
+                "type": "HC"
+            },
+            "HH11": {
+                "charge": "0.4478",
+                "type": "H"
+            },
+            "HH12": {
+                "charge": "0.4478",
+                "type": "H"
+            },
+            "HH21": {
+                "charge": "0.4478",
+                "type": "H"
+            },
+            "HH22": {
+                "charge": "0.4478",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.3479",
+                "type": "N"
+            },
+            "NE": {
+                "charge": "-0.5295",
+                "type": "N2"
+            },
+            "NH1": {
+                "charge": "-0.8627",
+                "type": "N2"
+            },
+            "NH2": {
+                "charge": "-0.8627",
+                "type": "N2"
+            },
+            "O": {
+                "charge": "-0.5894",
+                "type": "O"
+            }
+        },
+        "ASH": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0341",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0316",
+                "type": "2C"
+            },
+            "CG": {
+                "charge": "0.6462",
+                "type": "C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0864",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0488",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0488",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.4747",
+                "type": "HO"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "OD1": {
+                "charge": "-0.5554",
+                "type": "O"
+            },
+            "OD2": {
+                "charge": "-0.6376",
+                "type": "OH"
+            }
+        },
+        "ASN": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0143",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.2041",
+                "type": "2C"
+            },
+            "CG": {
+                "charge": "0.713",
+                "type": "C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1048",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0797",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0797",
+                "type": "HC"
+            },
+            "HD21": {
+                "charge": "0.4196",
+                "type": "H"
+            },
+            "HD22": {
+                "charge": "0.4196",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "ND2": {
+                "charge": "-0.9191",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "OD1": {
+                "charge": "-0.5931",
+                "type": "O"
+            }
+        },
+        "ASP": {
+            "C": {
+                "charge": "0.5366",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0381",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0303",
+                "type": "2C"
+            },
+            "CG": {
+                "charge": "0.7994",
+                "type": "CO"
+            },
+            "H": {
+                "charge": "0.2936",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.088",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "-0.0122",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "-0.0122",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.5163",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5819",
+                "type": "O"
+            },
+            "OD1": {
+                "charge": "-0.8014",
+                "type": "O2"
+            },
+            "OD2": {
+                "charge": "-0.8014",
+                "type": "O2"
+            }
+        },
+        "CALA": {
+            "C": {
+                "charge": "0.7731",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1747",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.2093",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1067",
+                "type": "H1"
+            },
+            "HB1": {
+                "charge": "0.0764",
+                "type": "HC"
+            },
+            "HB2": {
+                "charge": "0.0764",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0764",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8055",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8055",
+                "type": "O2"
+            }
+        },
+        "CARG": {
+            "C": {
+                "charge": "0.8557",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.3068",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0374",
+                "type": "C8"
+            },
+            "CD": {
+                "charge": "0.1114",
+                "type": "C8"
+            },
+            "CG": {
+                "charge": "0.0744",
+                "type": "C8"
+            },
+            "CZ": {
+                "charge": "0.8368",
+                "type": "CA"
+            },
+            "H": {
+                "charge": "0.2764",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1447",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0371",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0371",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.0468",
+                "type": "H1"
+            },
+            "HD3": {
+                "charge": "0.0468",
+                "type": "H1"
+            },
+            "HE": {
+                "charge": "0.3479",
+                "type": "H"
+            },
+            "HG2": {
+                "charge": "0.0185",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0185",
+                "type": "HC"
+            },
+            "HH11": {
+                "charge": "0.4493",
+                "type": "H"
+            },
+            "HH12": {
+                "charge": "0.4493",
+                "type": "H"
+            },
+            "HH21": {
+                "charge": "0.4493",
+                "type": "H"
+            },
+            "HH22": {
+                "charge": "0.4493",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.3481",
+                "type": "N"
+            },
+            "NE": {
+                "charge": "-0.5564",
+                "type": "N2"
+            },
+            "NH1": {
+                "charge": "-0.8737",
+                "type": "N2"
+            },
+            "NH2": {
+                "charge": "-0.8737",
+                "type": "N2"
+            },
+            "O": {
+                "charge": "-0.8266",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8266",
+                "type": "O2"
+            }
+        },
+        "CASN": {
+            "C": {
+                "charge": "0.805",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.208",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.2299",
+                "type": "2C"
+            },
+            "CG": {
+                "charge": "0.7153",
+                "type": "C"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1358",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.1023",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.1023",
+                "type": "HC"
+            },
+            "HD21": {
+                "charge": "0.415",
+                "type": "H"
+            },
+            "HD22": {
+                "charge": "0.415",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "ND2": {
+                "charge": "-0.9084",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8147",
+                "type": "O2"
+            },
+            "OD1": {
+                "charge": "-0.601",
+                "type": "O"
+            },
+            "OXT": {
+                "charge": "-0.8147",
+                "type": "O2"
+            }
+        },
+        "CASP": {
+            "C": {
+                "charge": "0.7256",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1817",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0677",
+                "type": "2C"
+            },
+            "CG": {
+                "charge": "0.8851",
+                "type": "CO"
+            },
+            "H": {
+                "charge": "0.3055",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1046",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "-0.0212",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "-0.0212",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.5192",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.7887",
+                "type": "O2"
+            },
+            "OD1": {
+                "charge": "-0.8162",
+                "type": "O2"
+            },
+            "OD2": {
+                "charge": "-0.8162",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.7887",
+                "type": "O2"
+            }
+        },
+        "CCYS": {
+            "C": {
+                "charge": "0.7497",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1635",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.1996",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1396",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.1437",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.1437",
+                "type": "H1"
+            },
+            "HG": {
+                "charge": "0.2068",
+                "type": "HS"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.7981",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.7981",
+                "type": "O2"
+            },
+            "SG": {
+                "charge": "-0.3102",
+                "type": "SH"
+            }
+        },
+        "CCYX": {
+            "C": {
+                "charge": "0.7618",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1318",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.1943",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0938",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.1228",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.1228",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8041",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8041",
+                "type": "O2"
+            },
+            "SG": {
+                "charge": "-0.0529",
+                "type": "S"
+            }
+        },
+        "CGLN": {
+            "C": {
+                "charge": "0.7775",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2248",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0664",
+                "type": "2C"
+            },
+            "CD": {
+                "charge": "0.7093",
+                "type": "C"
+            },
+            "CG": {
+                "charge": "-0.021",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1232",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0452",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0452",
+                "type": "HC"
+            },
+            "HE21": {
+                "charge": "0.4304",
+                "type": "H"
+            },
+            "HE22": {
+                "charge": "0.4304",
+                "type": "H"
+            },
+            "HG2": {
+                "charge": "0.0203",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0203",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "NE2": {
+                "charge": "-0.9574",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8042",
+                "type": "O2"
+            },
+            "OE1": {
+                "charge": "-0.6098",
+                "type": "O"
+            },
+            "OXT": {
+                "charge": "-0.8042",
+                "type": "O2"
+            }
+        },
+        "CGLU": {
+            "C": {
+                "charge": "0.742",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2059",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0071",
+                "type": "2C"
+            },
+            "CD": {
+                "charge": "0.8183",
+                "type": "CO"
+            },
+            "CG": {
+                "charge": "0.0675",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.3055",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1399",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "-0.0078",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "-0.0078",
+                "type": "HC"
+            },
+            "HG2": {
+                "charge": "-0.0548",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "-0.0548",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.5192",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.793",
+                "type": "O2"
+            },
+            "OE1": {
+                "charge": "-0.822",
+                "type": "O2"
+            },
+            "OE2": {
+                "charge": "-0.822",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.793",
+                "type": "O2"
+            }
+        },
+        "CGLY": {
+            "C": {
+                "charge": "0.7231",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2493",
+                "type": "CX"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA2": {
+                "charge": "0.1056",
+                "type": "H1"
+            },
+            "HA3": {
+                "charge": "0.1056",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.7855",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.7855",
+                "type": "O2"
+            }
+        },
+        "CHID": {
+            "C": {
+                "charge": "0.7615",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1739",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.1046",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "0.1001",
+                "type": "CV"
+            },
+            "CE1": {
+                "charge": "0.1925",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "0.0293",
+                "type": "CC"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.11",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0565",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0565",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.3755",
+                "type": "H"
+            },
+            "HD2": {
+                "charge": "0.1241",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.1418",
+                "type": "H5"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "ND1": {
+                "charge": "-0.3892",
+                "type": "NA"
+            },
+            "NE2": {
+                "charge": "-0.5629",
+                "type": "NB"
+            },
+            "O": {
+                "charge": "-0.8016",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8016",
+                "type": "O2"
+            }
+        },
+        "CHIE": {
+            "C": {
+                "charge": "0.7916",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2699",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.1068",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.2588",
+                "type": "CW"
+            },
+            "CE1": {
+                "charge": "0.1558",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "0.2724",
+                "type": "CC"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.165",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.062",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.062",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.1957",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.1448",
+                "type": "H5"
+            },
+            "HE2": {
+                "charge": "0.3319",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "ND1": {
+                "charge": "-0.5517",
+                "type": "NB"
+            },
+            "NE2": {
+                "charge": "-0.267",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.8065",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8065",
+                "type": "O2"
+            }
+        },
+        "CHIP": {
+            "C": {
+                "charge": "0.8032",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1445",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.08",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.1256",
+                "type": "CW"
+            },
+            "CE1": {
+                "charge": "-0.0251",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "0.0298",
+                "type": "CC"
+            },
+            "H": {
+                "charge": "0.2764",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1115",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0868",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0868",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.3883",
+                "type": "H"
+            },
+            "HD2": {
+                "charge": "0.2336",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.2694",
+                "type": "H5"
+            },
+            "HE2": {
+                "charge": "0.3913",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.3481",
+                "type": "N"
+            },
+            "ND1": {
+                "charge": "-0.1501",
+                "type": "NA"
+            },
+            "NE2": {
+                "charge": "-0.1683",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.8177",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8177",
+                "type": "O2"
+            }
+        },
+        "CHYP": {
+            "C": {
+                "charge": "0.6631",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0993",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0547",
+                "type": "CT"
+            },
+            "CD": {
+                "charge": "0.0778",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.081",
+                "type": "CT"
+            },
+            "HA": {
+                "charge": "0.0776",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0426",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0426",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.3851",
+                "type": "HO"
+            },
+            "HD22": {
+                "charge": "0.0331",
+                "type": "H1"
+            },
+            "HD23": {
+                "charge": "0.0331",
+                "type": "H1"
+            },
+            "HG": {
+                "charge": "0.0416",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.2802",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.7697",
+                "type": "O2"
+            },
+            "OD1": {
+                "charge": "-0.6134",
+                "type": "OH"
+            },
+            "OXT": {
+                "charge": "-0.7697",
+                "type": "O2"
+            }
+        },
+        "CILE": {
+            "C": {
+                "charge": "0.8343",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.31",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0363",
+                "type": "3C"
+            },
+            "CD1": {
+                "charge": "-0.0699",
+                "type": "CT"
+            },
+            "CG1": {
+                "charge": "-0.0323",
+                "type": "2C"
+            },
+            "CG2": {
+                "charge": "-0.3498",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1375",
+                "type": "H1"
+            },
+            "HB": {
+                "charge": "0.0766",
+                "type": "HC"
+            },
+            "HD11": {
+                "charge": "0.0196",
+                "type": "HC"
+            },
+            "HD12": {
+                "charge": "0.0196",
+                "type": "HC"
+            },
+            "HD13": {
+                "charge": "0.0196",
+                "type": "HC"
+            },
+            "HG12": {
+                "charge": "0.0321",
+                "type": "HC"
+            },
+            "HG13": {
+                "charge": "0.0321",
+                "type": "HC"
+            },
+            "HG21": {
+                "charge": "0.1021",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.1021",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.1021",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.819",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.819",
+                "type": "O2"
+            }
+        },
+        "CLEU": {
+            "C": {
+                "charge": "0.8326",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2847",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.2469",
+                "type": "2C"
+            },
+            "CD1": {
+                "charge": "-0.4163",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.4163",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.3706",
+                "type": "3C"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1346",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0974",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0974",
+                "type": "HC"
+            },
+            "HD11": {
+                "charge": "0.1038",
+                "type": "HC"
+            },
+            "HD12": {
+                "charge": "0.1038",
+                "type": "HC"
+            },
+            "HD13": {
+                "charge": "0.1038",
+                "type": "HC"
+            },
+            "HD21": {
+                "charge": "0.1038",
+                "type": "HC"
+            },
+            "HD22": {
+                "charge": "0.1038",
+                "type": "HC"
+            },
+            "HD23": {
+                "charge": "0.1038",
+                "type": "HC"
+            },
+            "HG": {
+                "charge": "-0.0374",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8199",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8199",
+                "type": "O2"
+            }
+        },
+        "CLYS": {
+            "C": {
+                "charge": "0.8488",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2903",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0538",
+                "type": "C8"
+            },
+            "CD": {
+                "charge": "-0.0392",
+                "type": "C8"
+            },
+            "CE": {
+                "charge": "-0.0176",
+                "type": "C8"
+            },
+            "CG": {
+                "charge": "0.0227",
+                "type": "C8"
+            },
+            "H": {
+                "charge": "0.2764",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1438",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0482",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0482",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.0611",
+                "type": "HC"
+            },
+            "HD3": {
+                "charge": "0.0611",
+                "type": "HC"
+            },
+            "HE2": {
+                "charge": "0.1121",
+                "type": "HP"
+            },
+            "HE3": {
+                "charge": "0.1121",
+                "type": "HP"
+            },
+            "HG2": {
+                "charge": "0.0134",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0134",
+                "type": "HC"
+            },
+            "HZ1": {
+                "charge": "0.3374",
+                "type": "H"
+            },
+            "HZ2": {
+                "charge": "0.3374",
+                "type": "H"
+            },
+            "HZ3": {
+                "charge": "0.3374",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.3481",
+                "type": "N"
+            },
+            "NZ": {
+                "charge": "-0.3741",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.8252",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8252",
+                "type": "O2"
+            }
+        },
+        "CMET": {
+            "C": {
+                "charge": "0.8013",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2597",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0236",
+                "type": "2C"
+            },
+            "CE": {
+                "charge": "-0.0376",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.0492",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1277",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.048",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.048",
+                "type": "HC"
+            },
+            "HE1": {
+                "charge": "0.0625",
+                "type": "H1"
+            },
+            "HE2": {
+                "charge": "0.0625",
+                "type": "H1"
+            },
+            "HE3": {
+                "charge": "0.0625",
+                "type": "H1"
+            },
+            "HG2": {
+                "charge": "0.0317",
+                "type": "H1"
+            },
+            "HG3": {
+                "charge": "0.0317",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8105",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8105",
+                "type": "O2"
+            },
+            "SD": {
+                "charge": "-0.2692",
+                "type": "S"
+            }
+        },
+        "CPHE": {
+            "C": {
+                "charge": "0.766",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1825",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0959",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.13",
+                "type": "CA"
+            },
+            "CD2": {
+                "charge": "-0.13",
+                "type": "CA"
+            },
+            "CE1": {
+                "charge": "-0.1847",
+                "type": "CA"
+            },
+            "CE2": {
+                "charge": "-0.1847",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "0.0552",
+                "type": "CA"
+            },
+            "CZ": {
+                "charge": "-0.0944",
+                "type": "CA"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1098",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0443",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0443",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.1408",
+                "type": "HA"
+            },
+            "HD2": {
+                "charge": "0.1408",
+                "type": "HA"
+            },
+            "HE1": {
+                "charge": "0.1461",
+                "type": "HA"
+            },
+            "HE2": {
+                "charge": "0.1461",
+                "type": "HA"
+            },
+            "HZ": {
+                "charge": "0.128",
+                "type": "HA"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8026",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8026",
+                "type": "O2"
+            }
+        },
+        "CPRO": {
+            "C": {
+                "charge": "0.6631",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1336",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0543",
+                "type": "CT"
+            },
+            "CD": {
+                "charge": "0.0434",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.0466",
+                "type": "CT"
+            },
+            "HA": {
+                "charge": "0.0776",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0381",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0381",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.0331",
+                "type": "H1"
+            },
+            "HD3": {
+                "charge": "0.0331",
+                "type": "H1"
+            },
+            "HG2": {
+                "charge": "0.0172",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0172",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.2802",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.7697",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.7697",
+                "type": "O2"
+            }
+        },
+        "CSER": {
+            "C": {
+                "charge": "0.8113",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2722",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.1123",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1304",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0813",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.0813",
+                "type": "H1"
+            },
+            "HG": {
+                "charge": "0.4474",
+                "type": "HO"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8132",
+                "type": "O2"
+            },
+            "OG": {
+                "charge": "-0.6514",
+                "type": "OH"
+            },
+            "OXT": {
+                "charge": "-0.8132",
+                "type": "O2"
+            }
+        },
+        "CTHR": {
+            "C": {
+                "charge": "0.781",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.242",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.3025",
+                "type": "3C"
+            },
+            "CG2": {
+                "charge": "-0.1853",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1207",
+                "type": "H1"
+            },
+            "HB": {
+                "charge": "0.0078",
+                "type": "H1"
+            },
+            "HG1": {
+                "charge": "0.4119",
+                "type": "HO"
+            },
+            "HG21": {
+                "charge": "0.0586",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.0586",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.0586",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8044",
+                "type": "O2"
+            },
+            "OG1": {
+                "charge": "-0.6496",
+                "type": "OH"
+            },
+            "OXT": {
+                "charge": "-0.8044",
+                "type": "O2"
+            }
+        },
+        "CTRP": {
+            "C": {
+                "charge": "0.7658",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2084",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0742",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.1808",
+                "type": "CW"
+            },
+            "CD2": {
+                "charge": "0.1078",
+                "type": "CB"
+            },
+            "CE2": {
+                "charge": "0.1222",
+                "type": "CN"
+            },
+            "CE3": {
+                "charge": "-0.1837",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "-0.0796",
+                "type": "C*"
+            },
+            "CH2": {
+                "charge": "-0.102",
+                "type": "CA"
+            },
+            "CZ2": {
+                "charge": "-0.2594",
+                "type": "CA"
+            },
+            "CZ3": {
+                "charge": "-0.2287",
+                "type": "CA"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1272",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0497",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0497",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.2043",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.3413",
+                "type": "H"
+            },
+            "HE3": {
+                "charge": "0.1491",
+                "type": "HA"
+            },
+            "HH2": {
+                "charge": "0.1401",
+                "type": "HA"
+            },
+            "HZ2": {
+                "charge": "0.1567",
+                "type": "HA"
+            },
+            "HZ3": {
+                "charge": "0.1507",
+                "type": "HA"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "NE1": {
+                "charge": "-0.3316",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.8011",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8011",
+                "type": "O2"
+            }
+        },
+        "CTYR": {
+            "C": {
+                "charge": "0.7817",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.2015",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0752",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.1922",
+                "type": "CA"
+            },
+            "CD2": {
+                "charge": "-0.1922",
+                "type": "CA"
+            },
+            "CE1": {
+                "charge": "-0.2458",
+                "type": "CA"
+            },
+            "CE2": {
+                "charge": "-0.2458",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "0.0243",
+                "type": "CA"
+            },
+            "CZ": {
+                "charge": "0.3395",
+                "type": "C"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1092",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.049",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.049",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.178",
+                "type": "HA"
+            },
+            "HD2": {
+                "charge": "0.178",
+                "type": "HA"
+            },
+            "HE1": {
+                "charge": "0.1673",
+                "type": "HA"
+            },
+            "HE2": {
+                "charge": "0.1673",
+                "type": "HA"
+            },
+            "HH": {
+                "charge": "0.4017",
+                "type": "HO"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.807",
+                "type": "O2"
+            },
+            "OH": {
+                "charge": "-0.5643",
+                "type": "OH"
+            },
+            "OXT": {
+                "charge": "-0.807",
+                "type": "O2"
+            }
+        },
+        "CVAL": {
+            "C": {
+                "charge": "0.835",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.3438",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.194",
+                "type": "3C"
+            },
+            "CG1": {
+                "charge": "-0.3064",
+                "type": "CT"
+            },
+            "CG2": {
+                "charge": "-0.3064",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2681",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1438",
+                "type": "H1"
+            },
+            "HB": {
+                "charge": "0.0308",
+                "type": "HC"
+            },
+            "HG11": {
+                "charge": "0.0836",
+                "type": "HC"
+            },
+            "HG12": {
+                "charge": "0.0836",
+                "type": "HC"
+            },
+            "HG13": {
+                "charge": "0.0836",
+                "type": "HC"
+            },
+            "HG21": {
+                "charge": "0.0836",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.0836",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.0836",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.3821",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.8173",
+                "type": "O2"
+            },
+            "OXT": {
+                "charge": "-0.8173",
+                "type": "O2"
+            }
+        },
+        "CYM": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0351",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.2413",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0508",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.1122",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.1122",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "SG": {
+                "charge": "-0.8844",
+                "type": "SH"
+            }
+        },
+        "CYS": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0213",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.1231",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1124",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.1112",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.1112",
+                "type": "H1"
+            },
+            "HG": {
+                "charge": "0.1933",
+                "type": "HS"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "SG": {
+                "charge": "-0.3119",
+                "type": "SH"
+            }
+        },
+        "CYX": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0429",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.079",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0766",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.091",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.091",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "SG": {
+                "charge": "-0.1081",
+                "type": "S"
+            }
+        },
+        "GLH": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0145",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0071",
+                "type": "2C"
+            },
+            "CD": {
+                "charge": "0.6801",
+                "type": "C"
+            },
+            "CG": {
+                "charge": "-0.0174",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0779",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0256",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0256",
+                "type": "HC"
+            },
+            "HE2": {
+                "charge": "0.4641",
+                "type": "HO"
+            },
+            "HG2": {
+                "charge": "0.043",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.043",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "OE1": {
+                "charge": "-0.5838",
+                "type": "O"
+            },
+            "OE2": {
+                "charge": "-0.6511",
+                "type": "OH"
+            }
+        },
+        "GLN": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0031",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0036",
+                "type": "2C"
+            },
+            "CD": {
+                "charge": "0.6951",
+                "type": "C"
+            },
+            "CG": {
+                "charge": "-0.0645",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.085",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0171",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0171",
+                "type": "HC"
+            },
+            "HE21": {
+                "charge": "0.4251",
+                "type": "H"
+            },
+            "HE22": {
+                "charge": "0.4251",
+                "type": "H"
+            },
+            "HG2": {
+                "charge": "0.0352",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0352",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "NE2": {
+                "charge": "-0.9407",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "OE1": {
+                "charge": "-0.6086",
+                "type": "O"
+            }
+        },
+        "GLU": {
+            "C": {
+                "charge": "0.5366",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0397",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.056",
+                "type": "2C"
+            },
+            "CD": {
+                "charge": "0.8054",
+                "type": "CO"
+            },
+            "CG": {
+                "charge": "0.0136",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2936",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1105",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "-0.0173",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "-0.0173",
+                "type": "HC"
+            },
+            "HG2": {
+                "charge": "-0.0425",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "-0.0425",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.5163",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5819",
+                "type": "O"
+            },
+            "OE1": {
+                "charge": "-0.8188",
+                "type": "O2"
+            },
+            "OE2": {
+                "charge": "-0.8188",
+                "type": "O2"
+            }
+        },
+        "GLY": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0252",
+                "type": "CX"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA2": {
+                "charge": "0.0698",
+                "type": "H1"
+            },
+            "HA3": {
+                "charge": "0.0698",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "HID": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0188",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0462",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "0.1292",
+                "type": "CV"
+            },
+            "CE1": {
+                "charge": "0.2057",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "-0.0266",
+                "type": "CC"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0881",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0402",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0402",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.3649",
+                "type": "H"
+            },
+            "HD2": {
+                "charge": "0.1147",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.1392",
+                "type": "H5"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "ND1": {
+                "charge": "-0.3811",
+                "type": "NA"
+            },
+            "NE2": {
+                "charge": "-0.5727",
+                "type": "NB"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "HIE": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0581",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0074",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.2207",
+                "type": "CW"
+            },
+            "CE1": {
+                "charge": "0.1635",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "0.1868",
+                "type": "CC"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.136",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0367",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0367",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.1862",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.1435",
+                "type": "H5"
+            },
+            "HE2": {
+                "charge": "0.3339",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "ND1": {
+                "charge": "-0.5432",
+                "type": "NB"
+            },
+            "NE2": {
+                "charge": "-0.2795",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "HIP": {
+            "C": {
+                "charge": "0.7341",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.1354",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0414",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.1141",
+                "type": "CW"
+            },
+            "CE1": {
+                "charge": "-0.017",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "-0.0012",
+                "type": "CC"
+            },
+            "H": {
+                "charge": "0.2747",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1212",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.081",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.081",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.3866",
+                "type": "H"
+            },
+            "HD2": {
+                "charge": "0.2317",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.2681",
+                "type": "H5"
+            },
+            "HE2": {
+                "charge": "0.3911",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.3479",
+                "type": "N"
+            },
+            "ND1": {
+                "charge": "-0.1513",
+                "type": "NA"
+            },
+            "NE2": {
+                "charge": "-0.1718",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.5894",
+                "type": "O"
+            }
+        },
+        "HYP": {
+            "C": {
+                "charge": "0.5896",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0047",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0203",
+                "type": "CT"
+            },
+            "CD": {
+                "charge": "0.0595",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.04",
+                "type": "CT"
+            },
+            "HA": {
+                "charge": "0.077",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0426",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0426",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.3851",
+                "type": "HO"
+            },
+            "HD22": {
+                "charge": "0.07",
+                "type": "H1"
+            },
+            "HD23": {
+                "charge": "0.07",
+                "type": "H1"
+            },
+            "HG": {
+                "charge": "0.0416",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.2548",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5748",
+                "type": "O"
+            },
+            "OD1": {
+                "charge": "-0.6134",
+                "type": "OH"
+            }
+        },
+        "ILE": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0597",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.1303",
+                "type": "3C"
+            },
+            "CD1": {
+                "charge": "-0.066",
+                "type": "CT"
+            },
+            "CG1": {
+                "charge": "-0.043",
+                "type": "2C"
+            },
+            "CG2": {
+                "charge": "-0.3204",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0869",
+                "type": "H1"
+            },
+            "HB": {
+                "charge": "0.0187",
+                "type": "HC"
+            },
+            "HD11": {
+                "charge": "0.0186",
+                "type": "HC"
+            },
+            "HD12": {
+                "charge": "0.0186",
+                "type": "HC"
+            },
+            "HD13": {
+                "charge": "0.0186",
+                "type": "HC"
+            },
+            "HG12": {
+                "charge": "0.0236",
+                "type": "HC"
+            },
+            "HG13": {
+                "charge": "0.0236",
+                "type": "HC"
+            },
+            "HG21": {
+                "charge": "0.0882",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.0882",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.0882",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "LEU": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0518",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.1102",
+                "type": "2C"
+            },
+            "CD1": {
+                "charge": "-0.4121",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.4121",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.3531",
+                "type": "3C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0922",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0457",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0457",
+                "type": "HC"
+            },
+            "HD11": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HD12": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HD13": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HD21": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HD22": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HD23": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HG": {
+                "charge": "-0.0361",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "LYN": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.07206",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.04845",
+                "type": "CT"
+            },
+            "CD": {
+                "charge": "-0.03768",
+                "type": "CT"
+            },
+            "CE": {
+                "charge": "0.32604",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.06612",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0994",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.034",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.034",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.01155",
+                "type": "HC"
+            },
+            "HD3": {
+                "charge": "0.01155",
+                "type": "HC"
+            },
+            "HE2": {
+                "charge": "-0.03358",
+                "type": "HP"
+            },
+            "HE3": {
+                "charge": "-0.03358",
+                "type": "HP"
+            },
+            "HG2": {
+                "charge": "0.01041",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.01041",
+                "type": "HC"
+            },
+            "HZ2": {
+                "charge": "0.38604",
+                "type": "H"
+            },
+            "HZ3": {
+                "charge": "0.38604",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "NZ": {
+                "charge": "-1.03581",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "LYS": {
+            "C": {
+                "charge": "0.7341",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.24",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0094",
+                "type": "C8"
+            },
+            "CD": {
+                "charge": "-0.0479",
+                "type": "C8"
+            },
+            "CE": {
+                "charge": "-0.0143",
+                "type": "C8"
+            },
+            "CG": {
+                "charge": "0.0187",
+                "type": "C8"
+            },
+            "H": {
+                "charge": "0.2747",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1426",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0362",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0362",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.0621",
+                "type": "HC"
+            },
+            "HD3": {
+                "charge": "0.0621",
+                "type": "HC"
+            },
+            "HE2": {
+                "charge": "0.1135",
+                "type": "HP"
+            },
+            "HE3": {
+                "charge": "0.1135",
+                "type": "HP"
+            },
+            "HG2": {
+                "charge": "0.0103",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0103",
+                "type": "HC"
+            },
+            "HZ1": {
+                "charge": "0.34",
+                "type": "H"
+            },
+            "HZ2": {
+                "charge": "0.34",
+                "type": "H"
+            },
+            "HZ3": {
+                "charge": "0.34",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.3479",
+                "type": "N"
+            },
+            "NZ": {
+                "charge": "-0.3854",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5894",
+                "type": "O"
+            }
+        },
+        "MET": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0237",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0342",
+                "type": "2C"
+            },
+            "CE": {
+                "charge": "-0.0536",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.0018",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.088",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0241",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0241",
+                "type": "HC"
+            },
+            "HE1": {
+                "charge": "0.0684",
+                "type": "H1"
+            },
+            "HE2": {
+                "charge": "0.0684",
+                "type": "H1"
+            },
+            "HE3": {
+                "charge": "0.0684",
+                "type": "H1"
+            },
+            "HG2": {
+                "charge": "0.044",
+                "type": "H1"
+            },
+            "HG3": {
+                "charge": "0.044",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "SD": {
+                "charge": "-0.2737",
+                "type": "S"
+            }
+        },
+        "NALA": {
+            "C": {
+                "charge": "0.6163",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0962",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0597",
+                "type": "CT"
+            },
+            "H1": {
+                "charge": "0.1997",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1997",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1997",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0889",
+                "type": "HP"
+            },
+            "HB1": {
+                "charge": "0.03",
+                "type": "HC"
+            },
+            "HB2": {
+                "charge": "0.03",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.03",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "0.1414",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5722",
+                "type": "O"
+            }
+        },
+        "NARG": {
+            "C": {
+                "charge": "0.7214",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0223",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0118",
+                "type": "C8"
+            },
+            "CD": {
+                "charge": "0.0935",
+                "type": "C8"
+            },
+            "CG": {
+                "charge": "0.0236",
+                "type": "C8"
+            },
+            "CZ": {
+                "charge": "0.8281",
+                "type": "CA"
+            },
+            "H1": {
+                "charge": "0.2083",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.2083",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.2083",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1242",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0226",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0226",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.0527",
+                "type": "H1"
+            },
+            "HD3": {
+                "charge": "0.0527",
+                "type": "H1"
+            },
+            "HE": {
+                "charge": "0.3592",
+                "type": "H"
+            },
+            "HG2": {
+                "charge": "0.0309",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0309",
+                "type": "HC"
+            },
+            "HH11": {
+                "charge": "0.4494",
+                "type": "H"
+            },
+            "HH12": {
+                "charge": "0.4494",
+                "type": "H"
+            },
+            "HH21": {
+                "charge": "0.4494",
+                "type": "H"
+            },
+            "HH22": {
+                "charge": "0.4494",
+                "type": "H"
+            },
+            "N": {
+                "charge": "0.1305",
+                "type": "N3"
+            },
+            "NE": {
+                "charge": "-0.565",
+                "type": "N2"
+            },
+            "NH1": {
+                "charge": "-0.8693",
+                "type": "N2"
+            },
+            "NH2": {
+                "charge": "-0.8693",
+                "type": "N2"
+            },
+            "O": {
+                "charge": "-0.6013",
+                "type": "O"
+            }
+        },
+        "NASN": {
+            "C": {
+                "charge": "0.6163",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0368",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0283",
+                "type": "2C"
+            },
+            "CG": {
+                "charge": "0.5833",
+                "type": "C"
+            },
+            "H1": {
+                "charge": "0.1921",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1921",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1921",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1231",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0515",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0515",
+                "type": "HC"
+            },
+            "HD21": {
+                "charge": "0.4097",
+                "type": "H"
+            },
+            "HD22": {
+                "charge": "0.4097",
+                "type": "H"
+            },
+            "N": {
+                "charge": "0.1801",
+                "type": "N3"
+            },
+            "ND2": {
+                "charge": "-0.8634",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5722",
+                "type": "O"
+            },
+            "OD1": {
+                "charge": "-0.5744",
+                "type": "O"
+            }
+        },
+        "NASP": {
+            "C": {
+                "charge": "0.5621",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0292",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0235",
+                "type": "2C"
+            },
+            "CG": {
+                "charge": "0.8194",
+                "type": "CO"
+            },
+            "H1": {
+                "charge": "0.22",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.22",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.22",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1141",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "-0.0169",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "-0.0169",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "0.0782",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5889",
+                "type": "O"
+            },
+            "OD1": {
+                "charge": "-0.8084",
+                "type": "O2"
+            },
+            "OD2": {
+                "charge": "-0.8084",
+                "type": "O2"
+            }
+        },
+        "NCYS": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0927",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.1195",
+                "type": "2C"
+            },
+            "H1": {
+                "charge": "0.2023",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.2023",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.2023",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1411",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.1188",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.1188",
+                "type": "H1"
+            },
+            "HG": {
+                "charge": "0.1975",
+                "type": "HS"
+            },
+            "N": {
+                "charge": "0.1325",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            },
+            "SG": {
+                "charge": "-0.3298",
+                "type": "SH"
+            }
+        },
+        "NCYX": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.1055",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0277",
+                "type": "2C"
+            },
+            "H1": {
+                "charge": "0.1815",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1815",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1815",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0922",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.068",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.068",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "0.2069",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            },
+            "SG": {
+                "charge": "-0.0984",
+                "type": "S"
+            }
+        },
+        "NGLN": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0536",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0651",
+                "type": "2C"
+            },
+            "CD": {
+                "charge": "0.7354",
+                "type": "C"
+            },
+            "CG": {
+                "charge": "-0.0903",
+                "type": "2C"
+            },
+            "H1": {
+                "charge": "0.1996",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1996",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1996",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1015",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.005",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.005",
+                "type": "HC"
+            },
+            "HE21": {
+                "charge": "0.4429",
+                "type": "H"
+            },
+            "HE22": {
+                "charge": "0.4429",
+                "type": "H"
+            },
+            "HG2": {
+                "charge": "0.0331",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0331",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "0.1493",
+                "type": "N3"
+            },
+            "NE2": {
+                "charge": "-1.0031",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            },
+            "OE1": {
+                "charge": "-0.6133",
+                "type": "O"
+            }
+        },
+        "NGLU": {
+            "C": {
+                "charge": "0.5621",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0588",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0909",
+                "type": "2C"
+            },
+            "CD": {
+                "charge": "0.8087",
+                "type": "CO"
+            },
+            "CG": {
+                "charge": "-0.0236",
+                "type": "2C"
+            },
+            "H1": {
+                "charge": "0.2391",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.2391",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.2391",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1202",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "-0.0232",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "-0.0232",
+                "type": "HC"
+            },
+            "HG2": {
+                "charge": "-0.0315",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "-0.0315",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "0.0017",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5889",
+                "type": "O"
+            },
+            "OE1": {
+                "charge": "-0.8189",
+                "type": "O2"
+            },
+            "OE2": {
+                "charge": "-0.8189",
+                "type": "O2"
+            }
+        },
+        "NGLY": {
+            "C": {
+                "charge": "0.6163",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.01",
+                "type": "CX"
+            },
+            "H1": {
+                "charge": "0.1642",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1642",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1642",
+                "type": "H"
+            },
+            "HA2": {
+                "charge": "0.0895",
+                "type": "HP"
+            },
+            "HA3": {
+                "charge": "0.0895",
+                "type": "HP"
+            },
+            "N": {
+                "charge": "0.2943",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5722",
+                "type": "O"
+            }
+        },
+        "NHE": {
+            "HN1": {
+                "charge": "0.2315",
+                "type": "H"
+            },
+            "HN2": {
+                "charge": "0.2315",
+                "type": "H"
+            },
+            "N": {
+                "charge": "-0.463",
+                "type": "N"
+            }
+        },
+        "NHID": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0964",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0259",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "0.1046",
+                "type": "CV"
+            },
+            "CE1": {
+                "charge": "0.2127",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "-0.0399",
+                "type": "CC"
+            },
+            "H1": {
+                "charge": "0.1963",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1963",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1963",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0958",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0209",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0209",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.3632",
+                "type": "H"
+            },
+            "HD2": {
+                "charge": "0.1299",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.1385",
+                "type": "H5"
+            },
+            "N": {
+                "charge": "0.1542",
+                "type": "N3"
+            },
+            "ND1": {
+                "charge": "-0.3819",
+                "type": "NA"
+            },
+            "NE2": {
+                "charge": "-0.5711",
+                "type": "NB"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            }
+        },
+        "NHIE": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0236",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0489",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.2349",
+                "type": "CW"
+            },
+            "CE1": {
+                "charge": "0.1804",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "0.174",
+                "type": "CC"
+            },
+            "H1": {
+                "charge": "0.2016",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.2016",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.2016",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.138",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0223",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0223",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.1963",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.1397",
+                "type": "H5"
+            },
+            "HE2": {
+                "charge": "0.3324",
+                "type": "H"
+            },
+            "N": {
+                "charge": "0.1472",
+                "type": "N3"
+            },
+            "ND1": {
+                "charge": "-0.5579",
+                "type": "NB"
+            },
+            "NE2": {
+                "charge": "-0.2781",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            }
+        },
+        "NHIP": {
+            "C": {
+                "charge": "0.7214",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0581",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0484",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.1433",
+                "type": "CW"
+            },
+            "CE1": {
+                "charge": "-0.0011",
+                "type": "CR"
+            },
+            "CG": {
+                "charge": "-0.0236",
+                "type": "CC"
+            },
+            "H1": {
+                "charge": "0.1704",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1704",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1704",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1047",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0531",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0531",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.3821",
+                "type": "H"
+            },
+            "HD2": {
+                "charge": "0.2495",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.2645",
+                "type": "H5"
+            },
+            "HE2": {
+                "charge": "0.3921",
+                "type": "H"
+            },
+            "N": {
+                "charge": "0.256",
+                "type": "N3"
+            },
+            "ND1": {
+                "charge": "-0.151",
+                "type": "NA"
+            },
+            "NE2": {
+                "charge": "-0.1739",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.6013",
+                "type": "O"
+            }
+        },
+        "NILE": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0257",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.1885",
+                "type": "3C"
+            },
+            "CD1": {
+                "charge": "-0.0908",
+                "type": "CT"
+            },
+            "CG1": {
+                "charge": "-0.0387",
+                "type": "2C"
+            },
+            "CG2": {
+                "charge": "-0.372",
+                "type": "CT"
+            },
+            "H1": {
+                "charge": "0.2329",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.2329",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.2329",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1031",
+                "type": "HP"
+            },
+            "HB": {
+                "charge": "0.0213",
+                "type": "HC"
+            },
+            "HD11": {
+                "charge": "0.0226",
+                "type": "HC"
+            },
+            "HD12": {
+                "charge": "0.0226",
+                "type": "HC"
+            },
+            "HD13": {
+                "charge": "0.0226",
+                "type": "HC"
+            },
+            "HG12": {
+                "charge": "0.0201",
+                "type": "HC"
+            },
+            "HG13": {
+                "charge": "0.0201",
+                "type": "HC"
+            },
+            "HG21": {
+                "charge": "0.0947",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.0947",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.0947",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "0.0311",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            }
+        },
+        "NLEU": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0104",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0244",
+                "type": "2C"
+            },
+            "CD1": {
+                "charge": "-0.4106",
+                "type": "CT"
+            },
+            "CD2": {
+                "charge": "-0.4104",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.3421",
+                "type": "3C"
+            },
+            "H1": {
+                "charge": "0.2148",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.2148",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.2148",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1053",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0256",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0256",
+                "type": "HC"
+            },
+            "HD11": {
+                "charge": "0.098",
+                "type": "HC"
+            },
+            "HD12": {
+                "charge": "0.098",
+                "type": "HC"
+            },
+            "HD13": {
+                "charge": "0.098",
+                "type": "HC"
+            },
+            "HD21": {
+                "charge": "0.098",
+                "type": "HC"
+            },
+            "HD22": {
+                "charge": "0.098",
+                "type": "HC"
+            },
+            "HD23": {
+                "charge": "0.098",
+                "type": "HC"
+            },
+            "HG": {
+                "charge": "-0.038",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "0.101",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            }
+        },
+        "NLYS": {
+            "C": {
+                "charge": "0.7214",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0015",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0212",
+                "type": "C8"
+            },
+            "CD": {
+                "charge": "-0.0608",
+                "type": "C8"
+            },
+            "CE": {
+                "charge": "-0.0181",
+                "type": "C8"
+            },
+            "CG": {
+                "charge": "-0.0048",
+                "type": "C8"
+            },
+            "H1": {
+                "charge": "0.2165",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.2165",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.2165",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.118",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0283",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0283",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.0633",
+                "type": "HC"
+            },
+            "HD3": {
+                "charge": "0.0633",
+                "type": "HC"
+            },
+            "HE2": {
+                "charge": "0.1171",
+                "type": "HP"
+            },
+            "HE3": {
+                "charge": "0.1171",
+                "type": "HP"
+            },
+            "HG2": {
+                "charge": "0.0121",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0121",
+                "type": "HC"
+            },
+            "HZ1": {
+                "charge": "0.3382",
+                "type": "H"
+            },
+            "HZ2": {
+                "charge": "0.3382",
+                "type": "H"
+            },
+            "HZ3": {
+                "charge": "0.3382",
+                "type": "H"
+            },
+            "N": {
+                "charge": "0.0966",
+                "type": "N3"
+            },
+            "NZ": {
+                "charge": "-0.3764",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.6013",
+                "type": "O"
+            }
+        },
+        "NME": {
+            "CH3": {
+                "charge": "-0.149",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HH31": {
+                "charge": "0.0976",
+                "type": "H1"
+            },
+            "HH32": {
+                "charge": "0.0976",
+                "type": "H1"
+            },
+            "HH33": {
+                "charge": "0.0976",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            }
+        },
+        "NMET": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0221",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0865",
+                "type": "2C"
+            },
+            "CE": {
+                "charge": "-0.0341",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.0334",
+                "type": "2C"
+            },
+            "H1": {
+                "charge": "0.1984",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1984",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1984",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1116",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0125",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0125",
+                "type": "HC"
+            },
+            "HE1": {
+                "charge": "0.0597",
+                "type": "H1"
+            },
+            "HE2": {
+                "charge": "0.0597",
+                "type": "H1"
+            },
+            "HE3": {
+                "charge": "0.0597",
+                "type": "H1"
+            },
+            "HG2": {
+                "charge": "0.0292",
+                "type": "H1"
+            },
+            "HG3": {
+                "charge": "0.0292",
+                "type": "H1"
+            },
+            "N": {
+                "charge": "0.1592",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            },
+            "SD": {
+                "charge": "-0.2774",
+                "type": "S"
+            }
+        },
+        "NPHE": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0733",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.033",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.1392",
+                "type": "CA"
+            },
+            "CD2": {
+                "charge": "-0.1391",
+                "type": "CA"
+            },
+            "CE1": {
+                "charge": "-0.1602",
+                "type": "CA"
+            },
+            "CE2": {
+                "charge": "-0.1603",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "0.0031",
+                "type": "CA"
+            },
+            "CZ": {
+                "charge": "-0.1208",
+                "type": "CA"
+            },
+            "H1": {
+                "charge": "0.1921",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1921",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1921",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1041",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0104",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0104",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.1374",
+                "type": "HA"
+            },
+            "HD2": {
+                "charge": "0.1374",
+                "type": "HA"
+            },
+            "HE1": {
+                "charge": "0.1433",
+                "type": "HA"
+            },
+            "HE2": {
+                "charge": "0.1433",
+                "type": "HA"
+            },
+            "HZ": {
+                "charge": "0.1329",
+                "type": "HA"
+            },
+            "N": {
+                "charge": "0.1737",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            }
+        },
+        "NPRO": {
+            "C": {
+                "charge": "0.526",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.1",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.115",
+                "type": "CT"
+            },
+            "CD": {
+                "charge": "-0.012",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "-0.121",
+                "type": "CT"
+            },
+            "H2": {
+                "charge": "0.312",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.312",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.1",
+                "type": "HP"
+            },
+            "HD3": {
+                "charge": "0.1",
+                "type": "HP"
+            },
+            "HG2": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.1",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.202",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5",
+                "type": "O"
+            }
+        },
+        "NSER": {
+            "C": {
+                "charge": "0.6163",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0567",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.2596",
+                "type": "2C"
+            },
+            "H1": {
+                "charge": "0.1898",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1898",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1898",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0782",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0273",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.0273",
+                "type": "H1"
+            },
+            "HG": {
+                "charge": "0.4239",
+                "type": "HO"
+            },
+            "N": {
+                "charge": "0.1849",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5722",
+                "type": "O"
+            },
+            "OG": {
+                "charge": "-0.6714",
+                "type": "OH"
+            }
+        },
+        "NTHR": {
+            "C": {
+                "charge": "0.6163",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0034",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.4514",
+                "type": "3C"
+            },
+            "CG2": {
+                "charge": "-0.2554",
+                "type": "CT"
+            },
+            "H1": {
+                "charge": "0.1934",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1934",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1934",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1087",
+                "type": "HP"
+            },
+            "HB": {
+                "charge": "-0.0323",
+                "type": "H1"
+            },
+            "HG1": {
+                "charge": "0.407",
+                "type": "HO"
+            },
+            "HG21": {
+                "charge": "0.0627",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.0627",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.0627",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "0.1812",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5722",
+                "type": "O"
+            },
+            "OG1": {
+                "charge": "-0.6764",
+                "type": "OH"
+            }
+        },
+        "NTRP": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.0421",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0543",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.1788",
+                "type": "CW"
+            },
+            "CD2": {
+                "charge": "0.1132",
+                "type": "CB"
+            },
+            "CE2": {
+                "charge": "0.1575",
+                "type": "CN"
+            },
+            "CE3": {
+                "charge": "-0.2265",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "-0.1654",
+                "type": "C*"
+            },
+            "CH2": {
+                "charge": "-0.108",
+                "type": "CA"
+            },
+            "CZ2": {
+                "charge": "-0.271",
+                "type": "CA"
+            },
+            "CZ3": {
+                "charge": "-0.2034",
+                "type": "CA"
+            },
+            "H1": {
+                "charge": "0.1888",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1888",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1888",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1162",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0222",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0222",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.2195",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.3412",
+                "type": "H"
+            },
+            "HE3": {
+                "charge": "0.1646",
+                "type": "HA"
+            },
+            "HH2": {
+                "charge": "0.1411",
+                "type": "HA"
+            },
+            "HZ2": {
+                "charge": "0.1589",
+                "type": "HA"
+            },
+            "HZ3": {
+                "charge": "0.1458",
+                "type": "HA"
+            },
+            "N": {
+                "charge": "0.1913",
+                "type": "N3"
+            },
+            "NE1": {
+                "charge": "-0.3444",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            }
+        },
+        "NTYR": {
+            "C": {
+                "charge": "0.6123",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "0.057",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.0659",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.2002",
+                "type": "CA"
+            },
+            "CD2": {
+                "charge": "-0.2002",
+                "type": "CA"
+            },
+            "CE1": {
+                "charge": "-0.2239",
+                "type": "CA"
+            },
+            "CE2": {
+                "charge": "-0.2239",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "-0.0205",
+                "type": "CA"
+            },
+            "CZ": {
+                "charge": "0.3139",
+                "type": "C"
+            },
+            "H1": {
+                "charge": "0.1873",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.1873",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.1873",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0983",
+                "type": "HP"
+            },
+            "HB2": {
+                "charge": "0.0102",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0102",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.172",
+                "type": "HA"
+            },
+            "HD2": {
+                "charge": "0.172",
+                "type": "HA"
+            },
+            "HE1": {
+                "charge": "0.165",
+                "type": "HA"
+            },
+            "HE2": {
+                "charge": "0.165",
+                "type": "HA"
+            },
+            "HH": {
+                "charge": "0.4001",
+                "type": "HO"
+            },
+            "N": {
+                "charge": "0.194",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5713",
+                "type": "O"
+            },
+            "OH": {
+                "charge": "-0.5578",
+                "type": "OH"
+            }
+        },
+        "NVAL": {
+            "C": {
+                "charge": "0.6163",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0054",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.3196",
+                "type": "3C"
+            },
+            "CG1": {
+                "charge": "-0.3129",
+                "type": "CT"
+            },
+            "CG2": {
+                "charge": "-0.3129",
+                "type": "CT"
+            },
+            "H1": {
+                "charge": "0.2272",
+                "type": "H"
+            },
+            "H2": {
+                "charge": "0.2272",
+                "type": "H"
+            },
+            "H3": {
+                "charge": "0.2272",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1093",
+                "type": "HP"
+            },
+            "HB": {
+                "charge": "-0.0221",
+                "type": "HC"
+            },
+            "HG11": {
+                "charge": "0.0735",
+                "type": "HC"
+            },
+            "HG12": {
+                "charge": "0.0735",
+                "type": "HC"
+            },
+            "HG13": {
+                "charge": "0.0735",
+                "type": "HC"
+            },
+            "HG21": {
+                "charge": "0.0735",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.0735",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.0735",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "0.0577",
+                "type": "N3"
+            },
+            "O": {
+                "charge": "-0.5722",
+                "type": "O"
+            }
+        },
+        "PHE": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0024",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0343",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.1256",
+                "type": "CA"
+            },
+            "CD2": {
+                "charge": "-0.1256",
+                "type": "CA"
+            },
+            "CE1": {
+                "charge": "-0.1704",
+                "type": "CA"
+            },
+            "CE2": {
+                "charge": "-0.1704",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "0.0118",
+                "type": "CA"
+            },
+            "CZ": {
+                "charge": "-0.1072",
+                "type": "CA"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0978",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0295",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0295",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.133",
+                "type": "HA"
+            },
+            "HD2": {
+                "charge": "0.133",
+                "type": "HA"
+            },
+            "HE1": {
+                "charge": "0.143",
+                "type": "HA"
+            },
+            "HE2": {
+                "charge": "0.143",
+                "type": "HA"
+            },
+            "HZ": {
+                "charge": "0.1297",
+                "type": "HA"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "PRO": {
+            "C": {
+                "charge": "0.5896",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0266",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.007",
+                "type": "CT"
+            },
+            "CD": {
+                "charge": "0.0192",
+                "type": "CT"
+            },
+            "CG": {
+                "charge": "0.0189",
+                "type": "CT"
+            },
+            "HA": {
+                "charge": "0.0641",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0253",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0253",
+                "type": "HC"
+            },
+            "HD2": {
+                "charge": "0.0391",
+                "type": "H1"
+            },
+            "HD3": {
+                "charge": "0.0391",
+                "type": "H1"
+            },
+            "HG2": {
+                "charge": "0.0213",
+                "type": "HC"
+            },
+            "HG3": {
+                "charge": "0.0213",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.2548",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5748",
+                "type": "O"
+            }
+        },
+        "SER": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0249",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.2117",
+                "type": "2C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0843",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0352",
+                "type": "H1"
+            },
+            "HB3": {
+                "charge": "0.0352",
+                "type": "H1"
+            },
+            "HG": {
+                "charge": "0.4275",
+                "type": "HO"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "OG": {
+                "charge": "-0.6546",
+                "type": "OH"
+            }
+        },
+        "THR": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0389",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.3654",
+                "type": "3C"
+            },
+            "CG2": {
+                "charge": "-0.2438",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1007",
+                "type": "H1"
+            },
+            "HB": {
+                "charge": "0.0043",
+                "type": "H1"
+            },
+            "HG1": {
+                "charge": "0.4102",
+                "type": "HO"
+            },
+            "HG21": {
+                "charge": "0.0642",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.0642",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.0642",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "OG1": {
+                "charge": "-0.6761",
+                "type": "OH"
+            }
+        },
+        "TRP": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0275",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.005",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.1638",
+                "type": "CW"
+            },
+            "CD2": {
+                "charge": "0.1243",
+                "type": "CB"
+            },
+            "CE2": {
+                "charge": "0.138",
+                "type": "CN"
+            },
+            "CE3": {
+                "charge": "-0.2387",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "-0.1415",
+                "type": "C*"
+            },
+            "CH2": {
+                "charge": "-0.1134",
+                "type": "CA"
+            },
+            "CZ2": {
+                "charge": "-0.2601",
+                "type": "CA"
+            },
+            "CZ3": {
+                "charge": "-0.1972",
+                "type": "CA"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.1123",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0339",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0339",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.2062",
+                "type": "H4"
+            },
+            "HE1": {
+                "charge": "0.3412",
+                "type": "H"
+            },
+            "HE3": {
+                "charge": "0.17",
+                "type": "HA"
+            },
+            "HH2": {
+                "charge": "0.1417",
+                "type": "HA"
+            },
+            "HZ2": {
+                "charge": "0.1572",
+                "type": "HA"
+            },
+            "HZ3": {
+                "charge": "0.1447",
+                "type": "HA"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "NE1": {
+                "charge": "-0.3418",
+                "type": "NA"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        },
+        "TYR": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0014",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "-0.0152",
+                "type": "CT"
+            },
+            "CD1": {
+                "charge": "-0.1906",
+                "type": "CA"
+            },
+            "CD2": {
+                "charge": "-0.1906",
+                "type": "CA"
+            },
+            "CE1": {
+                "charge": "-0.2341",
+                "type": "CA"
+            },
+            "CE2": {
+                "charge": "-0.2341",
+                "type": "CA"
+            },
+            "CG": {
+                "charge": "-0.0011",
+                "type": "CA"
+            },
+            "CZ": {
+                "charge": "0.3226",
+                "type": "C"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0876",
+                "type": "H1"
+            },
+            "HB2": {
+                "charge": "0.0295",
+                "type": "HC"
+            },
+            "HB3": {
+                "charge": "0.0295",
+                "type": "HC"
+            },
+            "HD1": {
+                "charge": "0.1699",
+                "type": "HA"
+            },
+            "HD2": {
+                "charge": "0.1699",
+                "type": "HA"
+            },
+            "HE1": {
+                "charge": "0.1656",
+                "type": "HA"
+            },
+            "HE2": {
+                "charge": "0.1656",
+                "type": "HA"
+            },
+            "HH": {
+                "charge": "0.3992",
+                "type": "HO"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            },
+            "OH": {
+                "charge": "-0.5579",
+                "type": "OH"
+            }
+        },
+        "VAL": {
+            "C": {
+                "charge": "0.5973",
+                "type": "C"
+            },
+            "CA": {
+                "charge": "-0.0875",
+                "type": "CX"
+            },
+            "CB": {
+                "charge": "0.2985",
+                "type": "3C"
+            },
+            "CG1": {
+                "charge": "-0.3192",
+                "type": "CT"
+            },
+            "CG2": {
+                "charge": "-0.3192",
+                "type": "CT"
+            },
+            "H": {
+                "charge": "0.2719",
+                "type": "H"
+            },
+            "HA": {
+                "charge": "0.0969",
+                "type": "H1"
+            },
+            "HB": {
+                "charge": "-0.0297",
+                "type": "HC"
+            },
+            "HG11": {
+                "charge": "0.0791",
+                "type": "HC"
+            },
+            "HG12": {
+                "charge": "0.0791",
+                "type": "HC"
+            },
+            "HG13": {
+                "charge": "0.0791",
+                "type": "HC"
+            },
+            "HG21": {
+                "charge": "0.0791",
+                "type": "HC"
+            },
+            "HG22": {
+                "charge": "0.0791",
+                "type": "HC"
+            },
+            "HG23": {
+                "charge": "0.0791",
+                "type": "HC"
+            },
+            "N": {
+                "charge": "-0.4157",
+                "type": "N"
+            },
+            "O": {
+                "charge": "-0.5679",
+                "type": "O"
+            }
+        }
+    }
+}

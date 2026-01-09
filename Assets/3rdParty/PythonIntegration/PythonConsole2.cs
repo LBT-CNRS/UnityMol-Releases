@@ -7,17 +7,17 @@ using System;
 using System.Text;
 using System.Reflection;
 using TMPro;
-
+using System.Text.RegularExpressions;
 
 using UMol.API;
 
 /// From https://github.com/AlexLemminG/PythonToUnity_Integration
-
+namespace UMol {
 public class PythonConsole2 : MonoBehaviour {
     public Color defaultColor = Color.white;
     public bool visibleByDefault = true;
 
-    public int lineLimit = 500;
+    public int lineLimit = 100;
 
     public TMP_InputField input;
     public RectTransform textsRoot;
@@ -30,7 +30,7 @@ public class PythonConsole2 : MonoBehaviour {
     private RectTransform lastTextTransform;
 
 
-    List<string> m_previousCommands = new List<string>();
+    public static List<string> m_previousCommands = new List<string>();
     int m_previousCommandSelected;
     ScriptScope m_scope;
     bool m_visible = true;
@@ -41,8 +41,8 @@ public class PythonConsole2 : MonoBehaviour {
     bool m_listeningToDevelopmentConsole = true;
     Coroutine m_toggleVisibilityCoroutine;
     LayoutElement layoutE;
-    Button showConsoleButton;
-    Button hideConsoleButton;
+    public Button showConsoleButton;
+    public Button hideConsoleButton;
 
     public void Select(UnityEngine.Object o) {
 #if UNITY_EDITOR
@@ -82,35 +82,36 @@ public class PythonConsole2 : MonoBehaviour {
             return;
         var message = (string.IsNullOrEmpty(m_log) ? "" : "\n") + "<i>" + ">>>" + s + "</i> ";
         m_log += message;
+        // make sure we don't loose this output when sending as external command
+        APIPython.addExternalCommandLogMessage(message);
     }
 
 
     bool ShouldToggleConsole() {
-        return Input.GetButtonDown ("Console");
+        return (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.Space);
     }
 
-    // void Awake() {
-    //     inputf.lineType = InputField.LineType.MultiLineNewline;
-    // }
-
-    // void OnDisable() {
-    //     inputf.onValidateInput -= CheckForEnter;
-    //     // inputf.OnSubmit.RemoveListener (value => ExecuteCommand(inputf.text));
-    //     HideLog ();
-    // }
 
     void OnDisable() {
-        // input.onSubmit.RemoveListener (CheckForEnter);
-        input.onSubmit.RemoveListener (ExecuteCommand);
+        bool success = false;
+#if !DISABLE_CONSOLE
+        UnityMolMain.onNewCommand -= addCommandToPrev;
+        UnityMolMain.onReplacePrevCommand -= replaceLastCommand;
+#endif
+        input.onSubmit.RemoveListener(value => ExecuteCommand(input.text, ref success));
         HideLog ();
     }
 
 
     void Start() {
 #if !DISABLE_CONSOLE
+        if (m_listeningToDevelopmentConsole)
+            ShowLog ();
         try {
-            showConsoleButton = transform.Find("Canvas/ShowUI").gameObject.GetComponent<Button>();
-            hideConsoleButton = transform.Find("Canvas/CloseUI").gameObject.GetComponent<Button>();
+            if (showConsoleButton == null)
+                showConsoleButton = transform.Find("Canvas/ShowUI").gameObject.GetComponent<Button>();
+            if (hideConsoleButton == null)
+                hideConsoleButton = transform.Find("Canvas/CloseUI").gameObject.GetComponent<Button>();
         }
         catch {}
 
@@ -125,32 +126,49 @@ public class PythonConsole2 : MonoBehaviour {
 
     }
 
-    void restoreUserPrefsCommands(){
+    void OnEnable() {
+#if !DISABLE_CONSOLE
+        UnityMolMain.onNewCommand += addCommandToPrev;
+        UnityMolMain.onReplacePrevCommand += replaceLastCommand;
+
+        bool success = false;
+        input.onSubmit.AddListener(value => ExecuteCommand(input.text, ref success));
+
+        if (m_scope == null) {
+            RecreateScope ();
+        }
+
+#endif
+    }
+
+    void restoreUserPrefsCommands() {
         int Ncomm = PlayerPrefs.GetInt("NRestoreCommands", 0);
+        if (Ncomm <= 0)
+            return;
+        m_previousCommands.Clear();
         List<string> prevComm = new List<string>(Ncomm);
-        for(int i = Ncomm-1; i == 0; i--){
-            string c = PlayerPrefs.GetString("lastcommand"+i, "");
-            if(!string.IsNullOrEmpty(c)){
+        for (int i = 0; i < Ncomm; i++) {
+            string c = PlayerPrefs.GetString("lastcommand" + i, "");
+            if (!string.IsNullOrEmpty(c)) {
                 m_previousCommands.Add(c);
             }
         }
     }
 
-    void OnEnable() {
-#if !DISABLE_CONSOLE
-        // input.onSubmit.AddListener (CheckForEnter);
-        input.onSubmit.AddListener (ExecuteCommand);
+    public static void addCommandsToUserPref(List<string> prevCommands) {
 
-        // inputf.onValidateInput += CheckForEnter;
-        // inputf.OnSubmit.AddListener(delegate {ExecuteCommand(inputf.text);});
-
-
-        if (m_scope == null) {
-            RecreateScope ();
+        clearUserPrefCommands();
+        int Ncomm = Mathf.Min(UnityMolMain.NRestoreCommands, prevCommands.Count);
+        PlayerPrefs.SetInt("NRestoreCommands", Ncomm);
+        for (int i = 0; i < Ncomm; i++) {
+            PlayerPrefs.SetString("lastcommand" + i, prevCommands[i]);
         }
-        if (m_listeningToDevelopmentConsole)
-            ShowLog ();
-#endif
+    }
+
+    static void clearUserPrefCommands() {
+        for (int i = 0; i < UnityMolMain.NRestoreCommands * 2; i++) {
+            PlayerPrefs.SetString("lastcommand" + i, "");
+        }
     }
 
     void RecreateScope() {
@@ -221,6 +239,10 @@ public class PythonConsole2 : MonoBehaviour {
 
     void Update() {
 #if !DISABLE_CONSOLE
+
+        if (input.text.Length == 1 && input.text[0] == '\n')
+            input.text = "";
+
         UpdateSelection ();
 
         if (ShouldToggleConsole()) {
@@ -235,7 +257,17 @@ public class PythonConsole2 : MonoBehaviour {
 
         UpdateSubmitButtonReaction ();
 
-        layoutE.preferredHeight = input.textComponent.preferredHeight + 8;
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+        if ( (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKey(KeyCode.A)) {
+            input.caretPosition = 0;
+        }
+        if ( (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKey(KeyCode.E)) {
+            input.caretPosition = input.text.Length;
+        }
+#endif
+
+        if (layoutE.preferredHeight != input.textComponent.preferredHeight + 8)
+            layoutE.preferredHeight = input.textComponent.preferredHeight + 8;
 
         m_prevFrameInputText = input.text;
 #endif
@@ -252,6 +284,15 @@ public class PythonConsole2 : MonoBehaviour {
         }
         m_toggleVisibilityCoroutine = StartCoroutine (ToggleVisibilityCoroutine(m_visible, immediately));
     }
+
+    public void SetVisibleAnim(bool value) {
+        m_visible = value;
+        if (m_toggleVisibilityCoroutine != null) {
+            StopCoroutine (m_toggleVisibilityCoroutine);
+        }
+        m_toggleVisibilityCoroutine = StartCoroutine (ToggleVisibilityCoroutine(m_visible, false));
+    }
+
 
     IEnumerator ToggleVisibilityCoroutine(bool makeVisible, bool immediately) {
 
@@ -312,25 +353,156 @@ public class PythonConsole2 : MonoBehaviour {
         }
     }
 
-    public void ExecuteCommand (string command) {
-        if (input.wasCanceled) {
-            input.ActivateInputField ();
-            return;
+
+    public IEnumerator ExecuteScript(string path) {
+
+        Debug.Log("Loading script...");
+        System.IO.StreamReader file = new System.IO.StreamReader(path);
+        List<string> scriptCommands = new List<string>();
+        string line = "";
+        while ((line = file.ReadLine()) != null) {
+            scriptCommands.Add(line);
         }
-        input.text = "";
-        input.ActivateInputField ();
+        file.Close();
+
+        List<string> commandBlocks = new List<string>();
+        string block = "";
+        bool multilineBlock = false;
+        foreach (string c in scriptCommands) {
+            string ctrim = c.Trim();
+            if (ctrim.StartsWith("#")) {
+                continue;
+            }
+            if (ctrim.Length == 0) {
+                continue;
+            }
+
+            bool ismulti = false;
+            if (ctrim.EndsWith(":") || c.StartsWith("\t") || c.StartsWith("  ")) {
+                ismulti = true;
+                multilineBlock = true;
+            }
+
+            if (ismulti == false && multilineBlock == true) { //End of a block
+                if (block.Trim().Length != 0)
+                    commandBlocks.Add(block + "\n");
+                block = "";
+                multilineBlock = false;
+            }
+            if (ismulti == false && multilineBlock == false) {
+                if (ctrim.Length > 1) {
+                    commandBlocks.Add(c);
+                }
+                continue;
+            }
+            block += c + "\n";
+        }
+        if (block.Trim().Length != 0) {
+            commandBlocks.Add(block);
+        }
+
+        bool success = false;
+        float timeToWait = 0.0f;
+        int framesToWait = 0;
+        foreach (string b in commandBlocks) {
+            string btrim = b.Trim();
+            if (btrim.StartsWith("waitForSeconds(") && !btrim.Contains("\n")) {
+                try {
+                    string sf = btrim.Replace("waitForSeconds(", "").Replace(")", "").Replace(";", "");
+                    timeToWait = float.Parse(sf, System.Globalization.CultureInfo.InvariantCulture);
+                }
+                catch {
+                    success = false;
+                }
+                if (success) {
+                    yield return new WaitForSeconds(timeToWait);
+                }
+
+            }
+            else if (btrim.StartsWith("waitForFrames(") && !btrim.Contains("\n")) {
+                try {
+                    string sf = btrim.Replace("waitForFrames(", "").Replace(")", "").Replace(";", "");
+                    framesToWait = int.Parse(sf);
+                }
+                catch {
+                    success = false;
+                }
+                if (success) {
+                    for (int i = 0; i < framesToWait; i++) {
+                        yield return null;
+                    }
+                }
+            }
+            else {
+                ExecuteCommand(b, ref success);
+            }
+
+            if (!success) {
+                Debug.LogError("Could not execute command '" + b + "'");
+                success = false;
+                yield break;
+            }
+        }
+        Debug.Log("Loaded history script from '" + path + "'");
+    }
+
+    void addCommandToPrev(CommandEventArgs args) {
+        if (UnityMolMain.writeAllCommandsToConsole)
+            addCommandToPrev(args.command);
+    }
+    public void addCommandToPrev(string command) {
         if (!string.IsNullOrEmpty(command.Trim())) {
             int ncommands = m_previousCommands.Count;
             if (ncommands == 0 || (m_previousCommands[0] != command)) {
                 m_previousCommands.Insert (0, command);
             }
         }
+    }
+    public void replaceLastCommand(CommandEventArgs args) {
+        int ncommands = m_previousCommands.Count;
+        if (ncommands != 0) {
+            m_previousCommands[0] = args.command;
+        }
+    }
+
+    public void doCoroutine(object e) {
+        StartCoroutine(e as System.Collections.IEnumerator);
+    }
+
+    public WaitForSeconds waitSeconds(float seconds)
+    {
+        return new WaitForSeconds(seconds);
+    }
+
+    public IEnumerator waitFrames(int f)
+    {
+        return WaitFor.Frames(f);
+    }
+
+
+    public object ExecuteCommand (string command, ref bool success) {
+
+        if (input.wasCanceled) {
+            input.ActivateInputField ();
+            success = false;
+            return null;
+        }
+
+        if (command.Contains("\v")) { //Weird bug: when you press shift + enter it gives you \v
+            command = command.Replace("\v", "\n");
+        }
+
+        input.text = "";
+        input.ActivateInputField ();
+
+        addCommandToPrev(command);
         m_previousCommandSelected = -1;
 
         m_commandExecutionInProgress = true;
         bool exception = false;
+        object res = null;
         try {
-            PythonUtils.GetEngine ().Execute (command, m_scope);
+            res = PythonUtils.GetEngine().Execute (command, m_scope);
         } catch (Exception e) {
             exception = true;
 
@@ -338,8 +510,12 @@ public class PythonConsole2 : MonoBehaviour {
             Debug.LogError(e);
 #endif
             string message = e.Message.Split(new [] { '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries)[0];
-            write (message);
-            throw new System.Exception(message);
+            write ("<color=#d22>" + message + "</color>");
+        }
+
+
+        if (res != null) {
+            PrintLogMessageToConsole(res.ToString(), "", LogType.Log);
         }
 
         m_commandExecutionInProgress = false;
@@ -353,6 +529,8 @@ public class PythonConsole2 : MonoBehaviour {
 
         FlushLog ();
         scroll.verticalNormalizedPosition = 0f;
+        success = !exception;
+        return res;
     }
 
 
@@ -372,7 +550,7 @@ public class PythonConsole2 : MonoBehaviour {
             rootSize.y = pos.y - 6;
             textsRoot.sizeDelta = rootSize;
 
-            //Remove some lines if too much message
+            //Remove some lines if too many messages
             if (textsRoot.childCount >= lineLimit) {
                 int nDelete = textsRoot.childCount - lineLimit;
                 for (int i = 1 ; i <= nDelete; i++) {
@@ -433,17 +611,29 @@ public class PythonConsole2 : MonoBehaviour {
         }
     }
 
-    private char CheckForEnter(string text, int charIndex, char addedChar)
-    {
-        if (addedChar == '\n' )
-        {
-            // onSubmit.Invoke(text);
-            ExecuteCommand(text);
-            return '\0';
-        }
-        else
-            return addedChar;
+    public void CopyToClip(TMP_Text t) {
+
+        string pattern = @"<(.|\n)*?>";
+
+        string text = Regex.Replace(t.text, pattern, string.Empty);
+        GUIUtility.systemCopyBuffer = text;
     }
+}
 
+public static class WaitFor
+{
+    public static IEnumerator Frames(int frameCount)
+    {
+        if (frameCount <= 0)
+        {
+            throw new ArgumentOutOfRangeException("frameCount", "Cannot wait for less that 1 frame");
+        }
 
+        while (frameCount > 0)
+        {
+            frameCount--;
+            yield return null;
+        }
+    }
+}
 }

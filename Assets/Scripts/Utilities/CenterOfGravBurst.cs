@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,23 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
 
 using UnityEngine;
 using Unity.Collections;
@@ -59,19 +44,35 @@ using System.Collections.Generic;
 namespace UMol {
 public class CenterOfGravBurst {
 
+	public static NativeArray<float3> curRes = new NativeArray<float3>(1, Allocator.Persistent);
+	public static NativeArray<float3> curMin = new NativeArray<float3>(1, Allocator.Persistent);
+	public static NativeArray<float3> curMax = new NativeArray<float3>(1, Allocator.Persistent);
+
+    ~CenterOfGravBurst() {
+        if (curRes.IsCreated) {
+            curRes.Dispose();
+            curMin.Dispose();
+            curMax.Dispose();
+        }
+    }
+
 	public static Vector3 computeCOG(List<UnityMolAtom> atoms, ref Vector3 mmin, ref Vector3 mmax) {
-		if (atoms.Count <= 0) {
+		int N = atoms.Count;
+
+		if (N <= 0) {
 			return Vector3.zero;
 		}
-		NativeArray<float3> atomPos = new NativeArray<float3>(atoms.Count, Allocator.TempJob);
 
-		for (int i = 0; i < atoms.Count; i++) {
-			atomPos[i] = atoms[i].position;
+		if (!curRes.IsCreated) {
+			curRes = new NativeArray<float3>(1, Allocator.Persistent);
+			curMin = new NativeArray<float3>(1, Allocator.Persistent);
+			curMax = new NativeArray<float3>(1, Allocator.Persistent);
 		}
 
-		NativeArray<float3> curRes = new NativeArray<float3>(1, Allocator.TempJob);
-		NativeArray<float3> curMin = new NativeArray<float3>(1, Allocator.TempJob);
-		NativeArray<float3> curMax = new NativeArray<float3>(1, Allocator.TempJob);
+		NativeArray<float3> atomPos = new NativeArray<float3>(N, Allocator.TempJob);
+		for (int i = 0; i < N; i++) {
+			atomPos[i] = atoms[i].position;
+		}
 
 		var cogJob = new COGJob() {
 			pos = atomPos,
@@ -83,16 +84,12 @@ public class CenterOfGravBurst {
 		var cogJobHandle = cogJob.Schedule();
 
 		cogJobHandle.Complete();
-		atomPos.Dispose();
 
 		mmin = cogJob.cmin[0];
 		mmax = cogJob.cmax[0];
 
-		curMin.Dispose();
-		curMax.Dispose();
-
 		Vector3 result = cogJob.res[0];
-		curRes.Dispose();
+		atomPos.Dispose();
 
 		return result;
 	}
@@ -101,13 +98,14 @@ public class CenterOfGravBurst {
 		if (pos.Length <= 0) {
 			return Vector3.zero;
 		}
+
+		if (!curRes.IsCreated) {
+			curRes = new NativeArray<float3>(1, Allocator.Persistent);
+			curMin = new NativeArray<float3>(1, Allocator.Persistent);
+			curMax = new NativeArray<float3>(1, Allocator.Persistent);
+		}
+
 		NativeArray<float3> atomPos = new NativeArray<float3>(pos.Length, Allocator.TempJob);
-
-		NativeArray<float3> curRes = new NativeArray<float3>(1, Allocator.TempJob);
-		NativeArray<float3> curMin = new NativeArray<float3>(1, Allocator.TempJob);
-		NativeArray<float3> curMax = new NativeArray<float3>(1, Allocator.TempJob);
-
-
 		GetNativeArray(atomPos, pos);
 
 		var cogJob = new COGJob() {
@@ -120,16 +118,13 @@ public class CenterOfGravBurst {
 		var cogJobHandle = cogJob.Schedule();
 		cogJobHandle.Complete();
 
-		atomPos.Dispose();
 
 		mmin = cogJob.cmin[0];
 		mmax = cogJob.cmax[0];
 
-		curMin.Dispose();
-		curMax.Dispose();
-
 		Vector3 result = cogJob.res[0];
-		curRes.Dispose();
+
+		atomPos.Dispose();
 
 		return result;
 	}
@@ -173,6 +168,5 @@ public class CenterOfGravBurst {
 			res[0] /= pos.Length;
 		}
 	}
-
 }
 }

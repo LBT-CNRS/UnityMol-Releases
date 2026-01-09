@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,30 +27,12 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine.XR;
-using VRTK;
 
 namespace UMol {
 public class DXSurfaceRepresentation : ISurfaceRepresentation {
@@ -63,10 +43,10 @@ public class DXSurfaceRepresentation : ISurfaceRepresentation {
 
     public DXSurfaceRepresentation(string structName, UnityMolSelection sel, DXReader dx, float iso) {
         colorationType = colorType.full;
+        useAO = false;
         if (dx == null) {
             throw new System.Exception("No DX map loaded");
         }
-        mcWrapper = new MarchingCubesWrapper();
 
         isStandardSurface = false;
 
@@ -75,60 +55,40 @@ public class DXSurfaceRepresentation : ISurfaceRepresentation {
         selection = sel;
 
         meshesGO = new List<GameObject>();
-        meshColors = new Dictionary<GameObject, List<Color32>>();
-        colorByAtom = new Dictionary<UnityMolAtom, Color32>();
-        atomToGo = new Dictionary<UnityMolAtom, GameObject>();
-        atomToMesh = new Dictionary<UnityMolAtom, List<int>>();
+        meshColors = new Dictionary<GameObject, Color32[]>();
+        colorByAtom = new Color32[sel.atoms.Count];
+        chainToGo = new Dictionary<UnityMolChain, GameObject>();
 
-        GameObject loadedMolGO = UnityMolMain.getRepresentationParent();
-
-        representationParent = loadedMolGO.transform.Find(structName);
-        if (UnityMolMain.inVR() && representationParent == null) {
-
-            Transform clref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.LeftController);
-            Transform crref = VRTK_DeviceFinder.DeviceTransform(VRTK_DeviceFinder.Devices.RightController);
-            if (clref != null) {
-                representationParent = clref.Find(structName);
-            }
-            if (representationParent == null && crref != null) {
-                representationParent = crref.Find(structName);
-            }
-        }
-        if (representationParent == null) {
-            representationParent = (new GameObject(structName).transform);
-            representationParent.parent = loadedMolGO.transform;
-            representationParent.localPosition = Vector3.zero;
-            representationParent.localRotation = Quaternion.identity;
-            representationParent.localScale = Vector3.one;
-        }
+        representationParent = UnityMolMain.getRepStructureParent(structName).transform;
 
         newRep = new GameObject("AtomDXSurfaceRepresentation");
         newRep.transform.parent = representationParent;
         representationTransform = newRep.transform;
 
-        subSelections = cutSelection(selection);
+        subSelections = new List<UnityMolSelection>(1) {selection};
 
-        mcWrapper.Init(dxR.densityValues, dxR.gridSize, dxR.origin, dxR.delta.x);
+        vertToAtom = new List<int[]>(subSelections.Count);
+
+        mcWrapper = new MarchingCubesWrapper(dxR.densityValues, dxR.gradient,
+                       dxR.gridSize, dxR.origin, dxR.deltaS, dxR.cellDir,
+                       dxR.cellIdToAtomId, selection.structures[0]);
 
         foreach (UnityMolSelection s in subSelections) {
             displayDXSurfaceMesh(s.name + "_DXSurface", s, newRep.transform);
-            if (meshesGO.Count > 0) {
-                computeNearestVertexPerAtom(meshesGO.Last(), s);
-            }
         }
 
         getMeshColors();
 
         Color32 white = Color.white;
-        foreach (UnityMolAtom a in selection.atoms) {
-            colorByAtom[a] = white;
+        for (int i = 0; i < selection.atoms.Count; i++) {
+            colorByAtom[i] = white;
         }
 
         newRep.transform.localPosition = Vector3.zero;
         newRep.transform.localRotation = Quaternion.identity;
         newRep.transform.localScale = Vector3.one;
 
-        nbAtoms = selection.Count;
+        nbAtoms = selection.atoms.Count;
 
     }
 
@@ -137,96 +97,86 @@ public class DXSurfaceRepresentation : ISurfaceRepresentation {
         GameObject go = createDXSurface(name, repParent);
         if (go != null) {
             meshesGO.Add(go);
+
             foreach (UnityMolAtom a in selection.atoms) {
-                atomToGo.Add(a, go);
+                if (!chainToGo.ContainsKey(a.residue.chain)) {
+                    chainToGo[a.residue.chain] = go;
+                }
             }
         }
     }
 
     GameObject createDXSurface(string name, Transform repParent) {
 
-        // MeshData mdata = MarchingCubesWrapper.callMarchingCubes(dxR.densityValues, dxR.gridSize, isoValue);
         MeshData mdata = mcWrapper.computeMC(isoValue);
-        // MeshData mdata = null;
 
-        if (mdata != null) {
+        Mesh newMesh = new() {
+            indexFormat = UnityEngine.Rendering.IndexFormat.UInt32,
+            vertices = mdata.vertices,
+            triangles = mdata.triangles,
+            normals = mdata.normals,
+            colors32 = mdata.colors
+        };
 
-            if (mcWrapper.mcMode != MarchingCubesWrapper.MCType.CJOB) {
-                mdata.Scale(dxR.delta);
-                mdata.InvertX();
-                mdata.Offset(dxR.origin);
-            }
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        GameObject.Destroy(go.GetComponent<BoxCollider>());
+        go.GetComponent<MeshFilter>().sharedMesh = newMesh;
+        go.transform.SetParent(repParent);
 
-            Mesh newMesh = new Mesh();
-            newMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        go.transform.localPosition = Vector3.zero;
+        go.transform.localRotation = Quaternion.identity;
+        go.transform.localScale = Vector3.one;
 
-            newMesh.vertices = mdata.vertices;
-            newMesh.triangles = mdata.triangles;
-            newMesh.normals = mdata.normals;
-            newMesh.colors32 = mdata.colors;
-
-            // newMesh.RecalculateNormals();
-
-            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            GameObject.Destroy(go.GetComponent<BoxCollider>());
-            go.GetComponent<MeshFilter>().mesh = newMesh;
-            go.transform.SetParent(repParent);
-
-            go.transform.localPosition = Vector3.zero;
-            go.transform.localRotation = Quaternion.identity;
-            go.transform.localScale = Vector3.one;
-
-            go.name = name;
-            Material mat = new Material(Shader.Find("Custom/SurfaceVertexColor"));
-            mat.SetFloat("_Glossiness", 0.0f);
-            mat.SetFloat("_Metallic", 0.0f);
-            mat.SetFloat("_AOIntensity", 0.0f);
-            mat.SetFloat("_AOPower", 0.0f);
-            go.GetComponent<MeshRenderer>().material = mat;
-
-            return go;
+        go.name = name;
+        if (normalMat == null) {
+            normalMat = new Material(Shader.Find("Custom/SurfaceVertexColor"));
+            normalMat.SetFloat("_Glossiness", 0.0f);
+            normalMat.SetFloat("_Metallic", 0.0f);
+            normalMat.SetFloat("_AOIntensity", 0.0f);
+            currentMat = normalMat;
         }
-        else {
-            return null;
-        }
+        go.GetComponent<MeshRenderer>().sharedMaterial = currentMat;
+
+        vertToAtom.Add(mdata.atomByVert);
+        return go;
+
     }
 
 
-    public override void recompute() {
-
-
-        List<Material> savedMat = new List<Material>();
-        foreach (GameObject m in meshesGO) {
-            savedMat.Add(m.GetComponent<MeshRenderer>().sharedMaterial);
-        }
+    public override void recompute(bool isTraj = false) {
 
         Clear();
 
+        vertToAtom.Clear();
+
         foreach (UnityMolSelection sel in subSelections) {
             displayDXSurfaceMesh(sel.name, sel, newRep.transform);
-            if (meshesGO.Count > 0) {
-                computeNearestVertexPerAtom(meshesGO.Last(), sel);
-            }
-        }
-
-        if (meshesGO.Count > 0 && meshesGO.Count == savedMat.Count) {
-            int i = 0;
-            foreach (GameObject m in meshesGO) {
-                m.GetComponent<MeshRenderer>().sharedMaterial = savedMat[i++];
-            }
         }
 
         getMeshColors();
+
+        restoreColorsPerAtom();
     }
 
     public override void Clean() {
 
+        vertToAtom.Clear();
         Clear();
+        colorByAtom = null;
+        meshColors.Clear();
+
         if (mcWrapper != null) {
             mcWrapper.FreeMC();
         }
         mcWrapper = null;
-
+        if (normalMat != null)
+            GameObject.Destroy(normalMat);
+        if (transMat != null)
+            GameObject.Destroy(transMat);
+        if (wireMat != null)
+            GameObject.Destroy(wireMat);
+        if (transMatShadow != null)
+            GameObject.Destroy(transMatShadow);
     }
 }
 }

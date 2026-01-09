@@ -4,12 +4,13 @@
 /[Bb]uild/
 /[Bb]uilds/
 /[Ll]ogs/
+/[Dd]ocs/
 
 /Assets/AssetStoreTools*
 sysinfo.txt
-Assets/Plugins/
 doc/html
 Screenshots/
+UserSettings/
 
 # Visual Studio 2015 cache directory
 /.vs/
@@ -50,11 +51,18 @@ ehthumbs.db
 *.sublime-project
 *.sublime-workspace
 *.swp
+*.code-workspace
+.vscode
+
+# Rider
+**/.idea/**
+
 
 # Unity3D generated meta files
 *.pidb.meta
 *.pdb.meta
 *.mdb.meta
+*.offset*
 
 # Unity3D generated file on crash reports
 sysinfo.txt
@@ -72,3 +80,16 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+/[Aa]ssets/[Ss]treamingAssets/IronPython/Lib/*.meta
+/[Aa]ssets/[Ss]treamingAssets/IronPython/Lib/*/*.meta
+/[Aa]ssets/[Ss]treamingAssets/IronPython/Lib/*/*/*.meta
+/[Aa]ssets/[Ss]treamingAssets/IronPython/Lib/*/*/*/*.meta
+
+# SteamVR package
+Assets/SteamVR*
+Assets/StreamingAssets/SteamVR*
+
+# Photon package
+Assets/Photon*
+Assets/StreamingAssets/PhotonIds.json

@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,23 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
 
 using UnityEngine;
 using System.Collections;
@@ -85,7 +70,8 @@ public class RibbonMeshDNA {
     public static string O5name = "O5'";
 
     private static float[] powersOfTen = {1e0f, 1e1f, 1e2f, 1e3f, 1e4f, 1e5f, 1e6f,
-                                          1e7f, 1e8f, 1e9f, 1e10f, 1e11f, 1e12f, 1e13f, 1e14f, 1e15f, 1e16f};
+                                          1e7f, 1e8f, 1e9f, 1e10f, 1e11f, 1e12f, 1e13f, 1e14f, 1e15f, 1e16f
+                                         };
 
     static Vector3[] ellipseProfile(int n, float w, float h) {
         Vector3[] result = new Vector3[n];
@@ -177,7 +163,8 @@ public class RibbonMeshDNA {
     static void createSegmentMesh(int i, int n, DNAPlane pp1, DNAPlane pp2, DNAPlane pp3, DNAPlane pp4,
                                   ref List<Vector3> verticesList, ref List<int> trianglesList, ref List<Color32> colorsList,
                                   ref Dictionary<UnityMolResidue, List<int>> residueToVert, ref Dictionary<Vector3, int> verticesDict,
-                                  ref HashSet<UnityMolResidue> doneRes, bool isTraj, bool drawBases) {
+                                  ref HashSet<UnityMolResidue> doneRes, bool isTraj, bool drawBases,
+                                  int idF, UnityMolSelection sel) {
 
 
         // UnityMolResidue.secondaryStructureType type0 = UnityMolResidue.secondaryStructureType.Strand;
@@ -277,12 +264,12 @@ public class RibbonMeshDNA {
         }
 
 
-        if(drawBases){
+        if (drawBases) {
             UnityMolResidue r = pp1.r3;
 
             if (!doneRes.Contains(r)) {
                 Color colCyl = Color.white;
-                
+
 
                 //Create a cylinder for each base
                 Vector3 ori = Vector3.zero;
@@ -292,7 +279,16 @@ public class RibbonMeshDNA {
                     if (r.atoms.ContainsKey(C3name) && r.atoms.ContainsKey("N3")) {
                         knownDNA = true;
                         ori = r.atoms[C3name].position;
+                        if (idF != -1) {
+                            int ida = sel.atomToIdInSel[r.atoms[C3name]];
+                            ori = sel.extractTrajFramePositions[idF][ida];
+                        }
                         end = r.atoms["N3"].position;
+                        if (idF != -1) {
+                            int ida = sel.atomToIdInSel[r.atoms["N3"]];
+                            end = sel.extractTrajFramePositions[idF][ida];
+                        }
+
                         if (r.name.Contains("C"))
                             ColorUtility.TryParseHtmlString(baseCCol, out colCyl);
                         else
@@ -303,7 +299,17 @@ public class RibbonMeshDNA {
                     if (r.atoms.ContainsKey(C3name) && r.atoms.ContainsKey("N1")) {
                         knownDNA = true;
                         ori = r.atoms[C3name].position;
+                        if (idF != -1) {
+                            int ida = sel.atomToIdInSel[r.atoms[C3name]];
+                            ori = sel.extractTrajFramePositions[idF][ida];
+                        }
+
                         end = r.atoms["N1"].position;
+                        if (idF != -1) {
+                            int ida = sel.atomToIdInSel[r.atoms["N1"]];
+                            end = sel.extractTrajFramePositions[idF][ida];
+                        }
+
                         if (r.name.Contains("A"))
                             ColorUtility.TryParseHtmlString(baseACol, out colCyl);
                         else
@@ -319,7 +325,8 @@ public class RibbonMeshDNA {
                     MeshData tmpCyl = createCapsule(dist, cylinderSize);
 
                     Quaternion rot = Quaternion.LookRotation(dir);
-                    foreach (Vector3 v in tmpCyl.vertices) {
+                    Vector3[] verts = tmpCyl.vertices;
+                    foreach (Vector3 v in verts) {
                         //Rotate the cylinder toward the vector ori->end
                         Vector3 nv = v + ori;
 
@@ -346,7 +353,7 @@ public class RibbonMeshDNA {
 
         List<int> listVertId = new List<int>();
 
-        for(int sV = startV; sV < verticesList.Count; sV++){
+        for (int sV = startV; sV < verticesList.Count; sV++) {
             listVertId.Add(sV);
         }
 
@@ -354,8 +361,10 @@ public class RibbonMeshDNA {
 
     }
 
-    public static MeshData createChainMesh(List<UnityMolResidue> residues,
-                                           ref Dictionary<UnityMolResidue, List<int>> residueToVert, bool isTraj = false, bool drawBases = true)  {
+    public static MeshData createChainMesh(int idF, UnityMolSelection sel,
+                                           List<UnityMolResidue> residues,
+                                           ref Dictionary<UnityMolResidue, List<int>> residueToVert,
+                                           bool isTraj = false, bool drawBases = true)  {
 
         DNAPlane[] planes = new DNAPlane[residues.Count + 3];
         List<Vector3> vertices = new List<Vector3>();
@@ -374,7 +383,8 @@ public class RibbonMeshDNA {
             UnityMolResidue r1 = residues[id];
             UnityMolResidue r2 = residues[id1];
             UnityMolResidue r3 = residues[id2];
-            DNAPlane plane = new DNAPlane(r1, r2, r3);
+            DNAPlane plane = new DNAPlane(r1, r2, r3,
+                                          idF, sel);
 
             if (plane == null || plane.r1 == null) {
                 continue;
@@ -382,11 +392,19 @@ public class RibbonMeshDNA {
             //Make sure to start at the first position
             if (i <= 0) {
                 plane.position = r1.atoms[C3name].position;
+                if (idF != -1) {
+                    int ida = sel.atomToIdInSel[r1.atoms[C3name]];
+                    plane.position = sel.extractTrajFramePositions[idF][ida];
+                }
                 plane.position.x = -plane.position.x;
             }
             //Make sure to end at the last position
             if (i >= residues.Count - 2) {
                 plane.position = r3.atoms[C3name].position;
+                if (idF != -1) {
+                    int ida = sel.atomToIdInSel[r3.atoms[C3name]];
+                    plane.position = sel.extractTrajFramePositions[idF][ida];
+                }
                 plane.position.x = -plane.position.x;
             }
 
@@ -438,7 +456,8 @@ public class RibbonMeshDNA {
             //     }
             // }
             createSegmentMesh(i, n, pp1, pp2, pp3, pp4, ref vertices, ref triangles,
-                              ref colors, ref residueToVert, ref verticesDict, ref doneRes, isTraj, drawBases);
+                              ref colors, ref residueToVert, ref verticesDict, ref doneRes, isTraj, drawBases,
+                              idF, sel);
 
         }
 
@@ -997,7 +1016,8 @@ public class DNAPlane {
     public Vector3 side;
     public bool flipped;
 
-    public DNAPlane(UnityMolResidue res1, UnityMolResidue res2, UnityMolResidue res3) {
+    public DNAPlane(UnityMolResidue res1, UnityMolResidue res2, UnityMolResidue res3,
+                    int idF, UnityMolSelection sel) {
 
         r1 = res1;
         r2 = res2;
@@ -1024,10 +1044,22 @@ public class DNAPlane {
             return;
         }
         Vector3 ca1 = r1.atoms[RibbonMeshDNA.C3name].position;
+        if (idF != -1) {
+            int ida = sel.atomToIdInSel[r1.atoms[RibbonMeshDNA.C3name]];
+            ca1 = sel.extractTrajFramePositions[idF][ida];
+        }
         ca1.x = -ca1.x;
         Vector3 ca2 = r2.atoms[RibbonMeshDNA.C3name].position;
+        if (idF != -1) {
+            int ida = sel.atomToIdInSel[r2.atoms[RibbonMeshDNA.C3name]];
+            ca2 = sel.extractTrajFramePositions[idF][ida];
+        }
         ca2.x = -ca2.x;
         Vector3 o1  = r1.atoms[RibbonMeshDNA.O5name].position;
+        if (idF != -1) {
+            int ida = sel.atomToIdInSel[r1.atoms[RibbonMeshDNA.O5name]];
+            o1  = sel.extractTrajFramePositions[idF][ida];
+        }
         o1.x = -o1.x;
 
         Vector3 a = (ca2 - ca1).normalized;

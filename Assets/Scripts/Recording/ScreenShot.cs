@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections;
 using System.IO;
@@ -65,9 +49,9 @@ public class ScreenShot : MonoBehaviour
     private int idseq = 1;
     private bool transparentBG = false;
     private Camera curCam;
+    public Camera uiCam;
 
     RenderTexture _tempTarget;
-
 
     void Start() {
         // Time.captureFramerate = frameRate;
@@ -113,45 +97,139 @@ public class ScreenShot : MonoBehaviour
         if (curCam == null) {
             curCam = GetComponent<Camera>();
         }
-        updateCameraParameters();
 
-        RenderTexture rt = new RenderTexture(resWidth, resHeight, 24);
-        curCam.targetTexture = rt;
+        var rt = RenderTexture.GetTemporary(resWidth, resHeight, 32, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
         Texture2D screenShot = new Texture2D(resWidth, resHeight, TextureFormat.RGB24, false);
-        curCam.Render();
-        RenderTexture.active = rt;
-        screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
-        curCam.targetTexture = null;
-        RenderTexture.active = null; // JC: added to avoid errors
-        Destroy(rt);
-        byte[] bytes = screenShot.EncodeToPNG();
-        System.IO.File.WriteAllBytes(path, bytes);
-        Debug.Log(string.Format("Saved screenshot to: {0}", path));
+
+        byte[] bytes = null;
+        if (UnityMolMain.raytracingMode) {
+            RaytracerManager rtm = transform.parent.gameObject.GetComponent<RaytracerManager>();
+            if (rtm != null) {
+                Texture2D t = rtm._texture;
+                Graphics.Blit(t, rt);
+
+                uiCam.targetTexture = rt;
+                uiCam.Render();
+                uiCam.targetTexture = null;
+
+
+                RenderTexture.active = rt;
+                screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
+                curCam.targetTexture = null;
+                RenderTexture.active = null;
+                // Destroy(rt);
+                RenderTexture.ReleaseTemporary(rt);
+                bytes = screenShot.EncodeToPNG();
+            }
+        }
+        else {
+            updateCameraParameters();
+
+            // RenderTexture rt = new RenderTexture(resWidth, resHeight, 24);
+
+            curCam.targetTexture = rt;
+            curCam.Render();
+
+            uiCam.targetTexture = rt;
+            uiCam.Render();
+            uiCam.targetTexture = null;
+
+            RenderTexture.active = rt;
+            screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
+            curCam.targetTexture = null;
+            RenderTexture.active = null;
+            // Destroy(rt);
+            RenderTexture.ReleaseTemporary(rt);
+            bytes = screenShot.EncodeToPNG();
+        }
+
+        if (bytes != null) {
+            System.IO.File.WriteAllBytes(path, bytes);
+            Debug.Log(string.Format("Saved screenshot to: {0}", path));
+        }
+        else {
+            Debug.LogError("Failed to take screenshot");
+        }
     }
+
     public void takeTransparentScreenshot(int resWidth, int resHeight, string path) {
         if (curCam == null) {
             curCam = GetComponent<Camera>();
         }
+
         updateCameraParameters();
-
-        RenderTexture rt = new RenderTexture(resWidth, resHeight, 24);
-        curCam.targetTexture = rt;
-        Texture2D screenShot = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
-
         Color saveCameraColor = curCam.backgroundColor;
-        curCam.backgroundColor = new Color(saveCameraColor.r, saveCameraColor.g, saveCameraColor.b, 0f);
 
+        var rt = RenderTexture.GetTemporary(resWidth, resHeight, 32, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+        curCam.targetTexture = rt;
+
+        curCam.clearFlags = CameraClearFlags.Color;
+        curCam.backgroundColor = Color.black;
         curCam.Render();
+
+
+        uiCam.targetTexture = rt;
+        uiCam.Render();
+        uiCam.targetTexture = null;
+
+
         RenderTexture.active = rt;
-        screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
+
+        Texture2D lBlackBackgroundCapture = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
+        lBlackBackgroundCapture.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0, false);
+
+        curCam.backgroundColor = Color.white;
+        curCam.Render();
+
+        RenderTexture.active = rt;
+        Texture2D lWhiteBackgroundCapture = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
+        lWhiteBackgroundCapture.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0, false);
+
+        for (int x = 0; x < lWhiteBackgroundCapture.width; ++x) {
+            for (int y = 0; y < lWhiteBackgroundCapture.height; ++y)
+            {
+                Color lColorWhenBlack = lBlackBackgroundCapture.GetPixel(x, y);
+                Color lColorWhenWhite = lWhiteBackgroundCapture.GetPixel(x, y);
+                if (lColorWhenBlack != Color.clear)
+                {
+                    //set real color
+                    lWhiteBackgroundCapture.SetPixel(x, y,
+                                                     getColor(lColorWhenBlack, lColorWhenWhite));
+                }
+            }
+        }
+
+        lWhiteBackgroundCapture.Apply();
+        Texture2D lOut = lWhiteBackgroundCapture;
+        byte[] bytes = lOut.EncodeToPNG();
+        System.IO.File.WriteAllBytes(path, bytes);
+        RenderTexture.ReleaseTemporary(rt);
 
         curCam.backgroundColor = saveCameraColor;
-
         curCam.targetTexture = null;
-        RenderTexture.active = null; // JC: added to avoid errors
-        Destroy(rt);
-        byte[] bytes = screenShot.EncodeToPNG();
-        System.IO.File.WriteAllBytes(path, bytes);
+        RenderTexture.active = null;
+
+        // // RenderTexture rt = new RenderTexture(resWidth, resHeight, 24);
+        // var rt = RenderTexture.GetTemporary(resWidth, resHeight, 32, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+        // curCam.targetTexture = rt;
+        // Texture2D screenShot = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
+
+        // Color saveCameraColor = curCam.backgroundColor;
+        // curCam.clearFlags = CameraClearFlags.SolidColor;
+        // curCam.backgroundColor = new Color(1.0f,1.0f,1.0f,0.0f);
+
+        // curCam.Render();
+        // RenderTexture.active = rt;
+        // screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0, false);
+
+        // curCam.backgroundColor = saveCameraColor;
+
+        // curCam.targetTexture = null;
+        // RenderTexture.active = null; // JC: added to avoid errors
+        // // Destroy(rt);
+        // RenderTexture.ReleaseTemporary(rt);
+        // byte[] bytes = screenShot.EncodeToPNG();
+        // System.IO.File.WriteAllBytes(path, bytes);
         Debug.Log(string.Format("Took screenshot to: {0}", path));
     }
 
@@ -160,19 +238,41 @@ public class ScreenShot : MonoBehaviour
             curCam = GetComponent<Camera>();
         }
         Camera mainCam = Camera.main;
-        if(curCam != null && mainCam != null){
+        if (curCam != null && mainCam != null) {
             curCam.backgroundColor = mainCam.backgroundColor;
             curCam.farClipPlane = mainCam.farClipPlane;
             curCam.nearClipPlane = mainCam.nearClipPlane;
-            if(!UnityMolMain.inVR()){
+            if (!UnityMolMain.inVR()) {
                 curCam.fieldOfView = mainCam.fieldOfView;
+                uiCam.fieldOfView = mainCam.fieldOfView;
                 curCam.orthographic = mainCam.orthographic;
-                if(curCam.orthographic){
+                uiCam.orthographic = mainCam.orthographic;
+                if (curCam.orthographic) {
                     curCam.orthographicSize = mainCam.orthographicSize;
+                    uiCam.orthographicSize = mainCam.orthographicSize;
                 }
             }
         }
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
+    }
+    //pColorWhenBlack!=Color.clear
+    static Color getColor(Color pColorWhenBlack, Color pColorWhenWhite)
+    {
+        float lAlpha = getAlpha(pColorWhenBlack.r, pColorWhenWhite.r);
+        return new Color(
+                   pColorWhenBlack.r / lAlpha,
+                   pColorWhenBlack.g / lAlpha,
+                   pColorWhenBlack.b / lAlpha,
+                   lAlpha);
+    }
+
+
+    //           Color*Alpha      Color   Color+(1-Color)*(1-Alpha)=1+Color*Alpha-Alpha
+    //0----------ColorWhenZero----Color---ColorWhenOne------------1
+    static float getAlpha(float pColorWhenZero, float pColorWhenOne)
+    {
+        //pColorWhenOne-pColorWhenZero=1-Alpha
+        return 1 + pColorWhenZero - pColorWhenOne;
     }
 }

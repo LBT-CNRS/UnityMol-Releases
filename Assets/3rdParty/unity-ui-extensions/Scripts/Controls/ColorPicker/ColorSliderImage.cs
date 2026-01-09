@@ -148,7 +148,10 @@ namespace UnityEngine.UI.Extensions.ColorPicker
                     size = 100;
                     break;
                 default:
-                    throw new System.NotImplementedException("");
+                    Debug.LogWarning("!!");
+                    return;
+                    break;
+                    // throw new System.NotImplementedException("");
             }
             if (vertical)
                 texture = new Texture2D(1, size);

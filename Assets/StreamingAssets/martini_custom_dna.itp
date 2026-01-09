@@ -1,0 +1,98 @@
+;
+; Custom made DNA itp file
+;
+
+[moleculetype]
+; molname      nrexcl
+  DA          1
+
+[atoms]
+; id    type    resnr   residu  atom
+   1    ??   1  DA       BB1      1    
+   2    ??   1  DA       BB2      2    
+   3    ??   1  DA       BB3      3
+   4    ??   1  DA       SC1      4
+   5    ??   1  DA       SC2      5
+   6    ??   1  DA       SC3      6
+   7    ??   1  DA       SC4      7
+
+[bonds]
+;  i  j     funct   length  force.c.
+   1  2     1   0.47    1250    
+   2  3     1   0.47    1250    
+   3  4     1   0.37    1250    
+   4  5     1   0.47    1250    
+   5  6     1   0.47    1250    
+   6  7     1   0.47    1250    
+   4  7     1   0.47    1250    
+
+
+[moleculetype]
+; molname      nrexcl
+  DC          1
+
+[atoms]
+; id    type    resnr   residu  atom
+   1    ??   1  DC       BB1      1    
+   2    ??   1  DC       BB2      2    
+   3    ??   1  DC       BB3      3
+   4    ??   1  DC       SC1      4
+   5    ??   1  DC       SC2      5
+   6    ??   1  DC       SC3      6
+
+[bonds]
+;  i  j     funct   length  force.c.
+   1  2     1   0.47    1250    
+   2  3     1   0.47    1250    
+   3  4     1   0.37    1250    
+   4  5     1   0.47    1250    
+   5  6     1   0.47    1250    
+   4  6     1   0.47    1250    
+ 
+
+
+[moleculetype]
+; molname      nrexcl
+  DG          1
+
+[atoms]
+; id    type    resnr   residu  atom
+   1    ??   1  DG       BB1      1    
+   2    ??   1  DG       BB2      2    
+   3    ??   1  DG       BB3      3
+   4    ??   1  DG       SC1      4
+   5    ??   1  DG       SC2      5
+   6    ??   1  DG       SC3      6
+   7    ??   1  DG       SC4      7
+
+[bonds]
+;  i  j     funct   length  force.c.
+   1  2     1   0.47    1250    
+   2  3     1   0.47    1250    
+   3  4     1   0.37    1250    
+   4  5     1   0.47    1250    
+   5  6     1   0.47    1250    
+   6  7     1   0.47    1250    
+   4  7     1   0.47    1250    
+
+[moleculetype]
+; molname      nrexcl
+  DT          1
+
+[atoms]
+; id    type    resnr   residu  atom
+   1    ??   1  DT       BB1      1    
+   2    ??   1  DT       BB2      2    
+   3    ??   1  DT       BB3      3
+   4    ??   1  DT       SC1      4
+   5    ??   1  DT       SC2      5
+   6    ??   1  DT       SC3      6
+
+[bonds]
+;  i  j     funct   length  force.c.
+   1  2     1   0.47    1250    
+   2  3     1   0.47    1250    
+   3  4     1   0.37    1250    
+   4  5     1   0.47    1250    
+   5  6     1   0.47    1250    
+   4  6     1   0.47    1250    

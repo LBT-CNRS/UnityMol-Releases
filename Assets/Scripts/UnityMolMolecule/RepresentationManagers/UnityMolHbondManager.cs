@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
@@ -56,10 +40,6 @@ namespace UMol {
 
 public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     private BondRepresentationHbonds bondRep;
-    public List<GameObject> meshesGO;
-
-    public Dictionary<UnityMolAtom, List<GameObject>> atomToGo;
-
 
     /// <summary>
     /// Initializes this instance of the manager.
@@ -71,8 +51,6 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
         }
 
         bondRep = (BondRepresentationHbonds) umolRep.bondRep;
-        meshesGO = bondRep.meshesGO;
-        atomToGo = bondRep.atomToGo;
         isInit = true;
         isEnabled = true;
         areSideChainsOn = true;
@@ -81,28 +59,23 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
 
     }
 
+    public override void InitRT() {}
+
     public override void Clean() {
         GameObject parent = null;
-        if (meshesGO != null && meshesGO.Count != 0) {
-            parent = meshesGO[0].transform.parent.gameObject;
-            for (int i = 0; i < meshesGO.Count; i++) {
-                GameObject.Destroy(meshesGO[i]);
+        if (bondRep.MeshesGO != null && bondRep.MeshesGO.Count != 0) {
+            parent = bondRep.MeshesGO[0].transform.parent.gameObject;
+            for (int i = 0; i < bondRep.MeshesGO.Count; i++) {
+                GameObject.Destroy(bondRep.MeshesGO[i].GetComponent<MeshFilter>().sharedMesh);
+                GameObject.Destroy(bondRep.MeshesGO[i]);
             }
-
-            atomToGo.Clear();
         }
 
         if (parent != null) {
             GameObject.Destroy(parent);
         }
 
-        bondRep.Clear();
-
-
-        meshesGO = null;
         bondRep = null;
-        atomToGo = null;
-
         isInit = false;
         isEnabled = false;
         // UnityMolMain.getRepresentationManager().UpdateActiveColliders();
@@ -113,7 +86,7 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     /// </summary>
 
     public override void DisableRenderers() {
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in bondRep.MeshesGO) {
             meshGO.GetComponent<Renderer>().enabled = false;
         }
         isEnabled = false;
@@ -123,7 +96,7 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     /// Enables the renderers for all objects managed by the instance of the manager.
     /// </summary>
     public override void EnableRenderers() {
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in bondRep.MeshesGO) {
             meshGO.GetComponent<Renderer>().enabled = true;
         }
         isEnabled = true;
@@ -132,23 +105,23 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     }
 
     public void RemoveForAtom(UnityMolAtom atom) {
-        if (atomToGo.ContainsKey(atom)) {
-            List<GameObject> goToDelete = atomToGo[atom];
+        if (bondRep.AtomToGO.ContainsKey(atom)) {
+            List<GameObject> goToDelete = bondRep.AtomToGO[atom];
 
             foreach (GameObject go in goToDelete) {
                 try {
                     GameObject.Destroy(go);
-                    meshesGO.Remove(go);
+                    bondRep.MeshesGO.Remove(go);
                 }
                 catch {
                     //Already destroyed
                 }
             }
-            bondRep.atomToVertices.Remove(atom);
-            bondRep.atomToMeshes.Remove(atom);
+            bondRep.AtomToVertices.Remove(atom);
+            bondRep.AtomToMeshes.Remove(atom);
 
-            atomToGo[atom].Clear();
-            atomToGo.Remove(atom);
+            bondRep.AtomToGO[atom].Clear();
+            bondRep.AtomToGO.Remove(atom);
         }
     }
 
@@ -164,16 +137,16 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     }//Does not really make sense for hbonds
 
 
-    public override void SetColor(Color col, UnityMolSelection sele) {
+    public override void SetColor(Color32 col, UnityMolSelection sele) {
         foreach (UnityMolAtom a in sele.atoms) {
             SetColor(col, a);
         }
     }
 
-    public override void SetColor(Color col, UnityMolAtom a) {
+    public override void SetColor(Color32 col, UnityMolAtom a) {
         try {
-            List<Mesh> meshes = bondRep.atomToMeshes[a];
-            List<int> ids = bondRep.atomToVertices[a];
+            List<Mesh> meshes = bondRep.AtomToMeshes[a];
+            List<int> ids = bondRep.AtomToVertices[a];
             int curid = 0;
             foreach (Mesh mesh in meshes) {
                 Color32[] cols = mesh.colors32;
@@ -190,28 +163,28 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     }
 
 
-    public override void SetColors(Color col, List<UnityMolAtom> atoms) {
+    public override void SetColors(Color32 col, List<UnityMolAtom> atoms) {
         foreach (UnityMolAtom a in atoms) {
             SetColor(col, a);
         }
     }
 
-    public override void SetColors(List<Color> cols, List<UnityMolAtom> atoms) {
+    public override void SetColors(List<Color32> cols, List<UnityMolAtom> atoms) {
         if (atoms.Count != cols.Count) {
             Debug.LogError("Lengths of color list and atom list are different");
             return;
         }
         for (int i = 0; i < atoms.Count; i++) {
             UnityMolAtom a = atoms[i];
-            Color col = cols[i];
+            Color32 col = cols[i];
             SetColor(col, a);
         }
     }
 
     public override void SetDepthCueingStart(float v) {
-        if (meshesGO == null)
+        if (bondRep.MeshesGO == null)
             return;
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in bondRep.MeshesGO) {
 
             Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_FogStart", v);
@@ -219,9 +192,9 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     }
 
     public override void SetDepthCueingDensity(float v) {
-        if (meshesGO == null)
+        if (bondRep.MeshesGO == null)
             return;
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in bondRep.MeshesGO) {
 
             Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_FogDensity", v);
@@ -229,9 +202,9 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     }
 
     public override void EnableDepthCueing() {
-        if (meshesGO == null)
+        if (bondRep.MeshesGO == null)
             return;
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in bondRep.MeshesGO) {
 
             Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_UseFog", 1.0f);
@@ -239,9 +212,9 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     }
 
     public override void DisableDepthCueing() {
-        if (meshesGO == null)
+        if (bondRep.MeshesGO == null)
             return;
-        foreach (GameObject meshGO in meshesGO) {
+        foreach (GameObject meshGO in bondRep.MeshesGO) {
 
             Material[] mats = meshGO.GetComponent<Renderer>().sharedMaterials;
             mats[0].SetFloat("_UseFog", 0.0f);
@@ -258,11 +231,11 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     /// </summary>
     public override void updateWithTrajectory() {
         bool wasEnabled = true;
-        if (meshesGO != null && meshesGO.Count >= 1)
-            wasEnabled = meshesGO[0].GetComponent<Renderer>().enabled;
+        if (bondRep.MeshesGO != null && bondRep.MeshesGO.Count >= 1)
+            wasEnabled = bondRep.MeshesGO[0].GetComponent<Renderer>().enabled;
 
         if (wasEnabled) {
-            bondRep.recompute();
+            bondRep.Recompute(false);
         }
     }
 
@@ -300,7 +273,10 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
         SetColor(Color.white, atom);
     }
     public override void ResetColors() {
-        foreach (UnityMolAtom a in bondRep.selection.bonds.bondsDual.Keys) {
+        UnityMolModel m = bondRep.selection.atoms[0].residue.chain.model;
+
+        foreach(int ida in bondRep.selection.bonds.bonds.Keys) {
+            UnityMolAtom a = m.allAtoms[ida];
             SetColor(Color.white, a);
         }
         bondRep.colorationType = colorType.full;
@@ -322,8 +298,8 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
     }
     private Color32 getAtomColor(UnityMolAtom a) {
         try {
-            Mesh mesh = bondRep.atomToMeshes[a][0];
-            List<int> ids = bondRep.atomToVertices[a];
+            Mesh mesh = bondRep.AtomToMeshes[a][0];
+            List<int> ids = bondRep.AtomToVertices[a];
             Color32[] cols = mesh.colors32;
             return cols[ids[0]];
         }
@@ -332,6 +308,10 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
         }
         return Color.white;
     }
+
+    public override void UpdateLike(){
+    }
+
     public override UnityMolRepresentationParameters Save() {
         UnityMolRepresentationParameters res = new UnityMolRepresentationParameters();
 
@@ -339,20 +319,21 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
         res.colorationType = bondRep.colorationType;
 
         if (res.colorationType == colorType.custom) {
-            res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(bondRep.selection.Count);
-            foreach (UnityMolAtom a in bondRep.atomToMeshes.Keys) {
+            res.colorPerAtom = new Dictionary<UnityMolAtom, Color32>(bondRep.selection.atoms.Count);
+            foreach (UnityMolAtom a in bondRep.AtomToMeshes.Keys) {
                 res.colorPerAtom[a] = getAtomColor(a);
             }
 
         }
         else if (res.colorationType == colorType.full) { //Get color of first atom/residue
-            foreach (UnityMolAtom a in bondRep.atomToMeshes.Keys) {
+            foreach (UnityMolAtom a in bondRep.AtomToMeshes.Keys) {
                 res.fullColor = getAtomColor(a);
                 break;
             }
         }
         else if (res.colorationType == colorType.bfactor) {
             res.bfactorStartColor = bondRep.bfactorStartCol;
+            res.bfactorMidColor = bondRep.bfactorMidColor;
             res.bfactorEndColor = bondRep.bfactorEndCol;
         }
         return res;
@@ -390,13 +371,19 @@ public class UnityMolHbondManager : UnityMolGenericRepresentationManager {
             else if (savedParams.colorationType == colorType.rescharge) {
                 colorByResCharge(bondRep.selection);
             }
+            else if (savedParams.colorationType == colorType.resid) {
+                colorByResid(bondRep.selection);
+            }
+            else if (savedParams.colorationType == colorType.resnum) {
+                colorByResnum(bondRep.selection);
+            }
             else if (savedParams.colorationType == colorType.bfactor) {
-                colorByBfactor(bondRep.selection, savedParams.bfactorStartColor, savedParams.bfactorEndColor);
+                colorByBfactor(bondRep.selection, savedParams.bfactorStartColor, savedParams.bfactorMidColor, savedParams.bfactorEndColor);
             }
             bondRep.colorationType = savedParams.colorationType;
         }
         else {
-            Debug.LogError("Could not restore representation parameteres");
+            Debug.LogError("Could not restore representation parameters");
         }
     }
 }

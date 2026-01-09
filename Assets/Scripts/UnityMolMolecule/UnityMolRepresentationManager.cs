@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,46 +27,67 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace UMol {
-public class UnityMolRepresentationManager {
+public class UnityMolRepresentationManager : MonoBehaviour {
 
-
+	/// <summary>
+	/// All representations
+	/// </summary>
 	public List<UnityMolRepresentation> representations = new List<UnityMolRepresentation>();
 
 	public delegate void RepresentationVisibility();
 	public static event RepresentationVisibility OnRepresentationVisibility;
+
+	public delegate void NewRepresentation();
+	public static event NewRepresentation OnNewRepresentation;
+
+	public delegate void DelRepresentation();
+	public static event DelRepresentation OnRepresentationDeleted;
 
 	/// <summary>
 	/// Store all the activated/visible representations
 	/// </summary>
 	public List<UnityMolRepresentation> activeRepresentations = new List<UnityMolRepresentation>();
 
+	/// Store all the activated/visible representations from a trajectory extraction
+	public List<UnityMolRepresentation> extractedTrajRep = new List<UnityMolRepresentation>();
+	/// Count atoms extracted from trajectory with an active representation, with all positions
+	public int countExtractTrajActive = 0;
+	/// Count atoms extracted from trajectory with an active representation, only the atom array
+	public int countExtractTrajActiveOnlyAtom = 0;
+
 	public HashSet<UnityMolAtom> atomsWithActiveRep = new HashSet<UnityMolAtom>();
 
-	public void AddRepresentation(UnityMolSelection selection, AtomType atomRep = AtomType.optihb,
-	                              BondType bondRep = BondType.optihs, params object[] args) {
+	void Awake() {
+		RaytracerManager.OnRTActivate += callRTInit;
+	}
+	void OnDestroy() {
+		RaytracerManager.OnRTActivate -= callRTInit;
+	}
+
+	void callRTInit() {
+		foreach (UnityMolRepresentation r in representations) {
+			foreach (SubRepresentation sr in r.subReps) {
+				if (sr.atomRepManager != null) {
+					sr.atomRepManager.InitRT();
+				}
+				if (sr.bondRepManager != null) {
+					sr.bondRepManager.InitRT();
+				}
+			}
+		}
+	}
+
+	public UnityMolRepresentation AddRepresentation(UnityMolSelection selection, AtomType atomRep = AtomType.optihb,
+	        BondType bondRep = BondType.optihs, params object[] args) {
 
 		RepType repType;
 		repType.atomType = atomRep;
@@ -87,53 +106,13 @@ public class UnityMolRepresentationManager {
 			s.representations.Add(newRep);
 		}
 
-		// Dictionary<UnityMolStructure, UnityMolSelection> selByStructure = cutSelectionByStructure(selection);
-
-		// //Create a representation for each structure of the selection
-		// foreach (UnityMolStructure s in selByStructure.Keys) {
-		// 	UnityMolSelection sel = selByStructure[s];
-
-		// 	UnityMolRepresentation newRep = new UnityMolRepresentation(atomRep, bondRep, sel, s.ToSelectionName(), args);
-
-		// 	if (!sel.representations.ContainsKey(repType)) {
-		// 		sel.representations[repType] = new List<UnityMolRepresentation>();
-		// 	}
-		// 	if (!selection.representations.ContainsKey(repType)) {
-		// 		selection.representations[repType] = new List<UnityMolRepresentation>();
-		// 	}
-
-		// 	selection.representations[repType].Add(newRep);
-		// 	if(sel != selection){
-		// 		sel.representations[repType].Add(newRep);
-		// 	}
-
-		// 	representations.Add(newRep);
-		// 	s.representations.Add(newRep);
-		// }
-
 		UpdateActiveRepresentations();
 
-	}
+		if (OnNewRepresentation != null)
+			OnNewRepresentation();
 
+		return newRep;
 
-	//Only add atoms from the current model
-	public void AddRepresentation(UnityMolStructure structure, AtomType atomRep, BondType bondRep, params object[] args) {
-
-
-		UnityMolSelection selection = null;
-		string selectionName = structure.ToSelectionName();
-		UnityMolSelectionManager selM = UnityMolMain.getSelectionManager();
-
-		if (selM.selections.ContainsKey(selectionName)) {
-			selection = selM.selections[selectionName];
-		}
-		else {
-			selection = structure.ToSelection();
-			selection.fromSelectionLanguage = true;
-			selection.MDASelString = structure.uniqueName;
-		}
-
-		AddRepresentation(selection, atomRep, bondRep, args);
 	}
 
 	public List<UnityMolRepresentation> representationExists(string nameSel, RepType repType) {
@@ -181,14 +160,23 @@ public class UnityMolRepresentationManager {
 		if (OnRepresentationVisibility != null) {
 			OnRepresentationVisibility();
 		}
-		
+
 		activeRepresentations.Clear();
+		extractedTrajRep.Clear();
+		countExtractTrajActive = 0;
+		countExtractTrajActiveOnlyAtom = 0;
 
 		foreach (UnityMolRepresentation rep in representations) {
-			if (rep.isActive()) {
+			if (rep.isActive() && !rep.selection.extractTrajFrame) {
 				activeRepresentations.Add(rep);
 			}
+			else if (rep.isActive() && rep.selection.extractTrajFrame) {
+				extractedTrajRep.Add(rep);
+				countExtractTrajActive += rep.selection.Count;
+				countExtractTrajActiveOnlyAtom += rep.selection.atoms.Count;
+			}
 		}
+
 		UpdateActiveColliders();
 	}
 
@@ -206,6 +194,10 @@ public class UnityMolRepresentationManager {
 		DeleteRepresentationFromStructures(r);
 		r.Clean();
 		UpdateActiveRepresentations();
+
+		if (OnRepresentationDeleted != null)
+			OnRepresentationDeleted();
+
 	}
 	public void Clean() {
 
@@ -228,6 +220,14 @@ public class UnityMolRepresentationManager {
 			if (r.isEnabled) {
 				if (r.repType.atomType == AtomType.cartoon) {
 					foreach (UnityMolAtom a in r.selection.atoms) {
+						//TODO integrate this with isBackBone
+						if (a.residue.chain.model.structure.structureType ==
+						        UnityMolStructure.MolecularType.Martini) {
+
+							if (a.name.StartsWith("BB")) {
+								atomsWithActiveRep.Add(a);
+							}
+						}
 
 						//Ignoring H atoms by setting the "bonds" argument to null
 						if (MDAnalysisSelection.isBackBone(a, null)) {
@@ -257,6 +257,20 @@ public class UnityMolRepresentationManager {
 
 		UnityMolMain.getCustomRaycast().needsFullUpdate = true;
 
+	}
+
+	void Update() {
+
+		foreach (UnityMolRepresentation r in activeRepresentations) {
+			foreach (SubRepresentation sr in r.subReps) {
+				if (sr.atomRepManager != null) {
+					sr.atomRepManager.UpdateLike();
+				}
+				if (sr.bondRepManager != null) {
+					sr.bondRepManager.UpdateLike();
+				}
+			}
+		}
 	}
 
 }

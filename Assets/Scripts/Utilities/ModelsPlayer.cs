@@ -3,18 +3,16 @@
     Copyright Centre National de la Recherche Scientifique (CNRS)
         Contributors and copyright holders :
 
-        Xavier Martinez, 2017-2021
-        Marc Baaden, 2010-2021
-        baaden@smplinux.de
-        http://www.baaden.ibpc.fr
+        Xavier Martinez, 2017-2022
+        Hubert Santuz, 2022-2026
+        Marc Baaden, 2010-2026
+        unitymol@gmail.com
+        https://unity.mol3d.tech/
 
-        This software is a computer program based on the Unity3D game engine.
-        It is part of UnityMol, a general framework whose purpose is to provide
+        This file is part of UnityMol, a general framework whose purpose is to provide
         a prototype for developing molecular graphics and scientific
-        visualisation applications. More details about UnityMol are provided at
-        the following URL: "http://unitymol.sourceforge.net". Parts of this
-        source code are heavily inspired from the advice provided on the Unity3D
-        forums and the Internet.
+        visualisation applications based on the Unity3D game engine.
+        More details about UnityMol are provided at the following URL: https://unity.mol3d.tech/
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -29,24 +27,10 @@
         You should have received a copy of the GNU General Public License
         along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-        References : 
-        If you use this code, please cite the following reference :         
-        Z. Lv, A. Tek, F. Da Silva, C. Empereur-mot, M. Chavent and M. Baaden:
-        "Game on, Science - how video game technology may help biologists tackle
-        visualization challenges" (2013), PLoS ONE 8(3):e57990.
-        doi:10.1371/journal.pone.0057990
-       
-        If you use the HyperBalls visualization metaphor, please also cite the
-        following reference : M. Chavent, A. Vanel, A. Tek, B. Levy, S. Robert,
-        B. Raffin and M. Baaden: "GPU-accelerated atom and dynamic bond visualization
-        using HyperBalls, a unified algorithm for balls, sticks and hyperboloids",
-        J. Comput. Chem., 2011, 32, 2924
-
-    Please contact unitymol@gmail.com
+        To help us with UnityMol development, we ask that you cite
+        the research papers listed at https://unity.mol3d.tech/cite-us/.
     ================================================================================
 */
-
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -64,7 +48,7 @@ public class ModelsPlayer : MonoBehaviour {
     public bool forwardAndBack = false;
     public float modelFramerate = 3.0f;
 
-    public GameObject modelUI;
+    public List<GameObject> modelUIs;
 
     private float timeperiod = 0.0f;
 
@@ -73,16 +57,18 @@ public class ModelsPlayer : MonoBehaviour {
     private float prevFrameRate = 3.0f;
     private bool sliderChanged = false;
 
-    private Text modelText;
-    private Slider modelSlider;
-    private Text modelCountText;
-    private Toggle loopToggle;
-    private Toggle forwardToggle;
-    private Slider frameRateSlider;
-    private Text framerateText;
+    private List<Text> modelTexts;
+    private List<Slider> modelSliders;
+    private List<Text> modelCountTexts;
+    private List<Toggle> loopToggles;
+    private List<Toggle> forwardToggles;
+    private List<Slider> frameRateSliders;
+    private List<Text> framerateTexts;
+    private List<Toggle> forwardAndBackToggles;
 
     void OnDestroy() {
-        if (modelUI) {
+        foreach (GameObject modelUI in modelUIs) {
+
             modelUI.SetActive(false);
             Canvas.ForceUpdateCanvases();
             //Force update Canvas of LoadedMoleculesUI parent
@@ -91,51 +77,84 @@ public class ModelsPlayer : MonoBehaviour {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(t.GetComponent<RectTransform>());
             }
         }
+        modelUIs.Clear();
+        modelTexts.Clear();
+        modelSliders.Clear();
+        modelCountTexts.Clear();
+        loopToggles.Clear();
+        forwardToggles.Clear();
+        frameRateSliders.Clear();
+        framerateTexts.Clear();
+        forwardAndBackToggles.Clear();
     }
 
     void Start() {
+        modelUIs = new List<GameObject>();
+        modelTexts = new List<Text>();
+        modelSliders = new List<Slider>();
+        modelCountTexts = new List<Text>();
+        loopToggles = new List<Toggle>();
+        forwardToggles = new List<Toggle>();
+        frameRateSliders = new List<Slider>();
+        framerateTexts = new List<Text>();
+        forwardAndBackToggles = new List<Toggle>();
+
         //Makes sure the UI is created before accessing it
         Invoke("Init", 1);
     }
 
-    void Init(){
+    void Init() {
 #if !DISABLE_MAINUI
-        var uiMan = GameObject.FindObjectsOfType<UIManager>();
-        if (uiMan.Length == 0) {
+        var uiMans = GameObject.FindObjectsOfType<UIManager>();
+        if (uiMans.Length == 0) {
             return;
         }
-        if(!uiMan[0].structureNameToUIObject.ContainsKey(s.uniqueName)){
-            return;
+        foreach (var uiMan in uiMans) {
+            if (!uiMan.structureNameToUIObject.ContainsKey(s.name)) {
+                continue;
+            }
+            GameObject modelUI = uiMan.structureNameToUIObject[s.name].transform.Find("Model Menu").gameObject;
+            modelUIs.Add(modelUI);
+            modelUI.SetActive(true);
+            Text modelText = modelUI.transform.Find("Row 1/Current Model").GetComponent<Text>();
+            modelTexts.Add(modelText);
+            Text modelCountText = modelUI.transform.Find("Row 1/Model Count").GetComponent<Text>();
+            modelCountTexts.Add(modelCountText);
+            Slider modelSlider = modelUI.transform.Find("Row 2/Timeline").GetComponent<Slider>();
+            modelSliders.Add(modelSlider);
+            Toggle loopToggle = modelUI.transform.Find("Row 5/Loop").GetComponent<Toggle>();
+            loopToggles.Add(loopToggle);
+            Toggle forwardToggle = modelUI.transform.Find("Row 5/ForwardSwitch").GetComponent<Toggle>();
+            forwardToggles.Add(forwardToggle);
+            Toggle forwardAndBackToggle = modelUI.transform.Find("Row 5/BackForth").GetComponent<Toggle>();
+            forwardAndBackToggles.Add(forwardAndBackToggle);
+            Slider frameRateSlider = modelUI.transform.Find("Row 4/FrameRate").GetComponent<Slider>();
+            frameRateSliders.Add(frameRateSlider);
+            Text framerateText = modelUI.transform.Find("Row 4/Current FrameRate").GetComponent<Text>();
+            framerateTexts.Add(framerateText);
+
+
+            modelUI.transform.Find("Row 3/Play").GetComponent<Button>().onClick.AddListener(switchPlay);
+            loopToggle.onValueChanged.AddListener((value) => {switchLoop(value);});
+
+            forwardToggle.onValueChanged.AddListener((value) => {switchForward(value);});
+
+            modelUI.transform.Find("Row 5/BackForth").GetComponent<Toggle>().onValueChanged.AddListener((value) => {switchBackForth(value);});
+
+            modelUI.transform.Find("Row 3/Backward").GetComponent<Button>().onClick.AddListener(forcePrevFrame);
+            modelUI.transform.Find("Row 3/Forward").GetComponent<Button>().onClick.AddListener(forceNextFrame);
+
+            modelSlider.onValueChanged.AddListener(setModel);
+
+            modelUI.transform.Find("Row 4/FrameRate").GetComponent<Slider>().onValueChanged.AddListener(changeFrameRate);
+
+            updateModelCount();
+            updateModelNumber();
+            updateFramerateValue();
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(modelUI.transform.parent.parent.gameObject.GetComponent<RectTransform>());
+            LayoutRebuilder.ForceRebuildLayoutImmediate(modelUI.transform.parent.parent.parent.gameObject.GetComponent<RectTransform>());
         }
-        modelUI = uiMan[0].structureNameToUIObject[s.uniqueName].transform.Find("Model Menu").gameObject;
-        modelUI.SetActive(true);
-        modelText = modelUI.transform.Find("Row 1/Current Model").GetComponent<Text>();
-        modelCountText = modelUI.transform.Find("Row 1/Model Count").GetComponent<Text>();
-        modelSlider = modelUI.transform.Find("Row 2/Timeline").GetComponent<Slider>();
-        loopToggle = modelUI.transform.Find("Row 5/Loop").GetComponent<Toggle>();
-        forwardToggle = modelUI.transform.Find("Row 5/ForwardSwitch").GetComponent<Toggle>();
-        frameRateSlider = modelUI.transform.Find("Row 4/FrameRate").GetComponent<Slider>();
-        framerateText = modelUI.transform.Find("Row 4/Current FrameRate").GetComponent<Text>();
-
-
-        modelUI.transform.Find("Row 3/Play").GetComponent<Button>().onClick.AddListener(switchPlay);
-        loopToggle.onValueChanged.AddListener((value) => {switchLoop(value);});
-
-        forwardToggle.onValueChanged.AddListener((value) => {switchForward(value);});
-
-        modelUI.transform.Find("Row 5/BackForth").GetComponent<Toggle>().onValueChanged.AddListener((value) => {switchBackForth(value);});
-
-        modelUI.transform.Find("Row 3/Backward").GetComponent<Button>().onClick.AddListener(forcePrevFrame);
-        modelUI.transform.Find("Row 3/Forward").GetComponent<Button>().onClick.AddListener(forceNextFrame);
-
-        modelSlider.onValueChanged.AddListener(setModel);
-
-        modelUI.transform.Find("Row 4/FrameRate").GetComponent<Slider>().onValueChanged.AddListener(changeFrameRate);
-
-        updateModelCount();
-        updateModelNumber();
-        updateFramerateValue();
-
 #endif
 
     }
@@ -156,12 +175,21 @@ public class ModelsPlayer : MonoBehaviour {
     }
     void switchLoop(bool newL) {
         looping = newL;
+        foreach (var l in loopToggles) {
+            l.SetValue(newL);
+        }
     }
     void switchForward(bool newF) {
         forward = newF;
+        foreach (var l in forwardToggles) {
+            l.SetValue(newF);
+        }
     }
     void switchBackForth(bool newS) {
         forwardAndBack = newS;
+        foreach (var l in forwardAndBackToggles) {
+            l.SetValue(newS);
+        }
     }
 
     void Update() {
@@ -174,12 +202,12 @@ public class ModelsPlayer : MonoBehaviour {
                 timeperiod = 0.0f;
 
                 if (forwardAndBack) {
-                    if(s.trajectoryMode){
+                    if (s.trajectoryMode) {
                         if ((forward && s.currentFrameId + 1 >= s.modelFrames.Count) || (!forward && s.currentFrameId - 1 < 0)) {
                             forward = !forward;
                         }
                     }
-                    else{
+                    else {
                         if ((forward && s.currentModelId + 1 >= s.models.Count) || (!forward && s.currentModelId - 1 < 0)) {
                             forward = !forward;
                         }
@@ -188,10 +216,10 @@ public class ModelsPlayer : MonoBehaviour {
 
                 s.modelNext(forward, looping);
             }
-        
+
 
             //Update UI Part
-            if (modelUI != null) {
+            if (modelUIs != null && modelUIs.Count > 0) {
                 updateModelNumber();
 
                 if (prevLoop != looping) {
@@ -211,53 +239,81 @@ public class ModelsPlayer : MonoBehaviour {
     }
 
     void updateModelCount() {
-        if (modelCountText == null || modelSlider == null) {
+        if (modelCountTexts == null || modelSliders == null) {
             return;
         }
-        if(s.trajectoryMode && s.modelFrames != null && s.modelFrames.Count > 1){
-            modelCountText.text = s.modelFrames.Count + " frames";
-            modelSlider.maxValue = s.modelFrames.Count - 1;
+
+        if (s.trajectoryMode && s.modelFrames != null && s.modelFrames.Count > 1) {
+
+            foreach (var mct in modelCountTexts) {
+                mct.text = s.modelFrames.Count + " frames";
+            }
+            foreach (var ms in modelSliders) {
+                ms.maxValue = s.modelFrames.Count - 1;
+            }
         }
-        else{
-            modelCountText.text = s.models.Count + " models";
-            modelSlider.maxValue = s.models.Count;            
+        else {
+            foreach (var mct in modelCountTexts) {
+                mct.text = s.models.Count + " frames";
+            }
+            foreach (var ms in modelSliders) {
+                ms.maxValue = s.models.Count - 1;
+            }
         }
     }
 
     void updateModelNumber() {
-        if (modelText == null || modelSlider == null) {
+        if (modelTexts == null || modelSliders == null) {
             return;
         }
-        if(s.trajectoryMode && s.modelFrames != null && s.modelFrames.Count > 1){
-            modelText.text = "Model " + s.currentFrameId;
-            modelSlider.value = s.currentFrameId;
+        if (s.trajectoryMode && s.modelFrames != null && s.modelFrames.Count > 1) {
+
+            foreach (var mt in modelTexts) {
+                mt.text = "Model " + s.currentFrameId;
+            }
+            foreach (var ms in modelSliders) {
+                ms.value = s.currentFrameId;
+            }
         }
-        else{
-            modelText.text = "Model " + s.currentModelId;
-            modelSlider.value = s.currentModelId;
+        else {
+
+            foreach (var mt in modelTexts) {
+                mt.text = "Model " + s.currentModelId;
+            }
+            foreach (var ms in modelSliders) {
+                ms.value = s.currentModelId;
+            }
         }
     }
     void updateLoopToggle() {
-        if (loopToggle == null) {
+        if (loopToggles == null) {
             return;
         }
-        loopToggle.isOn = looping;
+        foreach (var lt in loopToggles) {
+            lt.isOn = looping;
+        }
         prevLoop = looping;
     }
 
     void updateForwardToggle() {
-        if (forwardToggle == null) {
+        if (forwardToggles == null) {
             return;
         }
-        forwardToggle.isOn = forward;
+        foreach (var ft in forwardToggles) {
+            ft.isOn = forward;
+        }
         prevForward = forward;
     }
     void updateFramerateValue() {
-        if (frameRateSlider == null) {
+        if (frameRateSliders == null) {
             return;
         }
-        frameRateSlider.value = modelFramerate;
-        framerateText.text = "Speed : " + modelFramerate.ToString("F1");
+
+        foreach (var frs in frameRateSliders)
+            frs.value = modelFramerate;
+
+        foreach (var ft in framerateTexts)
+            ft.text = "Speed : " + modelFramerate.ToString("F1");
 
         prevFrameRate = modelFramerate;
     }
@@ -279,7 +335,7 @@ public class ModelsPlayer : MonoBehaviour {
             float frameNumber = val;
             int idF = (int) frameNumber;
             play = false;
-            API.APIPython.setModel(s.uniqueName, idF);
+            API.APIPython.setModel(s.name, idF);
         }
     }
 }

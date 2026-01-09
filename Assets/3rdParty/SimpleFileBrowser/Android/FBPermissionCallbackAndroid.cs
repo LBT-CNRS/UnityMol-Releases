@@ -1,32 +1,3 @@
-﻿using System.Threading;
-using UnityEngine;
-
-namespace SimpleFileBrowser
-{
-	public class FBPermissionCallbackAndroid
-#if UNITY_ANDROID
-	: AndroidJavaProxy
-	{
-		private object threadLock;
-		public int Result { get; private set; }
-
-		public FBPermissionCallbackAndroid( object threadLock ) : base( "com.yasirkula.unity.FileBrowserPermissionReceiver" )
-		{
-			Result = -1;
-			this.threadLock = threadLock;
-		}
-
-		public void OnPermissionResult( int result )
-		{
-			Result = result;
-
-			lock( threadLock )
-			{
-				Monitor.Pulse( threadLock );
-			}
-		}
-	}
-#else
-	{ }
-#endif
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:a251a2df801d37805aa7126fc585f52bfd854d6315bd04e3b84c59aa09789d2b
+size 604
