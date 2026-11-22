@@ -1,0 +1,101 @@
+{
+  "@context": "https://w3id.org/codemeta/3.0",
+  "type": "SoftwareSourceCode",
+  "name": "UnityMol",
+  "description": "UnityMol is a molecular viewer and prototyping platform, coded in C# with the Unity3D game engine.",
+  "codeRepository": "https://github.com/LBT-CNRS/UnityMol-Releases",
+  "license": [
+    {
+      "@type": "CreativeWork",
+      "name": "GPL-3.0 (open source edition), as stated in LICENSE.md",
+      "url": "https://www.gnu.org/licenses/gpl-3.0.html"
+    },
+    {
+      "@type": "CreativeWork",
+      "name": "Proprietary edition under a custom licence, as stated in LICENSE.md"
+    }
+  ],
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Marc",
+      "familyName": "Baaden",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Laboratoire de biochimie théorique [Paris]"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Xavier",
+      "familyName": "Martinez",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Laboratoire de biochimie théorique [Paris]"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Hubert",
+      "familyName": "Santuz",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Laboratoire de biochimie théorique [Paris]"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Mariano",
+      "familyName": "Spivak",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Laboratoire de biochimie théorique [Paris]"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Rajkumar",
+      "familyName": "Darbar",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Laboratoire de biochimie théorique [Paris]"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "André",
+      "familyName": "Lanrezac",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Laboratoire de biochimie théorique [Paris]"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "João",
+      "familyName": "Rodrigues",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Laboratory of Michael Levitt, United States"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "William",
+      "familyName": "Guilon-Dronnier",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Laboratoire de biochimie théorique [Paris]"
+      }
+    }
+  ],
+  "programmingLanguage": [
+    "C#",
+    "ShaderLab",
+    "HLSL",
+    "Python",
+    "GLSL"
+  ],
+  "version": "1.2.0",
+  "keywords": []
+}
